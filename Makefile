@@ -17,3 +17,6 @@ install: -install-pastiche
 
 test:
 	$(Q) ginkgo ./...
+
+lint:
+	$(Q) go run honnef.co/go/tools/cmd/staticcheck -checks 'all,-ST*' $(shell go list ./...)
