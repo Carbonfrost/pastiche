@@ -8,22 +8,24 @@ import (
 )
 
 type Service struct {
-	*Resource
+	Name        string    `json:"name"`
+	Title       string    `json:"title,omitempty"`
+	Description string    `json:"description,omitempty"`
+	Servers     []*Server `json:"servers,omitempty"`
 
-	Name    string
-	Servers []*Server
+	*Resource
 }
 
 type Server struct {
-	Name    string
-	BaseURL string
+	Name    string `json:"name"`
+	BaseURL string `json:"baseUrl"`
 }
 
 type Resource struct {
-	Resources   []*Resource
-	Name        string
-	Method      string
-	URITemplate *uritemplates.URITemplate
+	Name        string                    `json:"name"`
+	Resources   []*Resource               `json:"resources,omitempty"`
+	Method      string                    `json:"method,omitempty"`
+	URITemplate *uritemplates.URITemplate `json:"uriTemplate,omitempty"`
 }
 
 func (r *Resource) ApplyToClient(c *httpclient.Client, baseURL *url.URL) error {

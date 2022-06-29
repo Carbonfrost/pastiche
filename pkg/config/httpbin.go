@@ -7,7 +7,9 @@ import (
 
 var (
 	ExampleHTTPBinorg = &model.Service{
-		Name: "httpbin",
+		Name:        "httpbin",
+		Title:       "httpbin.org",
+		Description: "A simple HTTP Request & Response Service.",
 		Servers: []*model.Server{
 			{
 				Name:    "production",

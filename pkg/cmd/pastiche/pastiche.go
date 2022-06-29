@@ -37,6 +37,13 @@ func NewApp() *cli.App {
 		Before: cli.Pipeline(
 			suppressHTTPClientHelpByDefault(),
 		),
+		Commands: []*cli.Command{
+			{
+				Name:     "init",
+				HelpText: "Initialize the current directory with a new service definition",
+				Uses:     InitCommand(),
+			},
+		},
 		Flags: []*cli.Flag{
 			{
 				Name:     "chdir",
