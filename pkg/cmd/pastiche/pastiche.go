@@ -43,6 +43,17 @@ func NewApp() *cli.App {
 				HelpText: "Initialize the current directory with a new service definition",
 				Uses:     InitCommand(),
 			},
+			{
+				Name:     "describe",
+				HelpText: "Describe resources within Pastiche workspace",
+				Subcommands: []*cli.Command{
+					{
+						Name:    "service",
+						Aliases: []string{"services", "svc"},
+						Uses: DescribeServiceCommand(),
+					},
+				},
+			},
 		},
 		Flags: []*cli.Flag{
 			{

@@ -18,9 +18,10 @@ type serviceCounter struct {
 var (
 	commandNames = map[string]bool{
 		// In-use commands
-		"help":    true,
-		"init":    true,
-		"version": true,
+		"help":     true,
+		"init":     true,
+		"version":  true,
+		"describe": true,
 
 		// Reserved for future use
 		"env": true,
