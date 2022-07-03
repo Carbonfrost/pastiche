@@ -1,13 +1,14 @@
 package pastiche
 
 import (
-	"net/url"
+	"context"
 	"os"
 
 	"github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli/extensions/color"
 	"github.com/Carbonfrost/pastiche/pkg/config"
+	phttpclient "github.com/Carbonfrost/pastiche/pkg/httpclient"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 )
 
@@ -16,6 +17,7 @@ func Run() {
 }
 
 func NewApp() *cli.App {
+	cfg, _ := config.Load()
 	return &cli.App{
 		Name:     "pastiche",
 		HelpText: "Make requests to HTTP APIs using their OpenAPI schemas and definitions.",
@@ -23,16 +25,16 @@ func NewApp() *cli.App {
 		Options:  cli.Sorted,
 		Uses: cli.Pipeline(
 			&color.Options{},
-			httpclient.New(),
-			cli.RemoveArg(-1), // Remove URL contributed by http client
-			cli.AddArg(&cli.Arg{
-				Name:  "service",
-				Value: new(model.ServiceSpec),
-			}),
-		),
-		Action: cli.Pipeline(
-			selectAPIResourceFromSpec(),
-			httpclient.FetchAndPrint(),
+			httpclient.New(
+				httpclient.WithLocationResolver(
+					phttpclient.NewServiceResolver(cfg, func(c context.Context) *model.ServiceSpec {
+						ss := c.(*cli.Context).Value("service").(*model.ServiceSpec)
+						return ss
+					}),
+				),
+			),
+			cli.RemoveArg("url"), // Remove URL contributed by http client
+			cli.ImplicitCommand("get"),
 		),
 		Before: cli.Pipeline(
 			suppressHTTPClientHelpByDefault(),
@@ -50,10 +52,16 @@ func NewApp() *cli.App {
 					{
 						Name:    "service",
 						Aliases: []string{"services", "svc"},
-						Uses: DescribeServiceCommand(),
+						Uses:    DescribeServiceCommand(),
 					},
 				},
 			},
+			{Name: "get", Uses: invokeUsingMethod("GET")},
+			{Name: "head", Uses: invokeUsingMethod("HEAD")},
+			{Name: "post", Uses: invokeUsingMethod("POST")},
+			{Name: "put", Uses: invokeUsingMethod("PUT")},
+			{Name: "patch", Uses: invokeUsingMethod("PATCH")},
+			{Name: "delete", Uses: invokeUsingMethod("DELETE")},
 		},
 		Flags: []*cli.Flag{
 			{
@@ -90,30 +98,5 @@ func suppressHTTPClientHelpByDefault() cli.ActionFunc {
 			}
 			return nil
 		})
-	}
-}
-
-// selectAPIResourceFromSpec uses the service spec to determine which API resource
-// is being selected and configures the HTTP client so that when it processes it, it will
-// invoke the API request
-func selectAPIResourceFromSpec() cli.ActionFunc {
-	return func(c *cli.Context) error {
-		ss := c.Value("service").(*model.ServiceSpec)
-		cfg, err := config.Load()
-		if err != nil {
-			return err
-		}
-		service, resource, err := cfg.Resolve(*ss)
-		if err != nil {
-			return err
-		}
-
-		var baseURL *url.URL
-		if len(service.Servers) > 0 {
-			baseURL, _ = url.Parse(service.Servers[0].BaseURL)
-		}
-
-		client := httpclient.FromContext(c)
-		return resource.ApplyToClient(client, baseURL)
 	}
 }
