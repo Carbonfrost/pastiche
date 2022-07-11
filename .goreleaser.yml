@@ -16,7 +16,8 @@ builds:
       - -s -w -X github.com/Carbonfrost/pastiche/pkg/internal/build.Version={{.Version}}
 
 archives:
-  - replacements:
+  - id: pastiche
+    replacements:
       "386": i386
       amd64: x86_64
     format_overrides:
