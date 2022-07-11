@@ -2,6 +2,7 @@ package pastiche
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/Carbonfrost/joe-cli"
@@ -9,8 +10,11 @@ import (
 	"github.com/Carbonfrost/joe-cli/extensions/color"
 	"github.com/Carbonfrost/pastiche/pkg/config"
 	phttpclient "github.com/Carbonfrost/pastiche/pkg/httpclient"
+	"github.com/Carbonfrost/pastiche/pkg/internal/build"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 )
+
+const pasticheURL = "https://github.com/Carbonfrost/pastiche"
 
 func Run() {
 	NewApp().Run(os.Args)
@@ -23,9 +27,11 @@ func NewApp() *cli.App {
 		HelpText: "Make requests to HTTP APIs using their OpenAPI schemas and definitions.",
 		Comment:  "Smart OpenAPI client",
 		Options:  cli.Sorted,
+		Version:  build.Version,
 		Uses: cli.Pipeline(
 			&color.Options{},
 			httpclient.New(
+				httpclient.WithDefaultUserAgent(defaultUserAgent()),
 				httpclient.WithLocationResolver(
 					phttpclient.NewServiceResolver(cfg, func(c context.Context) *model.ServiceSpec {
 						ss := c.(*cli.Context).Value("service").(*model.ServiceSpec)
@@ -99,4 +105,12 @@ func suppressHTTPClientHelpByDefault() cli.ActionFunc {
 			return nil
 		})
 	}
+}
+
+func defaultUserAgent() string {
+	version := build.Version
+	if len(version) == 0 {
+		version = "development"
+	}
+	return fmt.Sprintf("Go-http-client/1.1 (pastiche/%s, +%s)", version, pasticheURL)
 }
