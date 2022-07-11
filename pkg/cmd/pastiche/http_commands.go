@@ -1,6 +1,8 @@
 package pastiche
 
 import (
+	"bytes"
+
 	"github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/pastiche/pkg/config"
@@ -16,6 +18,9 @@ func invokeUsingMethod(name string) cli.Action {
 					Name:       "service",
 					Value:      new(model.ServiceSpec),
 					Completion: completeServices(),
+					Uses: func(c *cli.Context) {
+						c.Arg().Description = renderServices(c)
+					},
 				}),
 				cli.AddFlags([]*cli.Flag{
 					{
@@ -64,4 +69,22 @@ func completeServer() cli.CompletionFunc {
 		}
 		return nil
 	}
+}
+
+func renderServices(c *cli.Context) string {
+	cfg, _ := config.Load()
+	items := []*model.Service{}
+	for _, v := range cfg.Services {
+		items = append(items, v)
+	}
+
+	data := struct {
+		Services []*model.Service
+	}{
+		Services: items,
+	}
+
+	var buf bytes.Buffer
+	c.Template("PasticheServices").Execute(&buf, data)
+	return buf.String()
 }

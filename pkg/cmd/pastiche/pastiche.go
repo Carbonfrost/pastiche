@@ -8,13 +8,26 @@ import (
 	"github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli/extensions/color"
+	"github.com/Carbonfrost/joe-cli/extensions/table"
 	"github.com/Carbonfrost/pastiche/pkg/config"
 	phttpclient "github.com/Carbonfrost/pastiche/pkg/httpclient"
 	"github.com/Carbonfrost/pastiche/pkg/internal/build"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 )
 
-const pasticheURL = "https://github.com/Carbonfrost/pastiche"
+const (
+	pasticheURL = "https://github.com/Carbonfrost/pastiche"
+
+	serviceTemplate = `Services:
+{{ Table "Unformatted" -}}
+    {{ range .Services }}
+    {{- Row -}}
+        {{- Cell "  " -}}
+        {{- Cell (.Name | Bold) -}}
+        {{- Cell .Title -}}
+    {{- end -}}
+{{- EndTable -}}`
+)
 
 func Run() {
 	NewApp().Run(os.Args)
@@ -30,6 +43,8 @@ func NewApp() *cli.App {
 		Version:  build.Version,
 		Uses: cli.Pipeline(
 			&color.Options{},
+			&table.Options{},
+			cli.RegisterTemplate("PasticheServices", serviceTemplate),
 			httpclient.New(
 				httpclient.WithDefaultUserAgent(defaultUserAgent()),
 				httpclient.WithLocationResolver(
