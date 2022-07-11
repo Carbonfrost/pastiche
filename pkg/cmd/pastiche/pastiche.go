@@ -33,10 +33,11 @@ func NewApp() *cli.App {
 			httpclient.New(
 				httpclient.WithDefaultUserAgent(defaultUserAgent()),
 				httpclient.WithLocationResolver(
-					phttpclient.NewServiceResolver(cfg, func(c context.Context) *model.ServiceSpec {
-						ss := c.(*cli.Context).Value("service").(*model.ServiceSpec)
-						return ss
-					}),
+					phttpclient.NewServiceResolver(
+						cfg,
+						lateBinding[*model.ServiceSpec]("service"),
+						lateBinding[string]("server"),
+					),
 				),
 			),
 			cli.RemoveArg("url"), // Remove URL contributed by http client
@@ -113,4 +114,11 @@ func defaultUserAgent() string {
 		version = "development"
 	}
 	return fmt.Sprintf("Go-http-client/1.1 (pastiche/%s, +%s)", version, pasticheURL)
+}
+
+func lateBinding[V any](name string) func(context.Context) V {
+	return func(c context.Context) V {
+		ss := c.(*cli.Context).Value(name).(V)
+		return ss
+	}
 }

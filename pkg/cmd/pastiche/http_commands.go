@@ -17,6 +17,15 @@ func invokeUsingMethod(name string) cli.Action {
 					Value:      new(model.ServiceSpec),
 					Completion: completeServices(),
 				}),
+				cli.AddFlags([]*cli.Flag{
+					{
+						Name:       "server",
+						Aliases:    []string{"S"},
+						HelpText:   "Use the specified server for the request",
+						Value:      new(string),
+						Completion: completeServer(),
+					},
+				}...),
 			),
 			Action: cli.Pipeline(
 				func(c *cli.Context) {
@@ -35,5 +44,24 @@ func completeServices() cli.CompletionFunc {
 			names = append(names, s.Name)
 		}
 		return cli.CompletionValues(names...).Complete(cc)
+	}
+}
+
+func completeServer() cli.CompletionFunc {
+	return func(cc *cli.CompletionContext) []cli.CompletionItem {
+		if v, ok := cc.Context.Value("service").(*model.ServiceSpec); ok {
+			cfg, _ := config.Load()
+			svc, _, err := cfg.Resolve(*v)
+			if err != nil {
+				return nil
+			}
+
+			names := make([]string, 0, len(svc.Servers))
+			for _, s := range svc.Servers {
+				names = append(names, s.Name)
+			}
+			return cli.CompletionValues(names...).Complete(cc)
+		}
+		return nil
 	}
 }

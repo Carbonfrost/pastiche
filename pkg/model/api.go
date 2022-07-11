@@ -33,3 +33,12 @@ func (r *Resource) Resource(name string) (*Resource, bool) {
 	}
 	return nil, false
 }
+
+func (s *Service) Server(name string) (*Server, bool) {
+	for _, c := range s.Servers {
+		if c.Name == name {
+			return c, true
+		}
+	}
+	return nil, false
+}

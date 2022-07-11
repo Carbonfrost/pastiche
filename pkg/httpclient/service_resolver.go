@@ -13,14 +13,20 @@ import (
 
 type serviceResolver struct {
 	root   func(context.Context) *model.ServiceSpec
+	server func(context.Context) string
 	vars   uritemplates.Vars
 	base   *url.URL
 	config *config.ServiceConfig
 }
 
-func NewServiceResolver(c *config.ServiceConfig, root func(context.Context) *model.ServiceSpec) httpclient.LocationResolver {
+func NewServiceResolver(
+	c *config.ServiceConfig,
+	root func(context.Context) *model.ServiceSpec,
+	server func(context.Context) string,
+) httpclient.LocationResolver {
 	return &serviceResolver{
 		root:   root,
+		server: server,
 		config: c,
 		vars:   uritemplates.Vars{},
 	}
@@ -63,9 +69,9 @@ func (s *serviceResolver) Resolve(c context.Context) ([]*url.URL, error) {
 	}
 
 	res := []*url.URL{loc}
-	base := s.base
-	if base == nil {
-		base, _ = url.Parse(svc.Servers[0].BaseURL)
+	base, err := s.findBaseURL(svc, s.server(c))
+	if err != nil {
+		return nil, err
 	}
 
 	for i := range res {
@@ -77,6 +83,19 @@ func (s *serviceResolver) Resolve(c context.Context) ([]*url.URL, error) {
 		}
 	}
 	return res, nil
+}
+
+func (s *serviceResolver) findBaseURL(svc *model.Service, server string) (*url.URL, error) {
+	if s.base != nil {
+		return s.base, nil
+	}
+	if server != "" {
+		if svr, ok := svc.Server(server); ok {
+			return url.Parse(svr.BaseURL)
+		}
+		return nil, fmt.Errorf("no server %q defined for service %q", server, svc.Name)
+	}
+	return url.Parse(svc.Servers[0].BaseURL)
 }
 
 var _ httpclient.LocationResolver = (*serviceResolver)(nil)
