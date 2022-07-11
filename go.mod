@@ -2,10 +2,6 @@ module github.com/Carbonfrost/pastiche
 
 go 1.18
 
-replace github.com/Carbonfrost/joe-cli-http => ../joe-cli-http
-
-replace github.com/Carbonfrost/joe-cli => ../joe-cli
-
 require (
 	github.com/Carbonfrost/joe-cli v0.2.1
 	github.com/Carbonfrost/joe-cli-http v0.1.0
