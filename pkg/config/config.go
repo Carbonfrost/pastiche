@@ -25,6 +25,9 @@ func Load() (sc *ServiceConfig, err error) {
 	if err = sc.loadExamples(); err != nil {
 		return
 	}
+	if err = sc.loadFromUser(); err != nil {
+		return
+	}
 	if err = sc.loadFromWorkspace(); err != nil {
 		return
 	}
@@ -37,12 +40,23 @@ func (c *ServiceConfig) loadExamples() error {
 	return nil
 }
 
+func (c *ServiceConfig) loadFromUser() error {
+	root, err := filepath.Abs(os.ExpandEnv("$HOME/.pastiche"))
+	if err != nil {
+		return err
+	}
+	return c.loadFiles(root)
+}
+
 func (c *ServiceConfig) loadFromWorkspace() error {
 	root, err := filepath.Abs(".pastiche")
 	if err != nil {
 		return err
 	}
+	return c.loadFiles(root)
+}
 
+func (c *ServiceConfig) loadFiles(root string) error {
 	return fs.WalkDir(os.DirFS(root), ".", func(name string, d fs.DirEntry, err error) error {
 		if d == nil || d.IsDir() {
 			return nil
