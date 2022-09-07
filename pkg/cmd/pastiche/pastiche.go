@@ -115,7 +115,7 @@ func suppressHTTPClientHelpByDefault() cli.ActionFunc {
 			for _, f := range cmd.Command().Flags {
 
 				if f.Data[n] == v {
-					f.SetHidden()
+					f.SetHidden(true)
 				}
 			}
 			return nil
