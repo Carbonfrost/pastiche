@@ -56,7 +56,7 @@ func NewApp() *cli.App {
 				),
 			),
 			cli.RemoveArg("url"), // Remove URL contributed by http client
-			cli.ImplicitCommand("get"),
+			cli.ImplicitCommand("fetch"),
 		),
 		Before: cli.Pipeline(
 			suppressHTTPClientHelpByDefault(),
@@ -78,12 +78,7 @@ func NewApp() *cli.App {
 					},
 				},
 			},
-			{Name: "get", Uses: invokeUsingMethod("GET")},
-			{Name: "head", Uses: invokeUsingMethod("HEAD")},
-			{Name: "post", Uses: invokeUsingMethod("POST")},
-			{Name: "put", Uses: invokeUsingMethod("PUT")},
-			{Name: "patch", Uses: invokeUsingMethod("PATCH")},
-			{Name: "delete", Uses: invokeUsingMethod("DELETE")},
+			{Name: "fetch", Uses: invokeUsingMethod()},
 		},
 		Flags: []*cli.Flag{
 			{

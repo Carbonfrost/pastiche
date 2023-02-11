@@ -9,7 +9,7 @@ import (
 	"github.com/Carbonfrost/pastiche/pkg/model"
 )
 
-func invokeUsingMethod(name string) cli.Action {
+func invokeUsingMethod() cli.Action {
 	return cli.Pipeline(
 		cli.Setup{
 			Uses: cli.Pipeline(
@@ -33,9 +33,6 @@ func invokeUsingMethod(name string) cli.Action {
 				}...),
 			),
 			Action: cli.Pipeline(
-				func(c *cli.Context) {
-					httpclient.FromContext(c).SetMethod(name)
-				},
 				httpclient.FetchAndPrint(),
 			),
 		})
