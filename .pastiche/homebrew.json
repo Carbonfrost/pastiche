@@ -1,0 +1,16 @@
+{
+  "name": "homebrew",
+  "servers": [
+    {
+      "name": "production",
+      "baseUrl": "https://formulae.brew.sh/"
+    }
+  ],
+  "resources": [
+    {
+      "name": "formula",
+      "method": "GET",
+      "uri": "/api/formula/{formula}.json"
+    }
+  ]
+}

@@ -49,7 +49,7 @@ func NewApp() *cli.App {
 				httpclient.WithDefaultUserAgent(defaultUserAgent()),
 				httpclient.WithLocationResolver(
 					phttpclient.NewServiceResolver(
-						cfg,
+						model.New(cfg),
 						lateBinding[*model.ServiceSpec]("service"),
 						lateBinding[string]("server"),
 					),

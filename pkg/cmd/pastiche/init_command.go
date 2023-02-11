@@ -6,8 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/Carbonfrost/joe-cli"
-	"github.com/Carbonfrost/joe-cli-http/uritemplates"
-	"github.com/Carbonfrost/pastiche/pkg/model"
+	"github.com/Carbonfrost/pastiche/pkg/config"
 )
 
 func InitCommand() cli.Action {
@@ -36,23 +35,23 @@ func InitCommand() cli.Action {
 				}
 			}
 
-			svc := &model.Service{
+			svc := &config.Service{
 				Title:       c.String("title"),
 				Name:        name,
 				Description: c.String("description"),
-				Servers: []*model.Server{
+				Servers: []*config.Server{
 					{
 						Name:    "default",
 						BaseURL: "http://localhost:8000/",
 					},
 				},
-				Resource: &model.Resource{
+				Resource: &config.Resource{
 					Name: "/",
-					Resources: []*model.Resource{
+					Resources: []*config.Resource{
 						{
-							Name:        "get",
-							URITemplate: t("/"),
-							Method:      "GET",
+							Name: "get",
+							URI:  "/",
+							Get:  &config.Endpoint{},
 						},
 					},
 				},
@@ -73,9 +72,4 @@ func InitCommand() cli.Action {
 			return err
 		},
 	}
-}
-
-func t(s string) *uritemplates.URITemplate {
-	res, _ := uritemplates.Parse(s)
-	return res
 }

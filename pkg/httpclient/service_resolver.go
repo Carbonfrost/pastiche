@@ -7,7 +7,6 @@ import (
 
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
-	"github.com/Carbonfrost/pastiche/pkg/config"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 )
 
@@ -16,11 +15,11 @@ type serviceResolver struct {
 	server func(context.Context) string
 	vars   uritemplates.Vars
 	base   *url.URL
-	config *config.ServiceConfig
+	config *model.Model
 }
 
 func NewServiceResolver(
-	c *config.ServiceConfig,
+	c *model.Model,
 	root func(context.Context) *model.ServiceSpec,
 	server func(context.Context) string,
 ) httpclient.LocationResolver {
@@ -52,7 +51,7 @@ func (s *serviceResolver) SetBase(base *url.URL) error {
 }
 
 func (s *serviceResolver) Resolve(c context.Context) ([]*url.URL, error) {
-	svc, resource, err := s.config.Resolve(*s.root(c))
+	service, resource, err := s.config.Resolve(*s.root(c))
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +68,7 @@ func (s *serviceResolver) Resolve(c context.Context) ([]*url.URL, error) {
 	}
 
 	res := []*url.URL{loc}
-	base, err := s.findBaseURL(svc, s.server(c))
+	base, err := s.findBaseURL(service, s.server(c))
 	if err != nil {
 		return nil, err
 	}

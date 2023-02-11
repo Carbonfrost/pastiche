@@ -24,15 +24,16 @@ func DescribeServiceCommand() cli.Action {
 				return err
 			}
 
+			mo := model.New(cfg)
 			if len(name) == 0 {
-				for _, s := range cfg.Services {
+				for _, s := range mo.Services {
 					displayService(s)
 				}
 				return nil
 			}
 
 			for _, nom := range name {
-				s, ok := cfg.Service(nom)
+				s, ok := mo.Service(nom)
 				if !ok {
 					return fmt.Errorf("service not found: %q", nom)
 				}

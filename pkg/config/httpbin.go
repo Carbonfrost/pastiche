@@ -1,56 +1,51 @@
 package config
 
-import (
-	"github.com/Carbonfrost/joe-cli-http/uritemplates"
-	"github.com/Carbonfrost/pastiche/pkg/model"
-)
-
 var (
-	ExampleHTTPBinorg = &model.Service{
+	ExampleHTTPBinorg = &Service{
 		Name:        "httpbin",
 		Title:       "httpbin.org",
 		Description: "A simple HTTP Request & Response Service.",
-		Servers: []*model.Server{
+		Servers: []*Server{
 			{
 				Name:    "production",
 				BaseURL: "https://httpbin.org/",
 			},
 		},
-		Resource: &model.Resource{
+		Resource: &Resource{
 			Name: "/",
-			Resources: []*model.Resource{
+			Resources: []*Resource{
 				{
-					Name:        "delete",
-					URITemplate: t("/delete"),
-					Method:      "DELETE",
+					Name:   "delete",
+					URI:    "/delete",
+					Delete: &Endpoint{},
 				},
 				{
-					Name:        "get",
-					URITemplate: t("/get"),
-					Method:      "GET",
+					Name: "get",
+					URI:  "/get",
+					Get:  &Endpoint{},
 				},
 				{
-					Name:        "patch",
-					URITemplate: t("/patch"),
-					Method:      "PATCH",
+					Name:  "patch",
+					URI:   "/patch",
+					Patch: &Endpoint{},
 				},
 				{
-					Name:        "post",
-					URITemplate: t("/post"),
-					Method:      "POST",
+					Name: "post",
+					URI:  "/post",
+					Post: &Endpoint{},
 				},
 				{
-					Name:        "put",
-					URITemplate: t("/put"),
-					Method:      "PUT",
+					Name: "put",
+					URI:  "/put",
+					Put:  &Endpoint{},
 				},
 				{
 					Name: "status",
-					Resources: []*model.Resource{
+					Resources: []*Resource{
 						{
-							Name:        "codes",
-							URITemplate: t("/status/{codes}"),
-							Method:      "GET",
+							Name: "codes",
+							URI:  "/status/{codes}",
+							Get:  &Endpoint{},
 						},
 					},
 				},
@@ -58,8 +53,3 @@ var (
 		},
 	}
 )
-
-func t(s string) *uritemplates.URITemplate {
-	res, _ := uritemplates.Parse(s)
-	return res
-}
