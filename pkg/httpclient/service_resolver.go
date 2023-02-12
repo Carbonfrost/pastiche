@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"os"
 
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
@@ -51,9 +52,21 @@ func (s *serviceResolver) SetBase(base *url.URL) error {
 }
 
 func (s *serviceResolver) Resolve(c context.Context) ([]*url.URL, error) {
-	service, resource, err := s.config.Resolve(*s.root(c))
+	spec := s.root(c)
+	service, resource, err := s.config.Resolve(*spec)
 	if err != nil {
 		return nil, err
+	}
+
+	// Detection of the method from the context is a hack that breaks the
+	// encapsulation of the resolver and mutates the client, but is currently
+	// necessary to apply the semantics of the chosen or default method until
+	// an alternative is available from the joe-cli-http API
+	method, _ := c.Value("method").(string)
+	ep := findEndpointOrDefault(resource, method, *spec)
+
+	if ep != nil {
+		httpclient.FromContext(c).SetMethod(ep.Method)
 	}
 
 	tt := resource.URITemplate
@@ -95,6 +108,24 @@ func (s *serviceResolver) findBaseURL(svc *model.Service, server string) (*url.U
 		return nil, fmt.Errorf("no server %q defined for service %q", server, svc.Name)
 	}
 	return url.Parse(svc.Servers[0].BaseURL)
+}
+
+func findEndpointOrDefault(resource *model.Resource, method string, spec model.ServiceSpec) *model.Endpoint {
+	if method != "" {
+		ep, ok := resource.Endpoint(method)
+		if !ok {
+			logWarning(fmt.Sprintf("warning: method %s is not defined for resource %s\n", method, spec.Path()))
+		}
+		return ep
+	}
+	if len(resource.Endpoints) > 0 {
+		return resource.Endpoints[0]
+	}
+	return nil
+}
+
+func logWarning(v interface{}) {
+	fmt.Fprint(os.Stderr, v)
 }
 
 var _ httpclient.LocationResolver = (*serviceResolver)(nil)

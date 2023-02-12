@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
 	"github.com/Carbonfrost/pastiche/pkg/config"
@@ -151,6 +152,15 @@ func (c *Model) Resolve(s ServiceSpec) (*Service, *Resource, error) {
 func (r *Resource) Resource(name string) (*Resource, bool) {
 	for _, c := range r.Resources {
 		if c.Name == name {
+			return c, true
+		}
+	}
+	return nil, false
+}
+
+func (r *Resource) Endpoint(m string) (*Endpoint, bool) {
+	for _, c := range r.Endpoints {
+		if strings.EqualFold(c.Method, m) {
 			return c, true
 		}
 	}
