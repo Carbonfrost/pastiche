@@ -7,6 +7,7 @@ require (
 	github.com/Carbonfrost/joe-cli-http v0.2.0
 	github.com/onsi/ginkgo/v2 v2.1.4
 	github.com/onsi/gomega v1.19.0
+	gopkg.in/yaml.v2 v2.4.0
 	honnef.co/go/tools v0.3.2
 )
 
@@ -27,5 +28,4 @@ require (
 	golang.org/x/term v0.0.0-20220722155259-a9ba230a4035 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.11-0.20220513221640-090b14e8501f // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

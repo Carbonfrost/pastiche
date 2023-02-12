@@ -6,10 +6,20 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+
+	"gopkg.in/yaml.v2"
 )
 
 type Config struct {
 	Services []*Service
+}
+
+type unmarshaler func([]byte, any) error
+
+var unmarshalers = map[string]unmarshaler{
+	".json": json.Unmarshal,
+	".yaml": yaml.Unmarshal,
+	".yml":  yaml.Unmarshal,
 }
 
 func Load() (sc *Config, err error) {
@@ -63,7 +73,7 @@ func (c *Config) loadFiles(root string) error {
 			return err
 		}
 
-		if filepath.Ext(file) == ".json" {
+		if unmarshal, ok := unmarshalers[filepath.Ext(file)]; ok {
 			data, err := os.ReadFile(file)
 			if err != nil {
 				logWarning(err)
@@ -71,7 +81,7 @@ func (c *Config) loadFiles(root string) error {
 			}
 
 			service := new(Service)
-			if err := json.Unmarshal(data, service); err != nil {
+			if err := unmarshal(data, service); err != nil {
 				logWarning(err)
 				return nil
 			}

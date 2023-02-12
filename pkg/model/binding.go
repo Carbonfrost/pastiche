@@ -66,7 +66,7 @@ func New(c *config.Config) *Model {
 	return res
 }
 
-func resource(r *config.Resource) *Resource {
+func resource(r config.Resource) *Resource {
 	uri, _ := uritemplates.Parse(r.URI)
 	res := &Resource{
 		Name:        r.Name,

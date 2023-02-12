@@ -11,9 +11,9 @@ var (
 				BaseURL: "https://httpbin.org/",
 			},
 		},
-		Resource: &Resource{
+		Resource: Resource{
 			Name: "/",
-			Resources: []*Resource{
+			Resources: []Resource{
 				{
 					Name:   "delete",
 					URI:    "/delete",
@@ -41,7 +41,7 @@ var (
 				},
 				{
 					Name: "status",
-					Resources: []*Resource{
+					Resources: []Resource{
 						{
 							Name: "codes",
 							URI:  "/status/{codes}",

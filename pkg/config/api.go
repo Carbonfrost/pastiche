@@ -6,7 +6,7 @@ type Service struct {
 	Description string    `json:"description,omitempty"`
 	Servers     []*Server `json:"servers,omitempty"`
 
-	*Resource
+	Resource
 }
 
 type Server struct {
@@ -15,18 +15,18 @@ type Server struct {
 }
 
 type Resource struct {
-	Name        string      `json:"name,omitempty"`
-	Description string      `json:"description,omitempty"`
-	Resources   []*Resource `json:"resources,omitempty"`
-	URI         string      `json:"uri,omitempty"`
-	Get         *Endpoint   `json:"get,omitempty"`
-	Put         *Endpoint   `json:"put,omitempty"`
-	Post        *Endpoint   `json:"post,omitempty"`
-	Delete      *Endpoint   `json:"delete,omitempty"`
-	Options     *Endpoint   `json:"options,omitempty"`
-	Head        *Endpoint   `json:"head,omitempty"`
-	Trace       *Endpoint   `json:"trace,omitempty"`
-	Patch       *Endpoint   `json:"patch,omitempty"`
+	Name        string     `json:"name,omitempty"`
+	Description string     `json:"description,omitempty"`
+	Resources   []Resource `json:"resources,omitempty"`
+	URI         string     `json:"uri,omitempty"`
+	Get         *Endpoint  `json:"get,omitempty"`
+	Put         *Endpoint  `json:"put,omitempty"`
+	Post        *Endpoint  `json:"post,omitempty"`
+	Delete      *Endpoint  `json:"delete,omitempty"`
+	Options     *Endpoint  `json:"options,omitempty"`
+	Head        *Endpoint  `json:"head,omitempty"`
+	Trace       *Endpoint  `json:"trace,omitempty"`
+	Patch       *Endpoint  `json:"patch,omitempty"`
 }
 
 type Endpoint struct {
