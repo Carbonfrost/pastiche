@@ -1,6 +1,6 @@
 module github.com/Carbonfrost/pastiche
 
-go 1.18
+go 1.20
 
 require (
 	github.com/Carbonfrost/joe-cli v0.2.2
@@ -23,7 +23,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20220414153411-bcd21879b8fd // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/net v0.0.0-20220708220712-1185a9018129 // indirect
+	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/sys v0.0.0-20220906165534-d0df966e6959 // indirect
 	golang.org/x/term v0.0.0-20220722155259-a9ba230a4035 // indirect
 	golang.org/x/text v0.3.7 // indirect
