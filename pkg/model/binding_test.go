@@ -18,7 +18,7 @@ var _ = Describe("Resolve", func() {
 
 	DescribeTable("examples", func(spec []string, match resolveResultMatches) {
 		subject := model.New(&config.Config{
-			Services: []*config.Service{
+			Services: []config.Service{
 				config.ExampleHTTPBinorg,
 			},
 		})

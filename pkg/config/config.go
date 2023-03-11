@@ -11,7 +11,7 @@ import (
 )
 
 type Config struct {
-	Services []*Service
+	Services []Service
 }
 
 type unmarshaler func([]byte, any) error
@@ -37,7 +37,7 @@ func Load() (sc *Config, err error) {
 	return
 }
 
-func (c *Config) appendService(s *Service) {
+func (c *Config) appendService(s Service) {
 	c.Services = append(c.Services, s)
 }
 
@@ -86,7 +86,7 @@ func (c *Config) loadFiles(root string) error {
 				return nil
 			}
 
-			c.appendService(service)
+			c.appendService(*service)
 		}
 
 		return nil

@@ -1,11 +1,11 @@
 package config
 
 var (
-	ExampleHTTPBinorg = &Service{
+	ExampleHTTPBinorg = Service{
 		Name:        "httpbin",
 		Title:       "httpbin.org",
 		Description: "A simple HTTP Request & Response Service.",
-		Servers: []*Server{
+		Servers: []Server{
 			{
 				Name:    "production",
 				BaseURL: "https://httpbin.org/",

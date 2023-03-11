@@ -38,7 +38,7 @@ func service(c *cli.Context) *config.Service {
 		Title:       c.String("title"),
 		Name:        serviceName(c),
 		Description: c.String("description"),
-		Servers: []*config.Server{
+		Servers: []config.Server{
 			{
 				Name:    "default",
 				BaseURL: "http://localhost:8000/",

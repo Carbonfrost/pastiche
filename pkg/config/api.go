@@ -1,10 +1,10 @@
 package config
 
 type Service struct {
-	Name        string    `json:"name"`
-	Title       string    `json:"title,omitempty"`
-	Description string    `json:"description,omitempty"`
-	Servers     []*Server `json:"servers,omitempty"`
+	Name        string   `json:"name"`
+	Title       string   `json:"title,omitempty"`
+	Description string   `json:"description,omitempty"`
+	Servers     []Server `json:"servers,omitempty"`
 
 	Resource
 }
@@ -12,6 +12,7 @@ type Service struct {
 type Server struct {
 	Name    string `json:"name"`
 	BaseURL string `json:"baseUrl"`
+	Headers Header `json:"headers"`
 }
 
 type Resource struct {
@@ -19,6 +20,7 @@ type Resource struct {
 	Description string     `json:"description,omitempty"`
 	Resources   []Resource `json:"resources,omitempty"`
 	URI         string     `json:"uri,omitempty"`
+	Headers     Header     `json:"headers"`
 	Get         *Endpoint  `json:"get,omitempty"`
 	Put         *Endpoint  `json:"put,omitempty"`
 	Post        *Endpoint  `json:"post,omitempty"`
@@ -32,4 +34,5 @@ type Resource struct {
 type Endpoint struct {
 	Name        string `json:"name,omitempty"`
 	Description string `json:"description,omitempty"`
+	Headers     Header `json:"headers"`
 }
