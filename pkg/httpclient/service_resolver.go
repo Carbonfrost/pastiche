@@ -107,6 +107,9 @@ func (s *serviceResolver) findBaseURL(svc *model.Service, server string) (*url.U
 		}
 		return nil, fmt.Errorf("no server %q defined for service %q", server, svc.Name)
 	}
+	if len(svc.Servers) == 0 {
+		return nil, fmt.Errorf("no servers defined for service %q", svc.Name)
+	}
 	return url.Parse(svc.Servers[0].BaseURL)
 }
 
