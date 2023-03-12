@@ -46,6 +46,7 @@ func NewApp() *cli.App {
 			&table.Options{},
 			cli.RegisterTemplate("PasticheServices", serviceTemplate),
 			httpclient.New(
+				httpclient.WithMiddleware(phttpclient.NewServiceResolverMiddleware()),
 				httpclient.WithDefaultUserAgent(defaultUserAgent()),
 				httpclient.WithLocationResolver(
 					phttpclient.NewServiceResolver(

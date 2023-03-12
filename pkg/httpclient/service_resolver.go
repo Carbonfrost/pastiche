@@ -3,6 +3,7 @@ package httpclient
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 
@@ -19,6 +20,20 @@ type serviceResolver struct {
 	config *model.Model
 }
 
+type pasticheLocation struct {
+	resource *model.Resource
+	service  *model.Service
+	ep       *model.Endpoint
+	u        *url.URL
+}
+
+type pasticheMiddleware struct {
+}
+
+type contextKey string
+
+const locationKey contextKey = "pastiche.location"
+
 func NewServiceResolver(
 	c *model.Model,
 	root func(context.Context) *model.ServiceSpec,
@@ -30,6 +45,10 @@ func NewServiceResolver(
 		config: c,
 		vars:   uritemplates.Vars{},
 	}
+}
+
+func NewServiceResolverMiddleware() httpclient.Middleware {
+	return &pasticheMiddleware{}
 }
 
 func (s *serviceResolver) Add(location string) error {
@@ -51,7 +70,7 @@ func (s *serviceResolver) SetBase(base *url.URL) error {
 	return nil
 }
 
-func (s *serviceResolver) Resolve(c context.Context) ([]*url.URL, error) {
+func (s *serviceResolver) Resolve(c context.Context) ([]httpclient.Location, error) {
 	spec := s.root(c)
 	service, resource, err := s.config.Resolve(*spec)
 	if err != nil {
@@ -59,16 +78,11 @@ func (s *serviceResolver) Resolve(c context.Context) ([]*url.URL, error) {
 	}
 
 	// Detection of the method from the context is a hack that breaks the
-	// encapsulation of the resolver and mutates the client, but is currently
+	// encapsulation of the resolver, but is currently
 	// necessary to apply the semantics of the chosen or default method until
 	// an alternative is available from the joe-cli-http API
 	method, _ := c.Value("method").(string)
 	ep := findEndpointOrDefault(resource, method, *spec)
-
-	if ep != nil {
-		httpclient.FromContext(c).SetMethod(ep.Method)
-	}
-
 	tt := resource.URITemplate
 	expanded, err := tt.Expand(s.vars)
 
@@ -94,7 +108,17 @@ func (s *serviceResolver) Resolve(c context.Context) ([]*url.URL, error) {
 			res[i] = base.ResolveReference(res[i])
 		}
 	}
-	return res, nil
+
+	ll := make([]httpclient.Location, len(res))
+	for i := range res {
+		ll[i] = &pasticheLocation{
+			service:  service,
+			resource: resource,
+			ep:       ep,
+			u:        res[i],
+		}
+	}
+	return ll, nil
 }
 
 func (s *serviceResolver) findBaseURL(svc *model.Service, server string) (*url.URL, error) {
@@ -111,6 +135,20 @@ func (s *serviceResolver) findBaseURL(svc *model.Service, server string) (*url.U
 		return nil, fmt.Errorf("no servers defined for service %q", svc.Name)
 	}
 	return url.Parse(svc.Servers[0].BaseURL)
+}
+
+func (l *pasticheLocation) URL(ctx context.Context) (context.Context, *url.URL, error) {
+	return context.WithValue(ctx, locationKey, l), l.u, nil
+}
+
+func (l *pasticheMiddleware) Handle(r *http.Request) error {
+	loc := r.Context().Value(locationKey).(*pasticheLocation)
+
+	r.Method = loc.ep.Method
+	httpclient.WithHeaders(loc.resource.Headers).Handle(r)
+	httpclient.WithHeaders(loc.ep.Headers).Handle(r)
+
+	return nil
 }
 
 func findEndpointOrDefault(resource *model.Resource, method string, spec model.ServiceSpec) *model.Endpoint {
