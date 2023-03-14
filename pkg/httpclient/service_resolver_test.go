@@ -2,6 +2,7 @@ package httpclient_test
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
@@ -54,6 +55,38 @@ var _ = Describe("ServiceResolver", func() {
 				phttpclient.NewServiceResolver(exampleModel, specTo("hasNoServers"), serverTo("")),
 				MatchError(`no servers defined for service "hasNoServers"`)),
 		)
+	})
+})
+
+var _ = Describe("pasticheMiddleware", func() {
+
+	It("returns an error on no endpoint", func() {
+		ctx := phttpclient.NewContextWithLocation([]string{"service", "spec"},
+			nil,
+			nil,
+			nil, // no endpoint
+			nil)
+
+		req, _ := http.NewRequestWithContext(ctx, "GET", "https://example.com", nil)
+		mw := phttpclient.NewServiceResolverMiddleware()
+		err := mw.Handle(req)
+
+		Expect(err).To(MatchError("no endpoint defined for service/spec"))
+	})
+
+	It("copies headers to request", func() {
+		ctx := phttpclient.NewContextWithLocation(nil,
+			&model.Resource{Headers: http.Header{"X-From-Resource": []string{"resource"}}},
+			nil,
+			&model.Endpoint{Headers: http.Header{"X-From-Endpoint": []string{"endpoint"}}},
+			nil)
+
+		req, _ := http.NewRequestWithContext(ctx, "GET", "https://example.com", nil)
+		mw := phttpclient.NewServiceResolverMiddleware()
+		mw.Handle(req)
+
+		Expect(req.Header.Get("X-From-Resource")).To(Equal("resource"))
+		Expect(req.Header.Get("X-From-Endpoint")).To(Equal("endpoint"))
 	})
 })
 
