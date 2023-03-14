@@ -104,6 +104,11 @@ func resource(r config.Resource) *Resource {
 		res.Endpoints = append(res.Endpoints, endpoint("PATCH", r.Patch))
 	}
 
+	// Implicitly create GET endpoint if none other was created
+	if len(res.Endpoints) == 0 {
+		res.Endpoints = append(res.Endpoints, &Endpoint{Method: "GET"})
+	}
+
 	for _, child := range r.Resources {
 		res.Resources = append(res.Resources, resource(child))
 	}

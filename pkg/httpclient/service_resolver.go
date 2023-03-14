@@ -21,6 +21,7 @@ type serviceResolver struct {
 }
 
 type pasticheLocation struct {
+	spec     model.ServiceSpec
 	resource *model.Resource
 	service  *model.Service
 	ep       *model.Endpoint
@@ -112,6 +113,7 @@ func (s *serviceResolver) Resolve(c context.Context) ([]httpclient.Location, err
 	ll := make([]httpclient.Location, len(res))
 	for i := range res {
 		ll[i] = &pasticheLocation{
+			spec:     *spec,
 			service:  service,
 			resource: resource,
 			ep:       ep,
@@ -144,6 +146,9 @@ func (l *pasticheLocation) URL(ctx context.Context) (context.Context, *url.URL, 
 func (l *pasticheMiddleware) Handle(r *http.Request) error {
 	loc := r.Context().Value(locationKey).(*pasticheLocation)
 
+	if loc.ep == nil {
+		return fmt.Errorf("no endpoint defined for %v", loc.spec.Path())
+	}
 	r.Method = loc.ep.Method
 	httpclient.WithHeaders(loc.resource.Headers).Handle(r)
 	httpclient.WithHeaders(loc.ep.Headers).Handle(r)

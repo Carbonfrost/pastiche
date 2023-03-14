@@ -44,3 +44,32 @@ var _ = Describe("Resolve", func() {
 		),
 	)
 })
+
+var _ = Describe("New", func() {
+
+	DescribeTable("resource binding", func(r config.Resource, match types.GomegaMatcher) {
+		subject := model.New(&config.Config{
+			Services: []config.Service{
+				{
+					Name:     "s",
+					Resource: r,
+				},
+			},
+		})
+
+		Expect(subject.Services["s"].Resource).To(match)
+	},
+		Entry("assume GET when no endpoint is defined",
+			config.Resource{
+				Name: "/",
+			},
+			PointTo(MatchFields(IgnoreExtras,
+				Fields{
+					"Endpoints": MatchElementsWithIndex(IndexIdentity, IgnoreExtras,
+						Elements{
+							"0": PointTo(MatchFields(IgnoreExtras, Fields{"Method": Equal("GET")})),
+						}),
+				})),
+		),
+	)
+})
