@@ -17,6 +17,7 @@ type Service struct {
 	Title       string
 	Description string
 	Servers     []*Server
+	Links       []Link
 
 	Resource *Resource
 }
@@ -25,6 +26,7 @@ type Server struct {
 	Name    string
 	BaseURL string
 	Headers map[string][]string
+	Links   []Link
 }
 
 type Resource struct {
@@ -34,6 +36,7 @@ type Resource struct {
 	Endpoints   []*Endpoint
 	URITemplate *uritemplates.URITemplate
 	Headers     map[string][]string
+	Links       []Link
 	Command     []string
 }
 
@@ -42,6 +45,14 @@ type Endpoint struct {
 	Description string
 	Method      string
 	Headers     map[string][]string
+	Links       []Link
+}
+
+type Link struct {
+	HRef     string
+	Audience string
+	Rel      string
+	Title    string
 }
 
 func New(c *config.Config) *Model {
@@ -60,6 +71,7 @@ func service(v config.Service) *Service {
 		servers[i] = &Server{
 			Name:    s.Name,
 			BaseURL: s.BaseURL,
+			Links:   links(s.Links),
 		}
 	}
 	return &Service{
@@ -95,6 +107,7 @@ func resource(r config.Resource) *Resource {
 		Description: r.Description,
 		URITemplate: uri,
 		Headers:     r.Headers,
+		Links:       links(r.Links),
 	}
 	if r.Get != nil {
 		res.Endpoints = append(res.Endpoints, endpoint("GET", r.Get))
@@ -143,7 +156,21 @@ func endpoint(method string, r *config.Endpoint) *Endpoint {
 		Description: r.Description,
 		Method:      method,
 		Headers:     r.Headers,
+		Links:       links(r.Links),
 	}
+}
+
+func links(links []config.Link) []Link {
+	res := make([]Link, len(links))
+	for i, l := range links {
+		res[i] = Link{
+			HRef:     l.HRef,
+			Audience: l.Audience,
+			Rel:      l.Rel,
+			Title:    l.Title,
+		}
+	}
+	return res
 }
 
 func (s *Service) Server(name string) (*Server, bool) {
