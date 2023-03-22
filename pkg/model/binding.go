@@ -67,8 +67,25 @@ func service(v config.Service) *Service {
 		Title:       v.Title,
 		Description: v.Description,
 		Servers:     servers,
-		Resource:    resource(v.Resource),
+		Resource: &Resource{
+			Name:        "/",
+			URITemplate: mustParseURITemplate("/"),
+			Resources:   resources(v.Resources),
+			Endpoints: []*Endpoint{
+				{
+					Method: "GET",
+				},
+			},
+		},
 	}
+}
+
+func mustParseURITemplate(t string) *uritemplates.URITemplate {
+	u, err := uritemplates.Parse(t)
+	if err != nil {
+		panic(err)
+	}
+	return u
 }
 
 func resource(r config.Resource) *Resource {
@@ -108,9 +125,14 @@ func resource(r config.Resource) *Resource {
 	if len(res.Endpoints) == 0 {
 		res.Endpoints = append(res.Endpoints, &Endpoint{Method: "GET"})
 	}
+	res.Resources = resources(r.Resources)
+	return res
+}
 
-	for _, child := range r.Resources {
-		res.Resources = append(res.Resources, resource(child))
+func resources(resources []config.Resource) []*Resource {
+	res := make([]*Resource, len(resources))
+	for i, child := range resources {
+		res[i] = resource(child)
 	}
 	return res
 }

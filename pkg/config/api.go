@@ -6,7 +6,7 @@ type Service struct {
 	Description string   `json:"description,omitempty"`
 	Servers     []Server `json:"servers,omitempty"`
 
-	Resource
+	Resources []Resource `json:"resources,omitempty" yaml:"resources,omitempty"`
 }
 
 type Server struct {

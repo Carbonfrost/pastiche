@@ -51,13 +51,13 @@ var _ = Describe("New", func() {
 		subject := model.New(&config.Config{
 			Services: []config.Service{
 				{
-					Name:     "s",
-					Resource: r,
+					Name:      "s",
+					Resources: []config.Resource{r},
 				},
 			},
 		})
 
-		Expect(subject.Services["s"].Resource).To(match)
+		Expect(subject.Services["s"].Resource.Resources[0]).To(match)
 	},
 		Entry("assume GET when no endpoint is defined",
 			config.Resource{

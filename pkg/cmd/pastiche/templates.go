@@ -44,14 +44,11 @@ func service(c *cli.Context) *config.Service {
 				BaseURL: "http://localhost:8000/",
 			},
 		},
-		Resource: config.Resource{
-			Name: "/",
-			Resources: []config.Resource{
-				{
-					Name: "get",
-					URI:  "/",
-					Get:  &config.Endpoint{},
-				},
+		Resources: []config.Resource{
+			{
+				Name: "get",
+				URI:  "/",
+				Get:  &config.Endpoint{},
 			},
 		},
 	}
