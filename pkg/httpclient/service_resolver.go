@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
+	"strings"
 
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
@@ -34,6 +36,8 @@ type pasticheMiddleware struct {
 type contextKey string
 
 const locationKey contextKey = "pastiche.location"
+
+var looksLikeURLPattern = regexp.MustCompile(`^https?://`)
 
 func NewServiceResolver(
 	c *model.Model,
@@ -72,8 +76,17 @@ func (s *serviceResolver) SetBase(base *url.URL) error {
 }
 
 func (s *serviceResolver) Resolve(c context.Context) ([]httpclient.Location, error) {
-	spec := s.root(c)
-	service, resource, err := s.config.Resolve(*spec)
+	spec := *s.root(c)
+
+	if looksLikeURL(spec[0]) {
+		r := httpclient.NewDefaultLocationResolver()
+		for _, s := range spec {
+			r.Add(s)
+		}
+		return r.Resolve(c)
+	}
+
+	service, resource, err := s.config.Resolve(spec)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +96,7 @@ func (s *serviceResolver) Resolve(c context.Context) ([]httpclient.Location, err
 	// necessary to apply the semantics of the chosen or default method until
 	// an alternative is available from the joe-cli-http API
 	method, _ := c.Value("method").(string)
-	ep := findEndpointOrDefault(resource, method, *spec)
+	ep := findEndpointOrDefault(resource, method, spec)
 	tt := resource.URITemplate
 	expanded, err := tt.Expand(s.vars)
 
@@ -113,7 +126,7 @@ func (s *serviceResolver) Resolve(c context.Context) ([]httpclient.Location, err
 	ll := make([]httpclient.Location, len(res))
 	for i := range res {
 		ll[i] = &pasticheLocation{
-			spec:     *spec,
+			spec:     spec,
 			service:  service,
 			resource: resource,
 			ep:       ep,
@@ -144,7 +157,11 @@ func (l *pasticheLocation) URL(ctx context.Context) (context.Context, *url.URL, 
 }
 
 func (l *pasticheMiddleware) Handle(r *http.Request) error {
-	loc := r.Context().Value(locationKey).(*pasticheLocation)
+	loc, ok := r.Context().Value(locationKey).(*pasticheLocation)
+	if !ok {
+		// Skip this request because there was no Pastiche location requested
+		return nil
+	}
 
 	if loc.ep == nil {
 		return fmt.Errorf("no endpoint defined for %v", loc.spec.Path())
@@ -172,6 +189,15 @@ func findEndpointOrDefault(resource *model.Resource, method string, spec model.S
 
 func logWarning(v interface{}) {
 	fmt.Fprint(os.Stderr, v)
+}
+
+func looksLikeURL(s string) bool {
+	// This works because service names are not allowed to contain dot
+	// This should therefore be a valid IPv4 or IPv6 address
+	return strings.HasPrefix(s, "/") ||
+		strings.ContainsAny(s, ".:") ||
+		looksLikeURLPattern.MatchString(s) ||
+		s == "localhost"
 }
 
 var _ httpclient.LocationResolver = (*serviceResolver)(nil)

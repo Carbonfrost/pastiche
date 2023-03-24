@@ -56,6 +56,28 @@ var _ = Describe("ServiceResolver", func() {
 				MatchError(`no servers defined for service "hasNoServers"`)),
 		)
 	})
+
+	Describe("Resolve", func() {
+
+		DescribeTable("examples", func(s string, expected string) {
+			r := phttpclient.NewServiceResolver(exampleModel, specTo(s), serverTo(""))
+			loc, err := r.Resolve(context.Background())
+			Expect(err).NotTo(HaveOccurred())
+
+			_, u, _ := loc[0].URL(context.Background())
+			Expect(u.String()).To(Equal(expected))
+		},
+			// For compatibility with Wig:
+			Entry("localhost", "localhost", "http://localhost"),
+			Entry("example.com", "example.com", "http://example.com"),
+			Entry("port", ":8080", "http://localhost:8080"),
+			Entry("rooted", "/root", "/root"),
+			// IP addresses should get treated as URLs
+			Entry("IPv4", "192.168.1.19", "http://192.168.1.19"),
+			Entry("IPv6", "2001:db8::8a2e:370:7334", "http://2001:db8::8a2e:370:7334"),
+		)
+	})
+
 })
 
 var _ = Describe("pasticheMiddleware", func() {
