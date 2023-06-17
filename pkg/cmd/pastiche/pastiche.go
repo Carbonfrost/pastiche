@@ -56,7 +56,7 @@ func NewApp() *cli.App {
 					),
 				),
 			),
-			cli.RemoveArg("url"), // Remove URL contributed by http client
+			cli.RemoveArg(0), // Remove URL contributed by http client
 			cli.ImplicitCommand("fetch"),
 		),
 		Before: cli.Pipeline(
