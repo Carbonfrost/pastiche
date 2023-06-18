@@ -78,6 +78,7 @@ func NewApp() *cli.App {
 						Name:    "service",
 						Aliases: []string{"services", "svc"},
 						Uses:    DescribeServiceCommand(),
+						Before:  disallowPersistentHTTPFlags,
 					},
 				},
 			},
@@ -134,4 +135,25 @@ func lateBinding[V any](name string) func(context.Context) V {
 		ss := c.(*cli.Context).Value(name).(V)
 		return ss
 	}
+}
+
+// disallowPersistentHTTPFlags is an action which returns an error if one
+// of the httpclient flags is present.  This is to allow them to be persistently
+// defined but not actually usable within certain contexts
+func disallowPersistentHTTPFlags(c *cli.Context) error {
+	src, tag := httpclient.SourceAnnotation()
+	for _, k := range c.BindingLookup().BindingNames() {
+		f, ok := c.LookupFlag(k)
+		if !ok {
+			continue
+		}
+
+		if v, ok := f.LookupData(src); ok {
+			if tag == v {
+				return fmt.Errorf("unknown option %v", k)
+			}
+		}
+	}
+
+	return nil
 }
