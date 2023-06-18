@@ -26,6 +26,7 @@ type pasticheLocation struct {
 	spec     model.ServiceSpec
 	resource *model.Resource
 	service  *model.Service
+	server   *model.Server
 	ep       *model.Endpoint
 	u        *url.URL
 }
@@ -109,7 +110,7 @@ func (s *serviceResolver) Resolve(c context.Context) ([]httpclient.Location, err
 	}
 
 	res := []*url.URL{loc}
-	base, err := s.findBaseURL(service, s.server(c))
+	server, base, err := s.findBaseURL(service, s.server(c))
 	if err != nil {
 		return nil, err
 	}
@@ -129,6 +130,7 @@ func (s *serviceResolver) Resolve(c context.Context) ([]httpclient.Location, err
 			spec:     spec,
 			service:  service,
 			resource: resource,
+			server:   server,
 			ep:       ep,
 			u:        res[i],
 		}
@@ -136,20 +138,24 @@ func (s *serviceResolver) Resolve(c context.Context) ([]httpclient.Location, err
 	return ll, nil
 }
 
-func (s *serviceResolver) findBaseURL(svc *model.Service, server string) (*url.URL, error) {
+func (s *serviceResolver) findBaseURL(svc *model.Service, server string) (*model.Server, *url.URL, error) {
 	if s.base != nil {
-		return s.base, nil
+		return nil, s.base, nil
 	}
 	if server != "" {
-		if svr, ok := svc.Server(server); ok {
-			return url.Parse(svr.BaseURL)
+		svr, ok := svc.Server(server)
+		if !ok {
+			return nil, nil, fmt.Errorf("no server %q defined for service %q", server, svc.Name)
 		}
-		return nil, fmt.Errorf("no server %q defined for service %q", server, svc.Name)
+		u, err := url.Parse(svr.BaseURL)
+		return svr, u, err
 	}
+
 	if len(svc.Servers) == 0 {
-		return nil, fmt.Errorf("no servers defined for service %q", svc.Name)
+		return nil, nil, fmt.Errorf("no servers defined for service %q", svc.Name)
 	}
-	return url.Parse(svc.Servers[0].BaseURL)
+	u, err := url.Parse(svc.Servers[0].BaseURL)
+	return svc.Servers[0], u, err
 }
 
 func (l *pasticheLocation) URL(ctx context.Context) (context.Context, *url.URL, error) {
@@ -169,6 +175,9 @@ func (l *pasticheMiddleware) Handle(r *http.Request) error {
 	r.Method = loc.ep.Method
 	httpclient.WithHeaders(loc.resource.Headers).Handle(r)
 	httpclient.WithHeaders(loc.ep.Headers).Handle(r)
+	if loc.server != nil {
+		httpclient.WithHeaders(loc.server.Headers).Handle(r)
+	}
 
 	return nil
 }

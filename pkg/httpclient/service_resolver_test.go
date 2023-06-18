@@ -86,6 +86,7 @@ var _ = Describe("pasticheMiddleware", func() {
 		ctx := phttpclient.NewContextWithLocation([]string{"service", "spec"},
 			nil,
 			nil,
+			nil,
 			nil, // no endpoint
 			nil)
 
@@ -96,19 +97,29 @@ var _ = Describe("pasticheMiddleware", func() {
 		Expect(err).To(MatchError("no endpoint defined for service/spec"))
 	})
 
-	It("copies headers to request", func() {
-		ctx := phttpclient.NewContextWithLocation(nil,
-			&model.Resource{Headers: http.Header{"X-From-Resource": []string{"resource"}}},
-			nil,
-			&model.Endpoint{Headers: http.Header{"X-From-Endpoint": []string{"endpoint"}}},
-			nil)
+	Describe("headers", func() {
 
-		req, _ := http.NewRequestWithContext(ctx, "GET", "https://example.com", nil)
-		mw := phttpclient.NewServiceResolverMiddleware()
-		mw.Handle(req)
+		DescribeTable("examples", func(expected types.GomegaMatcher) {
+			ctx := phttpclient.NewContextWithLocation(nil,
+				&model.Resource{Headers: http.Header{"X-From-Resource": []string{"resource"}}},
+				&model.Service{},
+				&model.Server{
+					Name:    "default",
+					Headers: http.Header{"X-From-Server": []string{"server"}},
+				},
+				&model.Endpoint{Headers: http.Header{"X-From-Endpoint": []string{"endpoint"}}},
+				nil)
 
-		Expect(req.Header.Get("X-From-Resource")).To(Equal("resource"))
-		Expect(req.Header.Get("X-From-Endpoint")).To(Equal("endpoint"))
+			req, _ := http.NewRequestWithContext(ctx, "GET", "https://example.com", nil)
+			mw := phttpclient.NewServiceResolverMiddleware()
+			mw.Handle(req)
+
+			Expect(req.Header).To(expected)
+		},
+			Entry("copied from resource", HaveKeyWithValue("X-From-Resource", []string{"resource"})),
+			Entry("copied from endpoint", HaveKeyWithValue("X-From-Endpoint", []string{"endpoint"})),
+			Entry("copied from server", HaveKeyWithValue("X-From-Server", []string{"server"})),
+		)
 	})
 })
 

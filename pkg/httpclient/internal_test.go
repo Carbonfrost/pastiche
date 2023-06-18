@@ -10,6 +10,7 @@ import (
 func NewContextWithLocation(spec model.ServiceSpec,
 	resource *model.Resource,
 	service *model.Service,
+	server *model.Server,
 	ep *model.Endpoint,
 	u *url.URL) context.Context {
 
@@ -17,6 +18,7 @@ func NewContextWithLocation(spec model.ServiceSpec,
 		spec:     spec,
 		resource: resource,
 		service:  service,
+		server:   server,
 		ep:       ep,
 		u:        u,
 	}
