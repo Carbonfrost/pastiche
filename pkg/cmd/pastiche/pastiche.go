@@ -1,7 +1,6 @@
 package pastiche
 
 import (
-	"context"
 	"fmt"
 	"os"
 
@@ -9,15 +8,11 @@ import (
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli/extensions/color"
 	"github.com/Carbonfrost/joe-cli/extensions/table"
-	"github.com/Carbonfrost/pastiche/pkg/config"
 	phttpclient "github.com/Carbonfrost/pastiche/pkg/httpclient"
 	"github.com/Carbonfrost/pastiche/pkg/internal/build"
-	"github.com/Carbonfrost/pastiche/pkg/model"
 )
 
 const (
-	pasticheURL = "https://github.com/Carbonfrost/pastiche"
-
 	serviceTemplate = `Services:
 {{ Table "Unformatted" -}}
     {{ range .Services }}
@@ -34,7 +29,6 @@ func Run() {
 }
 
 func NewApp() *cli.App {
-	cfg, _ := config.Load()
 	return &cli.App{
 		Name:     "pastiche",
 		HelpText: "Make requests to HTTP APIs using their OpenAPI schemas and definitions.",
@@ -47,18 +41,7 @@ func NewApp() *cli.App {
 				Features: table.AllFeatures &^ table.UseTablesInHelpTemplate,
 			},
 			cli.RegisterTemplate("PasticheServices", serviceTemplate),
-			httpclient.New(
-				httpclient.WithMiddleware(phttpclient.NewServiceResolverMiddleware()),
-				httpclient.WithDefaultUserAgent(defaultUserAgent()),
-				httpclient.WithLocationResolver(
-					phttpclient.NewServiceResolver(
-						model.New(cfg),
-						lateBinding[*model.ServiceSpec]("service"),
-						lateBinding[string]("server"),
-					),
-				),
-			),
-			cli.RemoveArg(0), // Remove URL contributed by http client
+			phttpclient.New(),
 			cli.ImplicitCommand("fetch"),
 		),
 		Before: cli.Pipeline(
@@ -120,21 +103,6 @@ func suppressHTTPClientHelpByDefault() cli.ActionFunc {
 			}
 			return nil
 		})
-	}
-}
-
-func defaultUserAgent() string {
-	version := build.Version
-	if len(version) == 0 {
-		version = "development"
-	}
-	return fmt.Sprintf("Go-http-client/1.1 (pastiche/%s, +%s)", version, pasticheURL)
-}
-
-func lateBinding[V any](name string) func(context.Context) V {
-	return func(c context.Context) V {
-		ss := c.(*cli.Context).Value(name).(V)
-		return ss
 	}
 }
 

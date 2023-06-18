@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/Carbonfrost/joe-cli v0.5.2
 	github.com/Carbonfrost/joe-cli-http v0.5.0
+	github.com/jmespath/go-jmespath v0.4.0
 	github.com/onsi/ginkgo/v2 v2.11.0
 	github.com/onsi/gomega v1.27.8
 	gopkg.in/yaml.v3 v3.0.1
