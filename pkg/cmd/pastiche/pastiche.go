@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Carbonfrost/joe-cli"
+	cli "github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli/extensions/color"
 	"github.com/Carbonfrost/joe-cli/extensions/table"
@@ -43,7 +43,9 @@ func NewApp() *cli.App {
 		Version:  build.Version,
 		Uses: cli.Pipeline(
 			&color.Options{},
-			&table.Options{},
+			&table.Options{
+				Features: table.AllFeatures &^ table.UseTablesInHelpTemplate,
+			},
 			cli.RegisterTemplate("PasticheServices", serviceTemplate),
 			httpclient.New(
 				httpclient.WithMiddleware(phttpclient.NewServiceResolverMiddleware()),
