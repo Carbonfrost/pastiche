@@ -81,6 +81,7 @@ func NewApp() *cli.App {
 						Before:  disallowPersistentHTTPFlags,
 					},
 				},
+				Uses: cli.HandleCommandNotFound(nil),
 			},
 			{Name: "fetch", Uses: invokeUsingMethod()},
 		},
