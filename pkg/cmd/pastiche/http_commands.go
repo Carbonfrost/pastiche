@@ -25,10 +25,11 @@ func invokeUsingMethod() cli.Action {
 						},
 					},
 					{
-						Name:    "args",
-						Value:   new(cli.NameValue),
-						Options: cli.EachOccurrence,
-						NArg:    cli.TakeUntilNextFlag,
+						Name:       "args",
+						Value:      new(cli.NameValue),
+						Options:    cli.EachOccurrence,
+						Completion: completeServiceArgs(),
+						NArg:       cli.TakeUntilNextFlag,
 						Action: func(c *cli.Context) error {
 							it := c.NameValue("")
 							httpclient.FromContext(c).LocationResolver.AddVar(uritemplates.StringVar(it.Name, it.Value))
@@ -64,24 +65,49 @@ func completeServices() cli.CompletionFunc {
 	}
 }
 
+func completeServiceArgs() cli.CompletionFunc {
+	return func(cc *cli.CompletionContext) []cli.CompletionItem {
+		_, resource, ok := tryContextResolve(cc.Context)
+		if !ok {
+			return nil
+		}
+
+		names := resource.URITemplate.Names()
+		return cli.CompletionValues(names...).Complete(cc)
+	}
+}
+
 func completeServer() cli.CompletionFunc {
 	return func(cc *cli.CompletionContext) []cli.CompletionItem {
-		if v, ok := cc.Context.Value("service").(*model.ServiceSpec); ok {
-			cfg, _ := config.Load()
-			mo := model.New(cfg)
-			service, _, err := mo.Resolve(*v)
-			if err != nil {
-				return nil
-			}
-
-			names := make([]string, 0, len(service.Servers))
-			for _, s := range service.Servers {
-				names = append(names, s.Name)
-			}
-			return cli.CompletionValues(names...).Complete(cc)
+		service, _, ok := tryContextResolve(cc.Context)
+		if !ok {
+			return nil
 		}
-		return nil
+
+		names := make([]string, 0, len(service.Servers))
+		for _, s := range service.Servers {
+			names = append(names, s.Name)
+		}
+		return cli.CompletionValues(names...).Complete(cc)
 	}
+}
+
+func tryContextResolve(c *cli.Context) (service *model.Service, res *model.Resource, ok bool) {
+	v, found := c.Value("service").(*model.ServiceSpec)
+	if !found {
+		return
+	}
+	cfg, err := config.Load()
+	if err != nil {
+		return
+	}
+	mo := model.New(cfg)
+	service, res, err = mo.Resolve(*v)
+	if err != nil {
+		return
+	}
+	ok = true
+	return
 }
 
 func renderServices(c *cli.Context) string {
