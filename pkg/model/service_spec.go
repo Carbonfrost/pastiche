@@ -9,6 +9,16 @@ import (
 
 type ServiceSpec []string
 
+type serviceSpecCounter struct {
+	base cli.ArgCounter
+}
+
+func newServiceSpecCounter() *serviceSpecCounter {
+	return &serviceSpecCounter{
+		base: cli.ArgCount(cli.TakeUntilNextFlag),
+	}
+}
+
 func (s *ServiceSpec) Set(arg string) error {
 	*s = append(*s, arg)
 	return nil
@@ -22,7 +32,7 @@ func (s ServiceSpec) ServiceName() string {
 }
 
 func (s ServiceSpec) NewCounter() cli.ArgCounter {
-	return cli.ArgCount(cli.TakeUntilNextFlag)
+	return newServiceSpecCounter()
 }
 
 func (s ServiceSpec) String() string {
@@ -31,6 +41,24 @@ func (s ServiceSpec) String() string {
 
 func (s ServiceSpec) Path() string {
 	return strings.Join(s, "/")
+}
+
+func (s *serviceSpecCounter) Take(arg string, possibleFlag bool) error {
+	err := s.base.Take(arg, possibleFlag)
+	if err != nil {
+		return err
+	}
+
+	// This looks like it is specifying a template variable
+	if strings.Contains(arg, "=") {
+		return cli.EndOfArguments
+	}
+
+	return nil
+}
+
+func (*serviceSpecCounter) Done() error {
+	return nil
 }
 
 var _ flag.Value = (*ServiceSpec)(nil)

@@ -5,6 +5,7 @@ import (
 
 	"github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
+	"github.com/Carbonfrost/joe-cli-http/uritemplates"
 	"github.com/Carbonfrost/pastiche/pkg/config"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 )
@@ -14,14 +15,28 @@ func invokeUsingMethod() cli.Action {
 		cli.Setup{
 			Uses: cli.Pipeline(
 				cli.Category("Invoke HTTP client"),
-				cli.AddArg(&cli.Arg{
-					Name:       "service",
-					Value:      new(model.ServiceSpec),
-					Completion: completeServices(),
-					Uses: func(c *cli.Context) {
-						c.Arg().Description = renderServices(c)
+				cli.AddArgs([]*cli.Arg{
+					{
+						Name:       "service",
+						Value:      new(model.ServiceSpec),
+						Completion: completeServices(),
+						Uses: func(c *cli.Context) {
+							c.Arg().Description = renderServices(c)
+						},
 					},
-				}),
+					{
+						Name:    "args",
+						Value:   new(cli.NameValue),
+						Options: cli.EachOccurrence,
+						NArg:    cli.TakeUntilNextFlag,
+						Action: func(c *cli.Context) error {
+							it := c.NameValue("")
+							httpclient.FromContext(c).LocationResolver.AddVar(uritemplates.StringVar(it.Name, it.Value))
+							return nil
+						},
+					},
+				}...,
+				),
 				cli.AddFlags([]*cli.Flag{
 					{
 						Name:       "server",

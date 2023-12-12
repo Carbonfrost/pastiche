@@ -1,0 +1,41 @@
+package model_test
+
+import (
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
+	"github.com/Carbonfrost/joe-cli"
+	"github.com/Carbonfrost/pastiche/pkg/model"
+	"github.com/onsi/gomega/types"
+)
+
+var _ = Describe("ServiceSpecCounter", func() {
+
+	Describe("Take", func() {
+
+		DescribeTable("examples", func(spec []string, shouldTake int, expectErr types.GomegaMatcher) {
+			subject := new(model.ServiceSpec).NewCounter()
+
+			for index, s := range spec {
+				err := subject.Take(s, false)
+				if index < shouldTake {
+					Expect(err).NotTo(HaveOccurred())
+					continue
+				}
+
+				Expect(err).To(expectErr)
+			}
+		},
+			Entry("nominal",
+				[]string{"homebrew", "formula"},
+				2,
+				MatchError(cli.EndOfArguments),
+			),
+			Entry("stop on template variables",
+				[]string{"homebrew", "formula", "formula=wget"},
+				2,
+				MatchError(cli.EndOfArguments),
+			),
+		)
+	})
+})
