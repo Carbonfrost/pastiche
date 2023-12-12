@@ -41,8 +41,8 @@ type Endpoint struct {
 }
 
 type Link struct {
-	HRef     string `json:"href,omitempty yaml:"href,omitempty"`
-	Audience string `json:"audience,omitempty yaml:"audience,omitempty"`
-	Rel      string `json:"rel,omitempty yaml:"rel,omitempty"`
-	Title    string `json:"title,omitempty yaml:"title,omitempty"`
+	HRef     string `json:"href,omitempty" yaml:"href,omitempty"`
+	Audience string `json:"audience,omitempty" yaml:"audience,omitempty"`
+	Rel      string `json:"rel,omitempty" yaml:"rel,omitempty"`
+	Title    string `json:"title,omitempty" yaml:"title,omitempty"`
 }
