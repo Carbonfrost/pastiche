@@ -19,6 +19,8 @@ ENG_EDITORCONFIG_FILES += $(foreach var,$(ENG_ENABLED_STACKS),$(wildcard $(_ENG_
 
 .envrc: -eng/.envrc
 .editorconfig: -eng/.editorconfig
+.gitignore:
+	$(Q) cat eng/stacks/{$(shell echo $(ENG_ENABLED_STACKS) | tr ' ' '\n' | sort | uniq | paste -sd, -)}/*.gitignore > $@
 
 ## Generate editor support files
 eng/ready: -eng/.envrc -eng/.editorconfig

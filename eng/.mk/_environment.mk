@@ -29,7 +29,7 @@ _DEV_MESSAGE=(Is direnv set up correctly?  Have you tried 'make init'?)
 		$(call _display_variables,ENG_GLOBAL_VERBOSE_VARIABLES) \
 	fi
 
--env-enabled-frameworks: | -env-enabled-dotnet -env-enabled-python -env-enabled-ruby -env-enabled-go -env-enabled-rust
+-env-enabled-frameworks: | -env-enabled-dotnet -env-enabled-python -env-enabled-ruby -env-enabled-go -env-enabled-rust -env-enabled-node
 
 -env-enabled-dotnet:
 	@ $(call _status,.NET,DOTNET)
@@ -42,6 +42,9 @@ _DEV_MESSAGE=(Is direnv set up correctly?  Have you tried 'make init'?)
 
 -env-enabled-go:
 	@ $(call _status,Go,GO)
+
+-env-enabled-node:
+	@ $(call _status,Node,NODE)
 
 -env-enabled-rust:
 	@ $(call _status,Rust,RUST)

@@ -74,7 +74,7 @@ _PIPE := |
 
 # Directories
 _ENG_STACKS_DIR = $(_ENG_MAKEFILE_DIR)/stacks
-_ENG_BASE_DIR = $(_ENG_MAKEFILE_DIR)/base
+_ENG_BASE_DIR = $(_ENG_MAKEFILE_DIR)/stacks/_base
 
 # Terminal output formatting
 _RESET = $(shell tput sgr0 2>/dev/null || printf '')

@@ -22,7 +22,7 @@ ENG_AVAILABLE_STACKS += ruby
 	use/ruby \
 
 ## Add support for Ruby to the project
-use/ruby: | -use/ruby-version -ruby/init -use/ruby-Gemfile
+use/ruby: | -use/ruby-version -use/ruby-bundler -use/ruby-Gemfile -ruby/init
 
 # Enable the tasks if we are using ruby
 ifeq (1,$(ENG_USING_RUBY))
@@ -41,6 +41,8 @@ endif
 
 -ruby/init: -check-command-rbenv
 	@    echo "$(_GREEN)Installing Ruby and Ruby dependencies...$(_RESET)"
+	$(Q) $(OUTPUT_COLLAPSED) eng/brew_bundle_inject rbenv ruby-build
+	$(Q) $(OUTPUT_COLLAPSED) brew bundle
 	$(Q) $(OUTPUT_COLLAPSED) rbenv install -s
 	$(Q) $(OUTPUT_COLLAPSED) gem install bundler
 	$(Q) [ -f Gemfile ] && $(OUTPUT_HIDDEN) bundle install
@@ -48,8 +50,11 @@ endif
 -ruby/fmt: -check-command-bundle -check-ruby-bundled-rufo -check-bundle-current
 	$(Q) bundle exec rufo .
 
--use/ruby-Gemfile: -check-command-Gemfile
+-use/ruby-Gemfile: -check-command-bundle
 	$(Q) [ -f Gemfile ] || bundle init
+
+-use/ruby-bundler: -check-command-gem
+	$(Q) $(OUTPUT_COLLAPSED) gem install bundler
 
 -use/ruby-version:
 	@    echo "Adding support for Ruby to this project... "
