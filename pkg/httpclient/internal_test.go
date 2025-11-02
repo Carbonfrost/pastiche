@@ -8,6 +8,7 @@ import (
 	"net/url"
 
 	"github.com/Carbonfrost/pastiche/pkg/model"
+	"github.com/Carbonfrost/pastiche/pkg/model/modelfakes"
 )
 
 func NewContextWithLocation(spec model.ServiceSpec,
@@ -18,12 +19,22 @@ func NewContextWithLocation(spec model.ServiceSpec,
 	u *url.URL) context.Context {
 
 	location := &pasticheLocation{
-		spec:     spec,
-		resource: resource,
-		service:  service,
-		server:   server,
-		ep:       ep,
-		u:        u,
+		spec: spec,
+		merged: &modelfakes.FakeResolvedResource{
+			ResourceStub: func() *model.Resource {
+				return resource
+			},
+			ServiceStub: func() *model.Service {
+				return service
+			},
+			ServerStub: func() *model.Server {
+				return server
+			},
+			EndpointStub: func() *model.Endpoint {
+				return ep
+			},
+		},
+		u: u,
 	}
 
 	return context.WithValue(context.Background(), locationKey, location)

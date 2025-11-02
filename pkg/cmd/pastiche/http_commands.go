@@ -96,6 +96,8 @@ func completeServer() cli.CompletionFunc {
 }
 
 func tryContextResolve(c *cli.Context) (service *model.Service, res *model.Resource, ok bool) {
+	method := c.String("method")
+	server := c.String("server")
 	v, found := c.Value("service").(*model.ServiceSpec)
 	if !found {
 		return
@@ -104,8 +106,12 @@ func tryContextResolve(c *cli.Context) (service *model.Service, res *model.Resou
 	if err != nil {
 		return
 	}
+
 	mo := model.New(cfg)
-	service, res, err = mo.Resolve(*v)
+	merged, err := mo.Resolve(*v, server, method)
+	service = merged.Service()
+	res = merged.Resource()
+
 	if err != nil {
 		return
 	}

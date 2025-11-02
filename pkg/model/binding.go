@@ -5,11 +5,17 @@ package model
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
 	"github.com/Carbonfrost/pastiche/pkg/config"
+	"github.com/Carbonfrost/pastiche/pkg/internal/log"
 )
+
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+
+//counterfeiter:generate . ResolvedResource
 
 type Model struct {
 	Services map[string]*Service
@@ -56,6 +62,22 @@ type Link struct {
 	Audience string
 	Rel      string
 	Title    string
+}
+
+type ResolvedResource interface {
+	Service() *Service
+	Resource() *Resource
+	Endpoint() *Endpoint
+	Server() *Server
+
+	URL(baseURL *url.URL, vars uritemplates.Vars) (*url.URL, error)
+}
+
+type resolvedResource struct {
+	endpoint *Endpoint
+	resource *Resource
+	server   *Server
+	service  *Service
 }
 
 func New(c *config.Config) *Model {
@@ -193,13 +215,25 @@ func (c *Model) Service(name string) (*Service, bool) {
 	return svc, ok
 }
 
-func (c *Model) Resolve(s ServiceSpec) (*Service, *Resource, error) {
+func (c *Model) Resolve(s ServiceSpec, server string, method string) (ResolvedResource, error) {
 	if len(s) == 0 {
-		return nil, nil, fmt.Errorf("no service specified")
+		return nil, fmt.Errorf("no service specified")
 	}
 	svc, ok := c.Service(s[0])
 	if !ok {
-		return nil, nil, fmt.Errorf("service not found: %q", s[0])
+		return nil, fmt.Errorf("service not found: %q", s[0])
+	}
+
+	if len(svc.Servers) == 0 {
+		return nil, fmt.Errorf("no servers defined for service %q", svc.Name)
+	}
+
+	svr := svc.Servers[0]
+	if server != "" {
+		svr, ok = svc.Server(server)
+		if !ok {
+			return nil, fmt.Errorf("no server %q defined for service %q", server, svc.Name)
+		}
 	}
 
 	current := svc.Resource
@@ -207,11 +241,18 @@ func (c *Model) Resolve(s ServiceSpec) (*Service, *Resource, error) {
 		current, ok = current.Resource(p)
 		if !ok {
 			path := ServiceSpec(s[0 : i+2]).Path()
-			return nil, nil, fmt.Errorf("resource not found: %q", path)
+			return nil, fmt.Errorf("resource not found: %q", path)
 		}
 	}
 
-	return svc, current, nil
+	ep := findEndpointOrDefault(current, method, s)
+
+	return &resolvedResource{
+		service:  svc,
+		resource: current,
+		endpoint: ep,
+		server:   svr,
+	}, nil
 }
 
 func (r *Resource) Resource(name string) (*Resource, bool) {
@@ -230,4 +271,57 @@ func (r *Resource) Endpoint(m string) (*Endpoint, bool) {
 		}
 	}
 	return nil, false
+}
+
+func (r *resolvedResource) Service() *Service {
+	return r.service
+}
+
+func (r *resolvedResource) Resource() *Resource {
+	return r.resource
+}
+
+func (r *resolvedResource) Endpoint() *Endpoint {
+	return r.endpoint
+}
+
+func (r *resolvedResource) Server() *Server {
+	return r.server
+}
+
+func (r *resolvedResource) URL(baseURL *url.URL, vars uritemplates.Vars) (*url.URL, error) {
+	tt := r.Resource().URITemplate
+	expanded, err := tt.Expand(vars)
+	if err != nil {
+		return nil, err
+	}
+
+	u, err := url.Parse(expanded)
+	if err != nil {
+		return nil, err
+	}
+
+	if baseURL == nil {
+		baseURL, err = url.Parse(r.Server().BaseURL)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	u = baseURL.ResolveReference(u)
+	return u, err
+}
+
+func findEndpointOrDefault(resource *Resource, method string, spec ServiceSpec) *Endpoint {
+	if method != "" {
+		ep, ok := resource.Endpoint(method)
+		if !ok {
+			log.Warnf("warning: method %s is not defined for resource %s", method, spec.Path())
+		}
+		return ep
+	}
+	if len(resource.Endpoints) > 0 {
+		return resource.Endpoints[0]
+	}
+	return nil
 }

@@ -26,10 +26,10 @@ var _ = Describe("Resolve", func() {
 			},
 		})
 
-		service, resource, err := subject.Resolve(spec)
+		merged, err := subject.Resolve(spec, "", "")
 		Expect(err).NotTo(HaveOccurred())
-		Expect(service).To(match.Service)
-		Expect(resource).To(match.Resource)
+		Expect(merged.Service()).To(match.Service)
+		Expect(merged.Resource()).To(match.Resource)
 	},
 		Entry("simple",
 			[]string{"httpbin", "get"},

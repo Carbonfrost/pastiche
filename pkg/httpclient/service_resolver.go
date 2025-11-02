@@ -13,7 +13,6 @@ import (
 
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
-	"github.com/Carbonfrost/pastiche/pkg/internal/log"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 )
 
@@ -26,12 +25,9 @@ type serviceResolver struct {
 }
 
 type pasticheLocation struct {
-	spec     model.ServiceSpec
-	resource *model.Resource
-	service  *model.Service
-	server   *model.Server
-	ep       *model.Endpoint
-	u        *url.URL
+	spec   model.ServiceSpec
+	merged model.ResolvedResource
+	u      *url.URL
 }
 
 type pasticheMiddleware struct {
@@ -90,75 +86,29 @@ func (s *serviceResolver) Resolve(c context.Context) ([]httpclient.Location, err
 		return r.Resolve(c)
 	}
 
-	service, resource, err := s.config.Resolve(spec)
-	if err != nil {
-		return nil, err
-	}
-
 	// Detection of the method from the context is a hack that breaks the
 	// encapsulation of the resolver, but is currently
 	// necessary to apply the semantics of the chosen or default method until
 	// an alternative is available from the joe-cli-http API
 	method, _ := c.Value("method").(string)
-	ep := findEndpointOrDefault(resource, method, spec)
-	tt := resource.URITemplate
-	expanded, err := tt.Expand(s.vars)
 
-	if err != nil {
-		return nil, err
-	}
-	loc, err := url.Parse(expanded)
+	merged, err := s.config.Resolve(spec, s.server(c), method)
 	if err != nil {
 		return nil, err
 	}
 
-	res := []*url.URL{loc}
-	server, base, err := s.findBaseURL(service, s.server(c))
+	loc, err := merged.URL(s.base, s.vars)
 	if err != nil {
 		return nil, err
 	}
 
-	for i := range res {
-		if i > 0 {
-			res[i] = res[i-1].ResolveReference(res[i])
-
-		} else if base != nil {
-			res[i] = base.ResolveReference(res[i])
-		}
-	}
-
-	ll := make([]httpclient.Location, len(res))
-	for i := range res {
-		ll[i] = &pasticheLocation{
-			spec:     spec,
-			service:  service,
-			resource: resource,
-			server:   server,
-			ep:       ep,
-			u:        res[i],
-		}
-	}
-	return ll, nil
-}
-
-func (s *serviceResolver) findBaseURL(svc *model.Service, server string) (*model.Server, *url.URL, error) {
-	if s.base != nil {
-		return nil, s.base, nil
-	}
-	if server != "" {
-		svr, ok := svc.Server(server)
-		if !ok {
-			return nil, nil, fmt.Errorf("no server %q defined for service %q", server, svc.Name)
-		}
-		u, err := url.Parse(svr.BaseURL)
-		return svr, u, err
-	}
-
-	if len(svc.Servers) == 0 {
-		return nil, nil, fmt.Errorf("no servers defined for service %q", svc.Name)
-	}
-	u, err := url.Parse(svc.Servers[0].BaseURL)
-	return svc.Servers[0], u, err
+	return []httpclient.Location{
+		&pasticheLocation{
+			spec:   spec,
+			merged: merged,
+			u:      loc,
+		},
+	}, nil
 }
 
 func (l *pasticheLocation) URL(ctx context.Context) (context.Context, *url.URL, error) {
@@ -172,30 +122,20 @@ func (l *pasticheMiddleware) Handle(r *http.Request) error {
 		return nil
 	}
 
-	if loc.ep == nil {
+	ep := loc.merged.Endpoint()
+	resource := loc.merged.Resource()
+	server := loc.merged.Server()
+
+	if ep == nil {
 		return fmt.Errorf("no endpoint defined for %v", loc.spec.Path())
 	}
-	r.Method = loc.ep.Method
-	httpclient.WithHeaders(loc.resource.Headers).Handle(r)
-	httpclient.WithHeaders(loc.ep.Headers).Handle(r)
-	if loc.server != nil {
-		httpclient.WithHeaders(loc.server.Headers).Handle(r)
+	r.Method = ep.Method
+	httpclient.WithHeaders(resource.Headers).Handle(r)
+	httpclient.WithHeaders(ep.Headers).Handle(r)
+	if loc.merged.Server() != nil {
+		httpclient.WithHeaders(server.Headers).Handle(r)
 	}
 
-	return nil
-}
-
-func findEndpointOrDefault(resource *model.Resource, method string, spec model.ServiceSpec) *model.Endpoint {
-	if method != "" {
-		ep, ok := resource.Endpoint(method)
-		if !ok {
-			log.Warnf("warning: method %s is not defined for resource %s", method, spec.Path())
-		}
-		return ep
-	}
-	if len(resource.Endpoints) > 0 {
-		return resource.Endpoints[0]
-	}
 	return nil
 }
 
