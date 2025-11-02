@@ -93,6 +93,6 @@ func (c *Config) loadFiles(root string) error {
 	})
 }
 
-func logWarning(v interface{}) {
+func logWarning(v any) {
 	fmt.Fprint(os.Stderr, v)
 }

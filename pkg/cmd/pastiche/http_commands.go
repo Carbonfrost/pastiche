@@ -55,7 +55,7 @@ func invokeUsingMethod() cli.Action {
 }
 
 func completeServices() cli.CompletionFunc {
-	return func(cc *cli.CompletionContext) []cli.CompletionItem {
+	return func(cc *cli.Context) []cli.CompletionItem {
 		cfg, _ := config.Load()
 		names := make([]string, 0, len(cfg.Services))
 		for _, s := range cfg.Services {
@@ -66,8 +66,8 @@ func completeServices() cli.CompletionFunc {
 }
 
 func completeServiceArgs() cli.CompletionFunc {
-	return func(cc *cli.CompletionContext) []cli.CompletionItem {
-		_, resource, ok := tryContextResolve(cc.Context)
+	return func(cc *cli.Context) []cli.CompletionItem {
+		_, resource, ok := tryContextResolve(cc)
 		if !ok {
 			return nil
 		}
@@ -78,8 +78,8 @@ func completeServiceArgs() cli.CompletionFunc {
 }
 
 func completeServer() cli.CompletionFunc {
-	return func(cc *cli.CompletionContext) []cli.CompletionItem {
-		service, _, ok := tryContextResolve(cc.Context)
+	return func(cc *cli.Context) []cli.CompletionItem {
+		service, _, ok := tryContextResolve(cc)
 		if !ok {
 			return nil
 		}

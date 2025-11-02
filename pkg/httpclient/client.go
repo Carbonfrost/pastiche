@@ -59,11 +59,13 @@ func FromContext(c context.Context) *Client {
 func (c *Client) Execute(ctx context.Context) error {
 	return cli.Do(
 		ctx,
-		c.Client,
-		cli.RemoveArg(0), // Remove URL contributed by http client
-		FilterRegistry,
-		FlagsAndArgs(),
-		ContextValue(c),
+		cli.Pipeline(
+			c.Client,
+			cli.RemoveArg(0), // Remove URL contributed by http client
+			FilterRegistry,
+			FlagsAndArgs(),
+			ContextValue(c),
+		),
 	)
 }
 
