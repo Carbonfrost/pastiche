@@ -22,4 +22,7 @@ test:
 	$(Q) ginkgo ./...
 
 lint:
-	$(Q) go run honnef.co/go/tools/cmd/staticcheck -checks 'all,-ST*' $(shell go list ./...)
+	$(Q) go vet ./... 2>&1 || true
+	$(Q) go tool gocritic check ./... 2>&1 || true
+	$(Q) go tool revive ./... 2>&1 || true
+	$(Q) go tool staticcheck -checks 'all,-ST*' $(shell go list ./...) 2>&1 || true

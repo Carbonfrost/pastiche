@@ -23,7 +23,7 @@ var _ = Describe("FilterDownloader", func() {
 
 		It("writes to the output of inner downloader", func() {
 			testResponse := &joehttpclient.Response{
-				&http.Response{
+				Response: &http.Response{
 					Body: io.NopCloser(bytes.NewBufferString(`{"a": "120", "b": "240"}`)),
 				},
 			}
