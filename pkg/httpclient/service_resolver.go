@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
 	"regexp"
 	"strings"
 
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
+	"github.com/Carbonfrost/pastiche/pkg/internal/log"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 )
 
@@ -186,7 +186,7 @@ func findEndpointOrDefault(resource *model.Resource, method string, spec model.S
 	if method != "" {
 		ep, ok := resource.Endpoint(method)
 		if !ok {
-			logWarning(fmt.Sprintf("warning: method %s is not defined for resource %s\n", method, spec.Path()))
+			log.Warnf("warning: method %s is not defined for resource %s", method, spec.Path())
 		}
 		return ep
 	}
@@ -194,10 +194,6 @@ func findEndpointOrDefault(resource *model.Resource, method string, spec model.S
 		return resource.Endpoints[0]
 	}
 	return nil
-}
-
-func logWarning(v interface{}) {
-	fmt.Fprint(os.Stderr, v)
 }
 
 func looksLikeURL(s string) bool {

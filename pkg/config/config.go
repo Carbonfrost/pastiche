@@ -2,11 +2,11 @@ package config
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 
+	"github.com/Carbonfrost/pastiche/pkg/internal/log"
 	"sigs.k8s.io/yaml"
 )
 
@@ -76,13 +76,13 @@ func (c *Config) loadFiles(root string) error {
 		if unmarshal, ok := unmarshalers[filepath.Ext(file)]; ok {
 			data, err := os.ReadFile(file)
 			if err != nil {
-				logWarning(err)
+				log.Warn(err)
 				return nil
 			}
 
 			service := new(Service)
 			if err := unmarshal(data, service); err != nil {
-				logWarning(err)
+				log.Warn(err)
 				return nil
 			}
 
@@ -91,10 +91,6 @@ func (c *Config) loadFiles(root string) error {
 
 		return nil
 	})
-}
-
-func logWarning(v any) {
-	fmt.Fprint(os.Stderr, v)
 }
 
 func unmarshalYaml(data []byte, v any) error {
