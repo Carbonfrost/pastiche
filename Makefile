@@ -1,4 +1,4 @@
-# Copyright 2022 The Pastiche Authors. All rights reserved.
+# Copyright 2022, 2025 The Pastiche Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE file.
 -include eng/Makefile
@@ -9,7 +9,7 @@
 	-install-pastiche \
 
 BUILD_VERSION=$(shell git rev-parse --short HEAD)
-GO_LDFLAGS=-X 'github.com/Carbonfrost/pastiche/pkg/internal/build.Version=$(BUILD_VERSION)'
+GO_LDFLAGS=
 
 install: -install-pastiche
 
