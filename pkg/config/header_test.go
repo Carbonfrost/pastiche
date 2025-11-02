@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/Carbonfrost/pastiche/pkg/config"
-	"gopkg.in/yaml.v3"
+	"sigs.k8s.io/yaml"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

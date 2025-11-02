@@ -3,8 +3,6 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-
-	"gopkg.in/yaml.v3"
 )
 
 // Header represents the key-value pairs in an HTTP header.
@@ -16,16 +14,6 @@ func (h *Header) UnmarshalJSON(d []byte) error {
 	if err != nil {
 		return err
 	}
-	return makeHeader(h, values)
-}
-
-func (h *Header) UnmarshalYAML(value *yaml.Node) error {
-	values := map[string]any{}
-	err := value.Decode(&values)
-	if err != nil {
-		return err
-	}
-
 	return makeHeader(h, values)
 }
 
@@ -54,5 +42,4 @@ func makeHeader(h *Header, values map[string]any) error {
 
 var (
 	_ json.Unmarshaler = (*Header)(nil)
-	_ yaml.Unmarshaler = (*Header)(nil)
 )

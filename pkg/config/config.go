@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"gopkg.in/yaml.v3"
+	"sigs.k8s.io/yaml"
 )
 
 type Config struct {
@@ -18,8 +18,8 @@ type unmarshaler func([]byte, any) error
 
 var unmarshalers = map[string]unmarshaler{
 	".json": json.Unmarshal,
-	".yaml": yaml.Unmarshal,
-	".yml":  yaml.Unmarshal,
+	".yaml": unmarshalYaml,
+	".yml":  unmarshalYaml,
 }
 
 func Load() (sc *Config, err error) {
@@ -95,4 +95,8 @@ func (c *Config) loadFiles(root string) error {
 
 func logWarning(v any) {
 	fmt.Fprint(os.Stderr, v)
+}
+
+func unmarshalYaml(data []byte, v any) error {
+	return yaml.UnmarshalStrict(data, v)
 }
