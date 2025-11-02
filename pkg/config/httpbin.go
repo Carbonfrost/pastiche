@@ -42,10 +42,11 @@ var (
 			},
 			{
 				Name: "status",
+				URI:  "/status",
 				Resources: []Resource{
 					{
 						Name: "codes",
-						URI:  "/status/{codes}",
+						URI:  "/{codes}",
 						Get:  &Endpoint{},
 					},
 				},

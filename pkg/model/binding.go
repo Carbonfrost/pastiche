@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"path"
 	"strings"
 
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
@@ -85,6 +86,7 @@ type resolvedResource struct {
 	resource *Resource
 	server   *Server
 	service  *Service
+	uri      []string
 }
 
 func New(c *config.Config) *Model {
@@ -248,12 +250,14 @@ func (c *Model) Resolve(s ServiceSpec, server string, method string) (ResolvedRe
 	}
 
 	current := svc.Resource
+	prefix := []string{current.URITemplate.String()}
 	for i, p := range s[1:] {
 		current, ok = current.Resource(p)
 		if !ok {
 			path := ServiceSpec(s[0 : i+2]).Path()
 			return nil, fmt.Errorf("resource not found: %q", path)
 		}
+		prefix = append(prefix, current.URITemplate.String())
 	}
 
 	ep := findEndpointOrDefault(current, method, s)
@@ -263,6 +267,7 @@ func (c *Model) Resolve(s ServiceSpec, server string, method string) (ResolvedRe
 		resource: current,
 		endpoint: ep,
 		server:   svr,
+		uri:      prefix,
 	}, nil
 }
 
@@ -301,7 +306,12 @@ func (r *resolvedResource) Server() *Server {
 }
 
 func (r *resolvedResource) URL(baseURL *url.URL, vars uritemplates.Vars) (*url.URL, error) {
-	tt := r.Resource().URITemplate
+	template := path.Join(r.uri...)
+	tt, err := uritemplates.Parse(template)
+	if err != nil {
+		return nil, err
+	}
+
 	expanded, err := tt.Expand(vars)
 	if err != nil {
 		return nil, err

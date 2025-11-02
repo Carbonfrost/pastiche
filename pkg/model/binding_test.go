@@ -48,6 +48,40 @@ var _ = Describe("Resolve", func() {
 	)
 })
 
+var _ = Describe("ResolvedReference", func() {
+
+	Describe("URL", func() {
+
+		DescribeTable("examples", func(spec []string, vars map[string]any, expected string) {
+			subject := model.New(&config.Config{
+				Services: []config.Service{
+					config.ExampleHTTPBinorg,
+				},
+			})
+
+			merged, err := subject.Resolve(spec, "", "")
+			Expect(err).NotTo(HaveOccurred())
+
+			url, err := merged.URL(nil, vars)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(url.String()).To(Equal(expected))
+		},
+			Entry("simple",
+				[]string{"httpbin", "get"},
+				nil,
+				"https://httpbin.org/get",
+			),
+			Entry("nested resource",
+				[]string{"httpbin", "status", "codes"},
+				map[string]any{"codes": 200},
+				"https://httpbin.org/status/200",
+			),
+		)
+
+	})
+})
+
 var _ = Describe("New", func() {
 
 	DescribeTable("resource binding", func(r config.Resource, match types.GomegaMatcher) {
