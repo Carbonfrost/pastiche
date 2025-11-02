@@ -1,0 +1,38 @@
+// Copyright 2025 The Pastiche Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+package model
+
+import (
+	"io"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+)
+
+var _ = Describe("newTemplateContent", func() {
+
+	DescribeTable("examples", func(tpl, expected string) {
+		c := newTemplateContent(tpl, map[string]any{"found": "found", "v": "var"})
+
+		c.Set("v", "form")
+
+		rendered, _ := io.ReadAll(c.Read())
+		Expect(string(rendered)).To(Equal(expected))
+	},
+		Entry("var fallback literal", `{{ var "notfound" "fallback" }}`, "fallback"),
+		Entry("var fallback var", `{{ var "notfound" "found" "fallback" }}`, "found"),
+		Entry("form wins over var", `{{ var "v" }}`, `form`),
+	)
+
+	DescribeTable("errors", func(tpl, expected string) {
+		c := newTemplateContent(tpl, map[string]any{"found": "found", "v": "var"})
+
+		_, err := io.ReadAll(c.Read())
+		Expect(err).To(MatchError(ContainSubstring(expected)))
+	},
+		Entry("bad template", "{{ missing_func }}", `function "missing_func" not defined`),
+		Entry("no variable names", "{{ var }}", "var/n requires at least one var name"),
+		Entry("missing variable value", `{{ var "notfound" }}`, `var not found: "notfound"`),
+	)
+})

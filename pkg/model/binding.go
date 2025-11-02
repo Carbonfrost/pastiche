@@ -348,11 +348,6 @@ func (r *resolvedResource) bodyContent(vars uritemplates.Vars) httpclient.Conten
 	return nil
 }
 
-func newTemplateContent(data string, vars uritemplates.Vars) httpclient.Content {
-	log.Warn("template body content not yet supported")
-	return httpclient.NewRawContent([]byte(data))
-}
-
 func newRawContent(data string) httpclient.Content {
 	return httpclient.NewRawContent([]byte(data))
 }

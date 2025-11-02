@@ -132,7 +132,7 @@ func (l *pasticheMiddleware) Handle(r *http.Request) error {
 	r.Method = ep.Method
 	httpclient.WithHeaders(resource.Headers).Handle(r)
 	httpclient.WithHeaders(ep.Headers).Handle(r)
-	body := loc.merged.Body(nil)
+	body := loc.merged.Body(nil) // TODO Must obtain vars via the location
 	if body != nil {
 		r.Body = body
 	}
