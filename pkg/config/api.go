@@ -35,6 +35,8 @@ type Resource struct {
 	Trace       *Endpoint  `json:"trace,omitempty"`
 	Patch       *Endpoint  `json:"patch,omitempty"`
 	Query       *Endpoint  `json:"query,omitempty"`
+	Body        string     `json:"body,omitempty"`
+	RawBody     string     `json:"rawBody,omitempty"`
 }
 
 type Endpoint struct {
@@ -42,6 +44,8 @@ type Endpoint struct {
 	Description string `json:"description,omitempty"`
 	Headers     Header `json:"headers,omitempty"`
 	Links       []Link `json:"links,omitempty"`
+	Body        string `json:"body,omitempty"`
+	RawBody     string `json:"rawBody,omitempty"`
 }
 
 type Link struct {

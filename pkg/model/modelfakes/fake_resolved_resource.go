@@ -2,6 +2,7 @@
 package modelfakes
 
 import (
+	"io"
 	"net/url"
 	"sync"
 
@@ -10,6 +11,17 @@ import (
 )
 
 type FakeResolvedResource struct {
+	BodyStub        func(uritemplates.Vars) io.ReadCloser
+	bodyMutex       sync.RWMutex
+	bodyArgsForCall []struct {
+		arg1 uritemplates.Vars
+	}
+	bodyReturns struct {
+		result1 io.ReadCloser
+	}
+	bodyReturnsOnCall map[int]struct {
+		result1 io.ReadCloser
+	}
 	EndpointStub        func() *model.Endpoint
 	endpointMutex       sync.RWMutex
 	endpointArgsForCall []struct {
@@ -66,6 +78,67 @@ type FakeResolvedResource struct {
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
+}
+
+func (fake *FakeResolvedResource) Body(arg1 uritemplates.Vars) io.ReadCloser {
+	fake.bodyMutex.Lock()
+	ret, specificReturn := fake.bodyReturnsOnCall[len(fake.bodyArgsForCall)]
+	fake.bodyArgsForCall = append(fake.bodyArgsForCall, struct {
+		arg1 uritemplates.Vars
+	}{arg1})
+	stub := fake.BodyStub
+	fakeReturns := fake.bodyReturns
+	fake.recordInvocation("Body", []interface{}{arg1})
+	fake.bodyMutex.Unlock()
+	if stub != nil {
+		return stub(arg1)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeResolvedResource) BodyCallCount() int {
+	fake.bodyMutex.RLock()
+	defer fake.bodyMutex.RUnlock()
+	return len(fake.bodyArgsForCall)
+}
+
+func (fake *FakeResolvedResource) BodyCalls(stub func(uritemplates.Vars) io.ReadCloser) {
+	fake.bodyMutex.Lock()
+	defer fake.bodyMutex.Unlock()
+	fake.BodyStub = stub
+}
+
+func (fake *FakeResolvedResource) BodyArgsForCall(i int) uritemplates.Vars {
+	fake.bodyMutex.RLock()
+	defer fake.bodyMutex.RUnlock()
+	argsForCall := fake.bodyArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeResolvedResource) BodyReturns(result1 io.ReadCloser) {
+	fake.bodyMutex.Lock()
+	defer fake.bodyMutex.Unlock()
+	fake.BodyStub = nil
+	fake.bodyReturns = struct {
+		result1 io.ReadCloser
+	}{result1}
+}
+
+func (fake *FakeResolvedResource) BodyReturnsOnCall(i int, result1 io.ReadCloser) {
+	fake.bodyMutex.Lock()
+	defer fake.bodyMutex.Unlock()
+	fake.BodyStub = nil
+	if fake.bodyReturnsOnCall == nil {
+		fake.bodyReturnsOnCall = make(map[int]struct {
+			result1 io.ReadCloser
+		})
+	}
+	fake.bodyReturnsOnCall[i] = struct {
+		result1 io.ReadCloser
+	}{result1}
 }
 
 func (fake *FakeResolvedResource) Endpoint() *model.Endpoint {
@@ -348,6 +421,8 @@ func (fake *FakeResolvedResource) URLReturnsOnCall(i int, result1 *url.URL, resu
 func (fake *FakeResolvedResource) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
+	fake.bodyMutex.RLock()
+	defer fake.bodyMutex.RUnlock()
 	fake.endpointMutex.RLock()
 	defer fake.endpointMutex.RUnlock()
 	fake.resourceMutex.RLock()

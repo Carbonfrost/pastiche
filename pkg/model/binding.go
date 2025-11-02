@@ -5,9 +5,11 @@ package model
 
 import (
 	"fmt"
+	"io"
 	"net/url"
 	"strings"
 
+	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
 	"github.com/Carbonfrost/pastiche/pkg/config"
 	"github.com/Carbonfrost/pastiche/pkg/internal/log"
@@ -47,6 +49,8 @@ type Resource struct {
 	Headers     map[string][]string
 	Links       []Link
 	Command     []string
+	Body        string
+	RawBody     string
 }
 
 type Endpoint struct {
@@ -55,6 +59,8 @@ type Endpoint struct {
 	Method      string
 	Headers     map[string][]string
 	Links       []Link
+	Body        string
+	RawBody     string
 }
 
 type Link struct {
@@ -71,6 +77,7 @@ type ResolvedResource interface {
 	Server() *Server
 
 	URL(baseURL *url.URL, vars uritemplates.Vars) (*url.URL, error)
+	Body(vars uritemplates.Vars) io.ReadCloser
 }
 
 type resolvedResource struct {
@@ -133,6 +140,8 @@ func resource(r config.Resource) *Resource {
 		URITemplate: uri,
 		Headers:     r.Headers,
 		Links:       links(r.Links),
+		Body:        r.Body,
+		RawBody:     r.RawBody,
 	}
 	if r.Get != nil {
 		res.Endpoints = append(res.Endpoints, endpoint("GET", r.Get))
@@ -185,6 +194,8 @@ func endpoint(method string, r *config.Endpoint) *Endpoint {
 		Method:      method,
 		Headers:     r.Headers,
 		Links:       links(r.Links),
+		Body:        r.Body,
+		RawBody:     r.RawBody,
 	}
 }
 
@@ -310,6 +321,40 @@ func (r *resolvedResource) URL(baseURL *url.URL, vars uritemplates.Vars) (*url.U
 
 	u = baseURL.ResolveReference(u)
 	return u, err
+}
+
+func (r *resolvedResource) Body(vars uritemplates.Vars) io.ReadCloser {
+	content := r.bodyContent(vars)
+	if content == nil {
+		return nil
+	}
+	return io.NopCloser(content.Read())
+}
+
+func (r *resolvedResource) bodyContent(vars uritemplates.Vars) httpclient.Content {
+	if r.Endpoint().Body != "" {
+		return newTemplateContent(r.Endpoint().Body, vars)
+	}
+	if r.Endpoint().RawBody != "" {
+		return newRawContent(r.Endpoint().RawBody)
+	}
+	if r.Resource().Body != "" {
+		return newTemplateContent(r.Resource().Body, vars)
+	}
+	if r.Resource().RawBody != "" {
+		return newRawContent(r.Resource().RawBody)
+	}
+
+	return nil
+}
+
+func newTemplateContent(data string, vars uritemplates.Vars) httpclient.Content {
+	log.Warn("template body content not yet supported")
+	return httpclient.NewRawContent([]byte(data))
+}
+
+func newRawContent(data string) httpclient.Content {
+	return httpclient.NewRawContent([]byte(data))
 }
 
 func findEndpointOrDefault(resource *Resource, method string, spec ServiceSpec) *Endpoint {
