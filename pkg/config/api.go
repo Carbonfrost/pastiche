@@ -31,6 +31,7 @@ type Resource struct {
 	Head        *Endpoint  `json:"head,omitempty"`
 	Trace       *Endpoint  `json:"trace,omitempty"`
 	Patch       *Endpoint  `json:"patch,omitempty"`
+	Query       *Endpoint  `json:"query,omitempty"`
 }
 
 type Endpoint struct {

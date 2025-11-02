@@ -133,6 +133,9 @@ func resource(r config.Resource) *Resource {
 	if r.Patch != nil {
 		res.Endpoints = append(res.Endpoints, endpoint("PATCH", r.Patch))
 	}
+	if r.Query != nil {
+		res.Endpoints = append(res.Endpoints, endpoint("QUERY", r.Query))
+	}
 
 	// Implicitly create GET endpoint if none other was created
 	if len(res.Endpoints) == 0 {
