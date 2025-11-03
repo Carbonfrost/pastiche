@@ -83,19 +83,19 @@ var _ = Describe("ServiceResolver", func() {
 
 })
 
-var _ = Describe("pasticheMiddleware", func() {
+var _ = Describe("pasticheLocation", func() {
 
 	It("returns an error on no endpoint", func() {
-		ctx := phttpclient.NewContextWithLocation([]string{"service", "spec"},
+		ctx := phttpclient.NewLocation(
 			nil,
 			nil,
 			nil,
 			nil, // no endpoint
 			nil)
 
-		req, _ := http.NewRequestWithContext(ctx, "GET", "https://example.com", nil)
-		mw := phttpclient.NewServiceResolverMiddleware()
-		err := mw.Handle(req)
+		req, _ := http.NewRequest("GET", "https://example.com", nil)
+		mw := ctx.Middleware
+		err := mw.Handle(req, nil)
 
 		Expect(err).To(MatchError("no endpoint defined for service/spec"))
 	})
@@ -103,7 +103,7 @@ var _ = Describe("pasticheMiddleware", func() {
 	Describe("headers", func() {
 
 		DescribeTable("examples", func(expected types.GomegaMatcher) {
-			ctx := phttpclient.NewContextWithLocation(nil,
+			ctx := phttpclient.NewLocation(
 				&model.Resource{Headers: http.Header{"X-From-Resource": []string{"resource"}}},
 				&model.Service{},
 				&model.Server{
@@ -113,9 +113,9 @@ var _ = Describe("pasticheMiddleware", func() {
 				&model.Endpoint{Headers: http.Header{"X-From-Endpoint": []string{"endpoint"}}},
 				nil)
 
-			req, _ := http.NewRequestWithContext(ctx, "GET", "https://example.com", nil)
-			mw := phttpclient.NewServiceResolverMiddleware()
-			mw.Handle(req)
+			req, _ := http.NewRequest("GET", "https://example.com", nil)
+			mw := ctx.Middleware
+			_ = mw.Handle(req, nil)
 
 			Expect(req.Header).To(expected)
 		},

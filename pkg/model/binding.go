@@ -233,13 +233,13 @@ func (c *Model) Service(name string) (*Service, bool) {
 	return svc, ok
 }
 
-func (c *Model) Resolve(s ServiceSpec, server string, method string) (ResolvedResource, error) {
-	if len(s) == 0 {
+func (c *Model) Resolve(spec ServiceSpec, server string, method string) (ResolvedResource, error) {
+	if len(spec) == 0 {
 		return nil, fmt.Errorf("no service specified")
 	}
-	svc, ok := c.Service(s[0])
+	svc, ok := c.Service(spec[0])
 	if !ok {
-		return nil, fmt.Errorf("service not found: %q", s[0])
+		return nil, fmt.Errorf("service not found: %q", spec[0])
 	}
 
 	if len(svc.Servers) == 0 {
@@ -256,16 +256,20 @@ func (c *Model) Resolve(s ServiceSpec, server string, method string) (ResolvedRe
 
 	current := svc.Resource
 	prefix := []string{current.URITemplate.String()}
-	for i, p := range s[1:] {
+	for i, p := range spec[1:] {
 		current, ok = current.Resource(p)
 		if !ok {
-			path := ServiceSpec(s[0 : i+2]).Path()
+			path := ServiceSpec(spec[0 : i+2]).Path()
 			return nil, fmt.Errorf("resource not found: %q", path)
 		}
 		prefix = append(prefix, current.URITemplate.String())
 	}
 
-	ep := findEndpointOrDefault(current, method, s)
+	ep := findEndpointOrDefault(current, method, spec)
+	if ep == nil {
+		// TODO It may be the case that this implies GET
+		return nil, fmt.Errorf("no endpoint defined for %v", spec.Path())
+	}
 
 	return &resolvedResource{
 		service:  svc,

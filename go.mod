@@ -7,7 +7,7 @@ go 1.24.0
 
 require (
 	github.com/Carbonfrost/joe-cli v0.9.0
-	github.com/Carbonfrost/joe-cli-http v0.5.2
+	github.com/Carbonfrost/joe-cli-http v0.5.3
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.37.0

@@ -5,7 +5,9 @@ package httpclient
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -25,17 +27,12 @@ type serviceResolver struct {
 }
 
 type pasticheLocation struct {
-	spec   model.ServiceSpec
-	merged model.ResolvedResource
-	u      *url.URL
-}
+	httpclient.Middleware
 
-type pasticheMiddleware struct {
+	u *url.URL
 }
 
 type contextKey string
-
-const locationKey contextKey = "pastiche.location"
 
 var looksLikeURLPattern = regexp.MustCompile(`^https?://`)
 
@@ -50,10 +47,6 @@ func NewServiceResolver(
 		config: c,
 		vars:   uritemplates.Vars{},
 	}
-}
-
-func NewServiceResolverMiddleware() httpclient.Middleware {
-	return &pasticheMiddleware{}
 }
 
 func (s *serviceResolver) Add(location string) error {
@@ -97,51 +90,75 @@ func (s *serviceResolver) Resolve(c context.Context) ([]httpclient.Location, err
 		return nil, err
 	}
 
-	loc, err := merged.URL(s.base, s.vars)
+	location, err := newLocation(s.base, s.vars, merged)
 	if err != nil {
 		return nil, err
 	}
 
 	return []httpclient.Location{
-		&pasticheLocation{
-			spec:   spec,
-			merged: merged,
-			u:      loc,
-		},
+		location,
+	}, nil
+}
+
+func newLocation(base *url.URL, vars map[string]any, merged model.ResolvedResource) (*pasticheLocation, error) {
+	loc, err := merged.URL(base, vars)
+	if err != nil {
+		return nil, err
+	}
+	var (
+		serverHeaders, resourceHeaders, endpointHeaders httpclient.Middleware
+
+		endpointMethod  httpclient.Middleware
+		requireEndpoint httpclient.MiddlewareFunc = func(req *http.Request) error {
+			if merged.Endpoint() == nil {
+				return errors.New("no endpoint defined for service/spec")
+			}
+			return nil
+		}
+	)
+
+	if merged.Server() != nil {
+		serverHeaders = httpclient.WithHeaders(merged.Server().Headers)
+	}
+	if merged.Resource() != nil {
+		resourceHeaders = httpclient.WithHeaders(merged.Resource().Headers)
+	}
+	if merged.Endpoint() != nil {
+		endpointHeaders = httpclient.WithHeaders(merged.Endpoint().Headers)
+		endpointMethod = withMethod(merged.Endpoint().Method)
+	}
+
+	return &pasticheLocation{
+		Middleware: httpclient.ComposeMiddleware(
+			requireEndpoint,
+			serverHeaders,
+			resourceHeaders,
+			endpointHeaders,
+			endpointMethod,
+			withBody(merged.Body(vars)),
+		),
+		u: loc,
 	}, nil
 }
 
 func (l *pasticheLocation) URL(ctx context.Context) (context.Context, *url.URL, error) {
-	return context.WithValue(ctx, locationKey, l), l.u, nil
+	return ctx, l.u, nil
 }
 
-func (l *pasticheMiddleware) Handle(r *http.Request) error {
-	loc, ok := r.Context().Value(locationKey).(*pasticheLocation)
-	if !ok {
-		// Skip this request because there was no Pastiche location requested
+func withMethod(method string) httpclient.MiddlewareFunc {
+	return func(r *http.Request) error {
+		r.Method = method
 		return nil
 	}
+}
 
-	ep := loc.merged.Endpoint()
-	resource := loc.merged.Resource()
-	server := loc.merged.Server()
-
-	if ep == nil {
-		return fmt.Errorf("no endpoint defined for %v", loc.spec.Path())
+func withBody(body io.ReadCloser) httpclient.MiddlewareFunc {
+	return func(r *http.Request) error {
+		if body != nil {
+			r.Body = body
+		}
+		return nil
 	}
-	r.Method = ep.Method
-	httpclient.WithHeaders(resource.Headers).Handle(r)
-	httpclient.WithHeaders(ep.Headers).Handle(r)
-	body := loc.merged.Body(nil) // TODO Must obtain vars via the location
-	if body != nil {
-		r.Body = body
-	}
-
-	if loc.merged.Server() != nil {
-		httpclient.WithHeaders(server.Headers).Handle(r)
-	}
-
-	return nil
 }
 
 func looksLikeURL(s string) bool {
@@ -153,4 +170,7 @@ func looksLikeURL(s string) bool {
 		s == "localhost"
 }
 
-var _ httpclient.LocationResolver = (*serviceResolver)(nil)
+var (
+	_ httpclient.LocationResolver = (*serviceResolver)(nil)
+	_ httpclient.Middleware       = (*pasticheLocation)(nil)
+)

@@ -4,38 +4,36 @@
 package httpclient // intentional
 
 import (
-	"context"
 	"net/url"
 
+	"github.com/Carbonfrost/joe-cli-http/uritemplates"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 	"github.com/Carbonfrost/pastiche/pkg/model/modelfakes"
 )
 
-func NewContextWithLocation(spec model.ServiceSpec,
+func NewLocation(
 	resource *model.Resource,
 	service *model.Service,
 	server *model.Server,
 	ep *model.Endpoint,
-	u *url.URL) context.Context {
+	u *url.URL) *pasticheLocation {
 
-	location := &pasticheLocation{
-		spec: spec,
-		merged: &modelfakes.FakeResolvedResource{
-			ResourceStub: func() *model.Resource {
-				return resource
-			},
-			ServiceStub: func() *model.Service {
-				return service
-			},
-			ServerStub: func() *model.Server {
-				return server
-			},
-			EndpointStub: func() *model.Endpoint {
-				return ep
-			},
+	loc, _ := newLocation(nil, nil, &modelfakes.FakeResolvedResource{
+		ResourceStub: func() *model.Resource {
+			return resource
 		},
-		u: u,
-	}
-
-	return context.WithValue(context.Background(), locationKey, location)
+		ServiceStub: func() *model.Service {
+			return service
+		},
+		ServerStub: func() *model.Server {
+			return server
+		},
+		EndpointStub: func() *model.Endpoint {
+			return ep
+		},
+		URLStub: func(*url.URL, uritemplates.Vars) (*url.URL, error) {
+			return u, nil
+		},
+	})
+	return loc
 }

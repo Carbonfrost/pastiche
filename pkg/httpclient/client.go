@@ -30,7 +30,6 @@ const (
 func New() *Client {
 	cfg, _ := config.Load()
 	client := httpclient.New(
-		httpclient.WithMiddleware(NewServiceResolverMiddleware()),
 		httpclient.WithDefaultUserAgent(defaultUserAgent()),
 		httpclient.WithLocationResolver(
 			NewServiceResolver(
