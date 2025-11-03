@@ -21,6 +21,7 @@ import (
 type serviceResolver struct {
 	root   func(context.Context) *model.ServiceSpec
 	server func(context.Context) string
+	method func(context.Context) string
 	vars   uritemplates.Vars
 	base   *url.URL
 	config *model.Model
@@ -40,10 +41,12 @@ func NewServiceResolver(
 	c *model.Model,
 	root func(context.Context) *model.ServiceSpec,
 	server func(context.Context) string,
+	method func(context.Context) string,
 ) httpclient.LocationResolver {
 	return &serviceResolver{
 		root:   root,
 		server: server,
+		method: method,
 		config: c,
 		vars:   uritemplates.Vars{},
 	}
@@ -79,13 +82,7 @@ func (s *serviceResolver) Resolve(c context.Context) ([]httpclient.Location, err
 		return r.Resolve(c)
 	}
 
-	// Detection of the method from the context is a hack that breaks the
-	// encapsulation of the resolver, but is currently
-	// necessary to apply the semantics of the chosen or default method until
-	// an alternative is available from the joe-cli-http API
-	method, _ := c.Value("method").(string)
-
-	merged, err := s.config.Resolve(spec, s.server(c), method)
+	merged, err := s.config.Resolve(spec, s.server(c), s.method(c))
 	if err != nil {
 		return nil, err
 	}

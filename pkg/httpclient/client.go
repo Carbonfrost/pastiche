@@ -36,6 +36,7 @@ func New() *Client {
 				model.New(cfg),
 				lateBinding[*model.ServiceSpec]("service"),
 				lateBinding[string]("server"),
+				lateBinding[string]("method"),
 			),
 		),
 	)

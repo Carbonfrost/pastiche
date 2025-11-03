@@ -1,4 +1,4 @@
-// Copyright 2023 The Pastiche Authors. All rights reserved.
+// Copyright 2023, 2025 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 package httpclient_test
@@ -39,7 +39,7 @@ var _ = Describe("ServiceResolver", func() {
 			}
 		}
 
-		serverTo = func(name string) func(context.Context) string {
+		stringTo = func(name string) func(context.Context) string {
 			return func(context.Context) string {
 				return name
 			}
@@ -55,7 +55,7 @@ var _ = Describe("ServiceResolver", func() {
 			},
 			Entry(
 				"default server requested but has no servers",
-				phttpclient.NewServiceResolver(exampleModel, specTo("hasNoServers"), serverTo("")),
+				phttpclient.NewServiceResolver(exampleModel, specTo("hasNoServers"), stringTo(""), stringTo("")),
 				MatchError(`no servers defined for service "hasNoServers"`)),
 		)
 	})
@@ -63,7 +63,7 @@ var _ = Describe("ServiceResolver", func() {
 	Describe("Resolve", func() {
 
 		DescribeTable("examples", func(s string, expected string) {
-			r := phttpclient.NewServiceResolver(exampleModel, specTo(s), serverTo(""))
+			r := phttpclient.NewServiceResolver(exampleModel, specTo(s), stringTo(""), stringTo(""))
 			loc, err := r.Resolve(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 
