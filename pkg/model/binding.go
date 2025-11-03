@@ -102,11 +102,7 @@ func New(c *config.Config) *Model {
 func service(v config.Service) *Service {
 	servers := make([]*Server, len(v.Servers))
 	for i, s := range v.Servers {
-		servers[i] = &Server{
-			Name:    s.Name,
-			BaseURL: s.BaseURL,
-			Links:   links(s.Links),
-		}
+		servers[i] = server(s)
 	}
 	return &Service{
 		Name:        v.Name,
@@ -132,6 +128,15 @@ func mustParseURITemplate(t string) *uritemplates.URITemplate {
 		panic(err)
 	}
 	return u
+}
+
+func server(s config.Server) *Server {
+	return &Server{
+		Name:    s.Name,
+		BaseURL: s.BaseURL,
+		Headers: s.Headers,
+		Links:   links(s.Links),
+	}
 }
 
 func resource(r config.Resource) *Resource {
