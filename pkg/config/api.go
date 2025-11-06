@@ -44,8 +44,8 @@ type Endpoint struct {
 	Description string `json:"description,omitempty"`
 	Headers     Header `json:"headers,omitempty"`
 	Links       []Link `json:"links,omitempty"`
-	Body        string `json:"body,omitempty"`
-	RawBody     string `json:"rawBody,omitempty"`
+	Body        any    `json:"body,omitempty"`
+	RawBody     any    `json:"rawBody,omitempty"`
 }
 
 type Link struct {

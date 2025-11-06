@@ -5,6 +5,7 @@ package model
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/url"
@@ -45,7 +46,7 @@ func resolveVar(exp Expander) func(...string) (any, error) {
 	}
 }
 
-func newTemplateContent(text string, vars map[string]any) joehttpclient.Content {
+func newTemplateContent(body any, vars map[string]any) joehttpclient.Content {
 	form := map[string]any{}
 	t, err := template.New("<body content>").
 		Funcs(template.FuncMap{
@@ -55,13 +56,21 @@ func newTemplateContent(text string, vars map[string]any) joehttpclient.Content 
 				expr.ExpandMap(vars),
 			)),
 		}).
-		Parse(text)
+		Parse(string(bodyToBytes(body)))
 
 	return &templateContent{
 		tpl:  t,
 		form: form,
 		err:  err,
 	}
+}
+
+func bodyToBytes(data any) []byte {
+	if s, ok := data.(string); ok {
+		return []byte(s)
+	}
+	result, _ := json.Marshal(data)
+	return result
 }
 
 func (t *templateContent) Read() io.Reader {

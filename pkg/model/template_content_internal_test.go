@@ -36,3 +36,17 @@ var _ = Describe("newTemplateContent", func() {
 		Entry("missing variable value", `{{ var "notfound" }}`, `var not found: "notfound"`),
 	)
 })
+
+var _ = Describe("bodyToBytes", func() {
+
+	DescribeTable("examples", func(body any, expected string) {
+		c := bodyToBytes(body)
+		Expect(string(c)).To(Equal(expected))
+	},
+		Entry("string", "str", "str"),
+		Entry("string literal", `"str"`, `"str"`),
+		Entry("map", map[string]any{"a": 3, "b": 1}, `{"a":3,"b":1}`),
+		Entry("list", []any{1, "b"}, `[1,"b"]`),
+	)
+
+})

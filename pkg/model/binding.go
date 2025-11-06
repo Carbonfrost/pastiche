@@ -50,18 +50,18 @@ type Resource struct {
 	Headers     map[string][]string
 	Links       []Link
 	Command     []string
-	Body        string
-	RawBody     string
+	Body        any
+	RawBody     any
 }
 
 type Endpoint struct {
-	Name        string
+	Name        any
 	Description string
 	Method      string
 	Headers     map[string][]string
 	Links       []Link
-	Body        string
-	RawBody     string
+	Body        any
+	RawBody     any
 }
 
 type Link struct {
@@ -367,8 +367,8 @@ func (r *resolvedResource) bodyContent(vars uritemplates.Vars) httpclient.Conten
 	return nil
 }
 
-func newRawContent(data string) httpclient.Content {
-	return httpclient.NewRawContent([]byte(data))
+func newRawContent(data any) httpclient.Content {
+	return httpclient.NewRawContent(bodyToBytes(data))
 }
 
 func findEndpointOrDefault(resource *Resource, method string, spec ServiceSpec) *Endpoint {
