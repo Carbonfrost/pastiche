@@ -37,3 +37,8 @@ func NewLocation(
 	})
 	return loc
 }
+
+func NewLocationVars(vars uritemplates.Vars, r model.ResolvedResource) *pasticheLocation {
+	loc, _ := newLocation(nil, vars, r)
+	return loc
+}

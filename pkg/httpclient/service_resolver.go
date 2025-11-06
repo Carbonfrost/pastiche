@@ -10,10 +10,12 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strings"
 
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
+	"github.com/Carbonfrost/joe-cli-http/httpclient/expr"
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 )
@@ -114,14 +116,24 @@ func newLocation(base *url.URL, vars map[string]any, merged model.ResolvedResour
 		}
 	)
 
+	expander := expr.ComposeExpanders(
+		expr.Prefix("env", func(k string) any {
+			return os.Getenv(k)
+		}),
+		expr.ExpandMap(vars),
+	)
+	varLookup := func(k string) string {
+		return fmt.Sprint(expander(k))
+	}
+
 	if merged.Server() != nil {
-		serverHeaders = httpclient.WithHeaders(merged.Server().Headers)
+		serverHeaders = withHeaders(merged.Server().Headers, varLookup)
 	}
 	if merged.Resource() != nil {
-		resourceHeaders = httpclient.WithHeaders(merged.Resource().Headers)
+		resourceHeaders = withHeaders(merged.Resource().Headers, varLookup)
 	}
 	if merged.Endpoint() != nil {
-		endpointHeaders = httpclient.WithHeaders(merged.Endpoint().Headers)
+		endpointHeaders = withHeaders(merged.Endpoint().Headers, varLookup)
 		endpointMethod = withMethod(merged.Endpoint().Method)
 	}
 
@@ -140,6 +152,19 @@ func newLocation(base *url.URL, vars map[string]any, merged model.ResolvedResour
 
 func (l *pasticheLocation) URL(ctx context.Context) (context.Context, *url.URL, error) {
 	return ctx, l.u, nil
+}
+
+func withHeaders(header http.Header, expander func(string) string) httpclient.Middleware {
+	copy := http.Header{}
+	for k, v := range header {
+		result := make([]string, len(v))
+		for i, str := range v {
+			result[i] = os.Expand(str, expander)
+		}
+		copy[k] = result
+	}
+
+	return httpclient.WithHeaders(copy)
 }
 
 func withMethod(method string) httpclient.MiddlewareFunc {

@@ -11,6 +11,7 @@ import (
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
 	phttpclient "github.com/Carbonfrost/pastiche/pkg/httpclient"
 	"github.com/Carbonfrost/pastiche/pkg/model"
+	"github.com/Carbonfrost/pastiche/pkg/model/modelfakes"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -101,6 +102,24 @@ var _ = Describe("pasticheLocation", func() {
 	})
 
 	Describe("headers", func() {
+
+		It("expands variables", func() {
+			ctx := phttpclient.NewLocationVars(
+				uritemplates.Vars{
+					"var": "value from var",
+				},
+				&modelfakes.FakeResolvedResource{
+					EndpointStub: func() *model.Endpoint {
+						return &model.Endpoint{Headers: http.Header{"Test": []string{"endpoint ${var}"}}}
+					},
+				})
+
+			req, _ := http.NewRequest("GET", "https://example.com", nil)
+			mw := ctx.Middleware
+			_ = mw.Handle(req, nil)
+
+			Expect(req.Header).To(HaveKeyWithValue("Test", []string{"endpoint value from var"}))
+		})
 
 		DescribeTable("examples", func(expected types.GomegaMatcher) {
 			ctx := phttpclient.NewLocation(
