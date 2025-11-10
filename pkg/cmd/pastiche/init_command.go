@@ -1,4 +1,4 @@
-// Copyright 2023 The Pastiche Authors. All rights reserved.
+// Copyright 2023, 2025 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 package pastiche
@@ -23,8 +23,6 @@ func InitCommand() cli.Action {
 				HelpText: "Short description of the service",
 			},
 		}...)),
-		Action: func(c *cli.Context) error {
-			return c.Do(initTemplate(c))
-		},
+		Action: NewInitServiceCommand(),
 	}
 }
