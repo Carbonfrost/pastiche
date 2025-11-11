@@ -18,14 +18,28 @@ import (
 )
 
 type templateContent struct {
-	tpl  *template.Template
-	form map[string]any
-	err  error
+	*contentSupport
+	tpl string
 }
 
-var _ joehttpclient.Content = (*templateContent)(nil)
-
 type Expander = expr.Expander
+
+type objectContent struct {
+	*contentSupport
+	value any
+}
+
+type contentSupport struct {
+	form map[string]any
+	vars map[string]any
+}
+
+func newContentSupport(vars map[string]any) *contentSupport {
+	return &contentSupport{
+		form: map[string]any{},
+		vars: vars,
+	}
+}
 
 func resolveVar(exp Expander) func(...string) (any, error) {
 	return func(vars ...string) (any, error) {
@@ -47,21 +61,15 @@ func resolveVar(exp Expander) func(...string) (any, error) {
 }
 
 func newTemplateContent(body any, vars map[string]any) joehttpclient.Content {
-	form := map[string]any{}
-	t, err := template.New("<body content>").
-		Funcs(template.FuncMap{
-			"env": os.Getenv,
-			"var": resolveVar(expr.ComposeExpanders(
-				expr.ExpandMap(form),
-				expr.ExpandMap(vars),
-			)),
-		}).
-		Parse(string(bodyToBytes(body)))
-
-	return &templateContent{
-		tpl:  t,
-		form: form,
-		err:  err,
+	if str, ok := body.(string); ok {
+		return &templateContent{
+			contentSupport: newContentSupport(vars),
+			tpl:            str,
+		}
+	}
+	return &objectContent{
+		contentSupport: newContentSupport(vars),
+		value:          body,
 	}
 }
 
@@ -74,12 +82,20 @@ func bodyToBytes(data any) []byte {
 }
 
 func (t *templateContent) Read() io.Reader {
-	if t.err != nil {
-		return firstReadError{t.err}
+	tpl, err := template.New("<body content>").
+		Funcs(template.FuncMap{
+			"env": os.Getenv,
+			"var": resolveVar(t.Expander()),
+		}).
+		Parse(t.tpl)
+
+	if err != nil {
+		log.Warn("error parsing template", err)
+		return firstReadError{err}
 	}
 
 	var result bytes.Buffer
-	err := t.tpl.Execute(&result, nil)
+	err = tpl.Execute(&result, nil)
 	if err != nil {
 		log.Warn("error executing template", err)
 		return firstReadError{err}
@@ -88,27 +104,83 @@ func (t *templateContent) Read() io.Reader {
 	return bytes.NewReader(result.Bytes())
 }
 
-func (t *templateContent) Query() (url.Values, error) {
-	panic("not impl")
-}
-
-func (t *templateContent) ContentType() string {
-	return ""
-}
-
-func (t *templateContent) Set(name, value string) error {
-	t.form[name] = value
-	return nil
-}
-
-func (t *templateContent) SetFile(name, file io.Reader) error {
-	panic("not impl")
-}
-
 type firstReadError struct {
 	err error
 }
 
 func (f firstReadError) Read([]byte) (int, error) {
 	return 0, f.err
+}
+
+func (t *objectContent) Read() io.Reader {
+	var result bytes.Buffer
+	expander := t.Expander()
+	err := json.NewEncoder(&result).Encode(
+		expandObject(t.value, func(s string) string {
+			return fmt.Sprint(expander(s))
+		}),
+	)
+	if err != nil {
+		log.Warn("error encoding body", err)
+		return firstReadError{err}
+	}
+
+	return bytes.NewReader(result.Bytes())
+}
+
+func (t *contentSupport) Expander() Expander {
+	return expr.ComposeExpanders(
+		expr.Prefix("var", expr.ExpandMap(t.vars)),
+		expr.Prefix("form", expr.ExpandMap(t.form)),
+		expr.ExpandMap(t.form),
+		expr.ExpandMap(t.vars),
+	)
+}
+
+func (t *contentSupport) Set(name, value string) error {
+	t.form[name] = value
+	return nil
+}
+
+func (t *contentSupport) SetFile(name, file io.Reader) error {
+	panic("not impl")
+}
+
+func (t *contentSupport) Query() (url.Values, error) {
+	panic("not impl")
+}
+
+func (t *contentSupport) ContentType() string {
+	return ""
+}
+
+func expandObject(v any, e func(string) string) any {
+	switch value := v.(type) {
+	case nil:
+		return nil
+	case string:
+		// TODO Support fallback and expression recursion
+		return os.Expand(value, e)
+	case map[string]any:
+		newValues := map[string]any{}
+		for k, v := range value {
+			// TODO Support expanding keys too
+			newValues[k] = expandObject(v, e)
+		}
+		return newValues
+	case []any:
+		newValues := make([]any, len(value))
+		for i := range value {
+			newValues[i] = expandObject(value[i], e)
+		}
+		return newValues
+	case []string:
+		newValues := make([]string, len(value))
+		for i := range value {
+			newValues[i] = expandObject(value[i], e).(string)
+		}
+		return newValues
+	default:
+		return v
+	}
 }
