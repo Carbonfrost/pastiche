@@ -45,6 +45,7 @@ type Server struct {
 
 type Resource struct {
 	Name        string
+	Title       string
 	Description string
 	Resources   []*Resource
 	Endpoints   []*Endpoint
@@ -148,6 +149,7 @@ func resource(r config.Resource) *Resource {
 	uri, _ := uritemplates.Parse(r.URI)
 	res := &Resource{
 		Name:        r.Name,
+		Title:       r.Title,
 		Description: r.Description,
 		URITemplate: uri,
 		Headers:     r.Headers,
