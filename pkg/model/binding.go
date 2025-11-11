@@ -66,6 +66,7 @@ type Endpoint struct {
 
 type Link struct {
 	HRef     string
+	HRefLang string
 	Audience string
 	Rel      string
 	Title    string
@@ -211,6 +212,7 @@ func links(links []config.Link) []Link {
 	for i, l := range links {
 		res[i] = Link{
 			HRef:     l.HRef,
+			HRefLang: l.HRefLang,
 			Audience: l.Audience,
 			Rel:      l.Rel,
 			Title:    l.Title,
