@@ -4,6 +4,8 @@
 package httpclient // intentional
 
 import (
+	"maps"
+	"net/http"
 	"net/url"
 
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
@@ -33,6 +35,19 @@ func NewLocation(
 		},
 		URLStub: func(*url.URL, uritemplates.Vars) (*url.URL, error) {
 			return u, nil
+		},
+		HeaderStub: func(m map[string]any) http.Header {
+			copy := http.Header{}
+			if resource != nil {
+				maps.Copy(copy, resource.Headers)
+			}
+			if server != nil {
+				maps.Copy(copy, server.Headers)
+			}
+			if ep != nil {
+				maps.Copy(copy, ep.Headers)
+			}
+			return copy
 		},
 	})
 	return loc

@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/Carbonfrost/joe-cli-http/uritemplates"
 	"github.com/Carbonfrost/pastiche/pkg/config"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 	. "github.com/onsi/gomega/gstruct"
@@ -46,6 +47,70 @@ var _ = Describe("Resolve", func() {
 			},
 		),
 	)
+})
+
+var _ = Describe("Header", func() {
+
+	DescribeTable("examples", func(expected types.GomegaMatcher) {
+		subject := model.New(&config.Config{
+			Services: []config.Service{
+				{
+					Name: "a",
+					Servers: []config.Server{
+						{
+							Name:    "default",
+							Headers: config.Header{"X-From-Server": []string{"server"}},
+						},
+					},
+					Resources: []config.Resource{
+						{
+							Name:    "b",
+							Headers: config.Header{"X-From-Resource": []string{"resource"}},
+							Get: &config.Endpoint{
+								Headers: config.Header{"X-From-Endpoint": []string{"endpoint"}},
+							},
+						},
+					},
+				},
+			},
+		})
+
+		spec := []string{"a", "b"}
+		merged, _ := subject.Resolve(spec, "default", "")
+		Expect(merged.Header(nil)).To(expected)
+	},
+		Entry("copied from resource", HaveKeyWithValue("X-From-Resource", []string{"resource"})),
+		Entry("copied from endpoint", HaveKeyWithValue("X-From-Endpoint", []string{"endpoint"})),
+		Entry("copied from server", HaveKeyWithValue("X-From-Server", []string{"server"})),
+	)
+
+	It("expands variables", func() {
+		subject := model.New(&config.Config{
+			Services: []config.Service{
+				{
+					Name: "a",
+					Servers: []config.Server{
+						{
+							Name:    "default",
+							Headers: config.Header{"Test": []string{"${var}"}},
+						},
+					},
+					Resources: []config.Resource{
+						{
+							Name: "b",
+						},
+					},
+				},
+			},
+		})
+
+		spec := []string{"a", "b"}
+
+		merged, _ := subject.Resolve(spec, "default", "")
+		Expect(merged.Header(uritemplates.Vars{
+			"var": "endpoint value from var",
+		})).To(HaveKeyWithValue("Test", []string{"endpoint value from var"}))
+	})
 })
 
 var _ = Describe("ResolvedReference", func() {

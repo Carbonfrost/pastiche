@@ -108,6 +108,10 @@ var _ = Describe("expandObject", func() {
 			map[string]any{"d": map[string]any{"e": "${var.value}"}},
 			map[string]any{"d": map[string]any{"e": "value"}},
 		),
+		Entry("header",
+			map[string][]string{"Prefer": {"1${var.value}", "2${var.value}"}},
+			map[string][]string{"Prefer": {"1value", "2value"}},
+		),
 	)
 
 })

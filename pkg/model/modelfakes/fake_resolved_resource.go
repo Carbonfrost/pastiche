@@ -3,6 +3,7 @@ package modelfakes
 
 import (
 	"io"
+	"net/http"
 	"net/url"
 	"sync"
 
@@ -31,6 +32,17 @@ type FakeResolvedResource struct {
 	}
 	endpointReturnsOnCall map[int]struct {
 		result1 *model.Endpoint
+	}
+	HeaderStub        func(map[string]any) http.Header
+	headerMutex       sync.RWMutex
+	headerArgsForCall []struct {
+		arg1 map[string]any
+	}
+	headerReturns struct {
+		result1 http.Header
+	}
+	headerReturnsOnCall map[int]struct {
+		result1 http.Header
 	}
 	ResourceStub        func() *model.Resource
 	resourceMutex       sync.RWMutex
@@ -191,6 +203,67 @@ func (fake *FakeResolvedResource) EndpointReturnsOnCall(i int, result1 *model.En
 	}
 	fake.endpointReturnsOnCall[i] = struct {
 		result1 *model.Endpoint
+	}{result1}
+}
+
+func (fake *FakeResolvedResource) Header(arg1 map[string]any) http.Header {
+	fake.headerMutex.Lock()
+	ret, specificReturn := fake.headerReturnsOnCall[len(fake.headerArgsForCall)]
+	fake.headerArgsForCall = append(fake.headerArgsForCall, struct {
+		arg1 map[string]any
+	}{arg1})
+	stub := fake.HeaderStub
+	fakeReturns := fake.headerReturns
+	fake.recordInvocation("Header", []interface{}{arg1})
+	fake.headerMutex.Unlock()
+	if stub != nil {
+		return stub(arg1)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeResolvedResource) HeaderCallCount() int {
+	fake.headerMutex.RLock()
+	defer fake.headerMutex.RUnlock()
+	return len(fake.headerArgsForCall)
+}
+
+func (fake *FakeResolvedResource) HeaderCalls(stub func(map[string]any) http.Header) {
+	fake.headerMutex.Lock()
+	defer fake.headerMutex.Unlock()
+	fake.HeaderStub = stub
+}
+
+func (fake *FakeResolvedResource) HeaderArgsForCall(i int) map[string]any {
+	fake.headerMutex.RLock()
+	defer fake.headerMutex.RUnlock()
+	argsForCall := fake.headerArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeResolvedResource) HeaderReturns(result1 http.Header) {
+	fake.headerMutex.Lock()
+	defer fake.headerMutex.Unlock()
+	fake.HeaderStub = nil
+	fake.headerReturns = struct {
+		result1 http.Header
+	}{result1}
+}
+
+func (fake *FakeResolvedResource) HeaderReturnsOnCall(i int, result1 http.Header) {
+	fake.headerMutex.Lock()
+	defer fake.headerMutex.Unlock()
+	fake.HeaderStub = nil
+	if fake.headerReturnsOnCall == nil {
+		fake.headerReturnsOnCall = make(map[int]struct {
+			result1 http.Header
+		})
+	}
+	fake.headerReturnsOnCall[i] = struct {
+		result1 http.Header
 	}{result1}
 }
 
@@ -425,6 +498,8 @@ func (fake *FakeResolvedResource) Invocations() map[string][][]interface{} {
 	defer fake.bodyMutex.RUnlock()
 	fake.endpointMutex.RLock()
 	defer fake.endpointMutex.RUnlock()
+	fake.headerMutex.RLock()
+	defer fake.headerMutex.RUnlock()
 	fake.resourceMutex.RLock()
 	defer fake.resourceMutex.RUnlock()
 	fake.serverMutex.RLock()

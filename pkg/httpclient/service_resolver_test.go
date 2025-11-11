@@ -103,14 +103,17 @@ var _ = Describe("pasticheLocation", func() {
 
 	Describe("headers", func() {
 
-		It("expands variables", func() {
+		It("copies headers in Middleware", func() {
 			ctx := phttpclient.NewLocationVars(
-				uritemplates.Vars{
-					"var": "value from var",
-				},
+				nil,
 				&modelfakes.FakeResolvedResource{
 					EndpointStub: func() *model.Endpoint {
-						return &model.Endpoint{Headers: http.Header{"Test": []string{"endpoint ${var}"}}}
+						return &model.Endpoint{}
+					},
+					HeaderStub: func(m map[string]any) http.Header {
+						return map[string][]string{
+							"X-Header": {"Value"},
+						}
 					},
 				})
 
@@ -118,30 +121,10 @@ var _ = Describe("pasticheLocation", func() {
 			mw := ctx.Middleware
 			_ = mw.Handle(req, nil)
 
-			Expect(req.Header).To(HaveKeyWithValue("Test", []string{"endpoint value from var"}))
+			Expect(req.Header).To(Equal(http.Header{
+				"X-Header": {"Value"},
+			}))
 		})
-
-		DescribeTable("examples", func(expected types.GomegaMatcher) {
-			ctx := phttpclient.NewLocation(
-				&model.Resource{Headers: http.Header{"X-From-Resource": []string{"resource"}}},
-				&model.Service{},
-				&model.Server{
-					Name:    "default",
-					Headers: http.Header{"X-From-Server": []string{"server"}},
-				},
-				&model.Endpoint{Headers: http.Header{"X-From-Endpoint": []string{"endpoint"}}},
-				nil)
-
-			req, _ := http.NewRequest("GET", "https://example.com", nil)
-			mw := ctx.Middleware
-			_ = mw.Handle(req, nil)
-
-			Expect(req.Header).To(expected)
-		},
-			Entry("copied from resource", HaveKeyWithValue("X-From-Resource", []string{"resource"})),
-			Entry("copied from endpoint", HaveKeyWithValue("X-From-Endpoint", []string{"endpoint"})),
-			Entry("copied from server", HaveKeyWithValue("X-From-Server", []string{"server"})),
-		)
 	})
 })
 

@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"os"
 	"text/template"
@@ -180,7 +181,24 @@ func expandObject(v any, e func(string) string) any {
 			newValues[i] = expandObject(value[i], e).(string)
 		}
 		return newValues
+	case http.Header:
+		return http.Header(expandHeader(value, e))
+
+	case map[string][]string:
+		return expandHeader(value, e)
 	default:
 		return v
 	}
+}
+
+func expandHeader(value map[string][]string, e func(string) string) map[string][]string {
+	copy := map[string][]string{}
+	for k, v := range value {
+		result := make([]string, len(v))
+		for i, str := range v {
+			result[i] = os.Expand(str, e)
+		}
+		copy[k] = result
+	}
+	return copy
 }

@@ -6,11 +6,15 @@ package model
 import (
 	"fmt"
 	"io"
+	"maps"
+	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"strings"
 
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
+	"github.com/Carbonfrost/joe-cli-http/httpclient/expr"
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
 	"github.com/Carbonfrost/pastiche/pkg/config"
 	"github.com/Carbonfrost/pastiche/pkg/internal/log"
@@ -83,6 +87,7 @@ type ResolvedResource interface {
 
 	URL(baseURL *url.URL, vars uritemplates.Vars) (*url.URL, error)
 	Body(vars uritemplates.Vars) io.ReadCloser
+	Header(vars map[string]any) http.Header
 }
 
 type resolvedResource struct {
@@ -348,6 +353,31 @@ func (r *resolvedResource) URL(baseURL *url.URL, vars uritemplates.Vars) (*url.U
 
 	u = baseURL.ResolveReference(u)
 	return u, err
+}
+
+func (r *resolvedResource) Header(vars map[string]any) http.Header {
+	expander := expr.ComposeExpanders(
+		expr.Prefix("env", func(k string) any {
+			return os.Getenv(k)
+		}),
+		expr.Prefix("var", expr.ExpandMap(vars)),
+		expr.ExpandMap(vars),
+	)
+	varLookup := func(k string) string {
+		return fmt.Sprint(expander(k))
+	}
+
+	result := http.Header{}
+	if r.Server() != nil {
+		maps.Copy(result, r.Server().Headers)
+	}
+	if r.Resource() != nil {
+		maps.Copy(result, r.Resource().Headers)
+	}
+	if r.Endpoint() != nil {
+		maps.Copy(result, r.Endpoint().Headers)
+	}
+	return expandHeader(result, varLookup)
 }
 
 func (r *resolvedResource) Body(vars uritemplates.Vars) io.ReadCloser {
