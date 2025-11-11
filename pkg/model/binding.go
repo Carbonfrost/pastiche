@@ -35,10 +35,12 @@ type Service struct {
 }
 
 type Server struct {
-	Name    string
-	BaseURL string
-	Headers map[string][]string
-	Links   []Link
+	Name        string
+	Description string
+	Title       string
+	BaseURL     string
+	Headers     map[string][]string
+	Links       []Link
 }
 
 type Resource struct {
@@ -133,10 +135,12 @@ func mustParseURITemplate(t string) *uritemplates.URITemplate {
 
 func server(s config.Server) *Server {
 	return &Server{
-		Name:    s.Name,
-		BaseURL: s.BaseURL,
-		Headers: s.Headers,
-		Links:   links(s.Links),
+		Name:        s.Name,
+		BaseURL:     s.BaseURL,
+		Description: s.Description,
+		Title:       s.Title,
+		Headers:     s.Headers,
+		Links:       links(s.Links),
 	}
 }
 

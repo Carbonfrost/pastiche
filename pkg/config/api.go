@@ -13,10 +13,12 @@ type Service struct {
 }
 
 type Server struct {
-	Name    string `json:"name"`
-	BaseURL string `json:"baseUrl"`
-	Headers Header `json:"headers"`
-	Links   []Link `json:"links,omitempty"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Title       string `json:"title"`
+	BaseURL     string `json:"baseUrl"`
+	Headers     Header `json:"headers"`
+	Links       []Link `json:"links,omitempty"`
 }
 
 type Resource struct {
