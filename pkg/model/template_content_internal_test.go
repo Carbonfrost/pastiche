@@ -5,6 +5,7 @@ package model
 
 import (
 	"io"
+	"os"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -28,6 +29,9 @@ var _ = Describe("newTemplateContent", func() {
 		)
 
 		DescribeTable("errors", func(tpl, expected string) {
+			// Suppress Stderr traces
+			defer suppressStderr()()
+
 			c := newTemplateContent(tpl, map[string]any{"found": "found", "v": "var"})
 
 			_, err := io.ReadAll(c.Read())
@@ -115,3 +119,11 @@ var _ = Describe("expandObject", func() {
 	)
 
 })
+
+func suppressStderr() func() {
+	orig := os.Stderr
+	os.Stderr = nil
+	return func() {
+		os.Stderr = orig
+	}
+}
