@@ -88,7 +88,7 @@ var _ = Describe("bodyToBytes", func() {
 var _ = Describe("expandObject", func() {
 
 	DescribeTable("examples", func(body any, expected any) {
-		c := expandObject(body, func(s string) string {
+		c := expandObject(body, func(s string) any {
 			if s == "var.value" {
 				return "value"
 			}

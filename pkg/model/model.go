@@ -239,9 +239,6 @@ func (r *resolvedResource) Header(vars map[string]any) http.Header {
 		expr.Prefix("var", expr.ExpandMap(vars)),
 		expr.ExpandMap(vars),
 	)
-	varLookup := func(k string) string {
-		return fmt.Sprint(expander(k))
-	}
 
 	result := http.Header{}
 	if r.Server() != nil {
@@ -253,7 +250,7 @@ func (r *resolvedResource) Header(vars map[string]any) http.Header {
 	if r.Endpoint() != nil {
 		maps.Copy(result, r.Endpoint().Headers)
 	}
-	return expandHeader(result, varLookup)
+	return expandHeader(result, expander)
 }
 
 func (r *resolvedResource) Body(vars uritemplates.Vars) io.ReadCloser {

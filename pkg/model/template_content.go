@@ -117,9 +117,7 @@ func (t *objectContent) Read() io.Reader {
 	var result bytes.Buffer
 	expander := t.Expander()
 	err := json.NewEncoder(&result).Encode(
-		expandObject(t.value, func(s string) string {
-			return fmt.Sprint(expander(s))
-		}),
+		expandObject(t.value, expander),
 	)
 	if err != nil {
 		log.Warn("error encoding body", err)
@@ -155,13 +153,12 @@ func (t *contentSupport) ContentType() string {
 	return ""
 }
 
-func expandObject(v any, e func(string) string) any {
+func expandObject(v any, e Expander) any {
 	switch value := v.(type) {
 	case nil:
 		return nil
 	case string:
-		// TODO Support fallback and expression recursion
-		return os.Expand(value, e)
+		return expandString(value, e)
 	case map[string]any:
 		newValues := map[string]any{}
 		for k, v := range value {
@@ -178,7 +175,7 @@ func expandObject(v any, e func(string) string) any {
 	case []string:
 		newValues := make([]string, len(value))
 		for i := range value {
-			newValues[i] = expandObject(value[i], e).(string)
+			newValues[i] = expandString(value[i], e)
 		}
 		return newValues
 	case http.Header:
@@ -191,14 +188,18 @@ func expandObject(v any, e func(string) string) any {
 	}
 }
 
-func expandHeader(value map[string][]string, e func(string) string) map[string][]string {
+func expandHeader(value map[string][]string, e Expander) map[string][]string {
 	copy := map[string][]string{}
 	for k, v := range value {
 		result := make([]string, len(v))
 		for i, str := range v {
-			result[i] = os.Expand(str, e)
+			result[i] = expandString(str, e)
 		}
 		copy[k] = result
 	}
 	return copy
+}
+
+func expandString(s string, e Expander) string {
+	return expr.SyntaxRecursive.CompilePattern(s, "${", "}").Expand(e)
 }
