@@ -44,6 +44,16 @@ type FakeResolvedResource struct {
 	headerReturnsOnCall map[int]struct {
 		result1 http.Header
 	}
+	LineageStub        func() []*model.Resource
+	lineageMutex       sync.RWMutex
+	lineageArgsForCall []struct {
+	}
+	lineageReturns struct {
+		result1 []*model.Resource
+	}
+	lineageReturnsOnCall map[int]struct {
+		result1 []*model.Resource
+	}
 	ResourceStub        func() *model.Resource
 	resourceMutex       sync.RWMutex
 	resourceArgsForCall []struct {
@@ -264,6 +274,59 @@ func (fake *FakeResolvedResource) HeaderReturnsOnCall(i int, result1 http.Header
 	}
 	fake.headerReturnsOnCall[i] = struct {
 		result1 http.Header
+	}{result1}
+}
+
+func (fake *FakeResolvedResource) Lineage() []*model.Resource {
+	fake.lineageMutex.Lock()
+	ret, specificReturn := fake.lineageReturnsOnCall[len(fake.lineageArgsForCall)]
+	fake.lineageArgsForCall = append(fake.lineageArgsForCall, struct {
+	}{})
+	stub := fake.LineageStub
+	fakeReturns := fake.lineageReturns
+	fake.recordInvocation("Lineage", []interface{}{})
+	fake.lineageMutex.Unlock()
+	if stub != nil {
+		return stub()
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeResolvedResource) LineageCallCount() int {
+	fake.lineageMutex.RLock()
+	defer fake.lineageMutex.RUnlock()
+	return len(fake.lineageArgsForCall)
+}
+
+func (fake *FakeResolvedResource) LineageCalls(stub func() []*model.Resource) {
+	fake.lineageMutex.Lock()
+	defer fake.lineageMutex.Unlock()
+	fake.LineageStub = stub
+}
+
+func (fake *FakeResolvedResource) LineageReturns(result1 []*model.Resource) {
+	fake.lineageMutex.Lock()
+	defer fake.lineageMutex.Unlock()
+	fake.LineageStub = nil
+	fake.lineageReturns = struct {
+		result1 []*model.Resource
+	}{result1}
+}
+
+func (fake *FakeResolvedResource) LineageReturnsOnCall(i int, result1 []*model.Resource) {
+	fake.lineageMutex.Lock()
+	defer fake.lineageMutex.Unlock()
+	fake.LineageStub = nil
+	if fake.lineageReturnsOnCall == nil {
+		fake.lineageReturnsOnCall = make(map[int]struct {
+			result1 []*model.Resource
+		})
+	}
+	fake.lineageReturnsOnCall[i] = struct {
+		result1 []*model.Resource
 	}{result1}
 }
 
@@ -494,20 +557,6 @@ func (fake *FakeResolvedResource) URLReturnsOnCall(i int, result1 *url.URL, resu
 func (fake *FakeResolvedResource) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
-	fake.bodyMutex.RLock()
-	defer fake.bodyMutex.RUnlock()
-	fake.endpointMutex.RLock()
-	defer fake.endpointMutex.RUnlock()
-	fake.headerMutex.RLock()
-	defer fake.headerMutex.RUnlock()
-	fake.resourceMutex.RLock()
-	defer fake.resourceMutex.RUnlock()
-	fake.serverMutex.RLock()
-	defer fake.serverMutex.RUnlock()
-	fake.serviceMutex.RLock()
-	defer fake.serviceMutex.RUnlock()
-	fake.uRLMutex.RLock()
-	defer fake.uRLMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value

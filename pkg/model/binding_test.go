@@ -65,9 +65,15 @@ var _ = Describe("Header", func() {
 					Resources: []config.Resource{
 						{
 							Name:    "b",
-							Headers: config.Header{"X-From-Resource": []string{"resource"}},
-							Get: &config.Endpoint{
-								Headers: config.Header{"X-From-Endpoint": []string{"endpoint"}},
+							Headers: config.Header{"X-Nested": []string{"b"}},
+							Resources: []config.Resource{
+								{
+									Name:    "c",
+									Headers: config.Header{"X-From-Resource": []string{"resource"}},
+									Get: &config.Endpoint{
+										Headers: config.Header{"X-From-Endpoint": []string{"endpoint"}},
+									},
+								},
 							},
 						},
 					},
@@ -75,13 +81,14 @@ var _ = Describe("Header", func() {
 			},
 		})
 
-		spec := []string{"a", "b"}
+		spec := []string{"a", "b", "c"}
 		merged, _ := subject.Resolve(spec, "default", "")
 		Expect(merged.Header(nil)).To(expected)
 	},
 		Entry("copied from resource", HaveKeyWithValue("X-From-Resource", []string{"resource"})),
 		Entry("copied from endpoint", HaveKeyWithValue("X-From-Endpoint", []string{"endpoint"})),
 		Entry("copied from server", HaveKeyWithValue("X-From-Server", []string{"server"})),
+		Entry("copied from nested", HaveKeyWithValue("X-Nested", []string{"b"})),
 	)
 
 	It("expands variables", func() {

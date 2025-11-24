@@ -82,6 +82,7 @@ type Link struct {
 type ResolvedResource interface {
 	Service() *Service
 	Resource() *Resource
+	Lineage() []*Resource
 	Endpoint() *Endpoint
 	Server() *Server
 
@@ -92,10 +93,9 @@ type ResolvedResource interface {
 
 type resolvedResource struct {
 	endpoint *Endpoint
-	resource *Resource
+	lineage  []*Resource
 	server   *Server
 	service  *Service
-	uri      []string
 }
 
 func New(c *config.Config) *Model {
@@ -143,15 +143,15 @@ func (c *Model) Resolve(spec ServiceSpec, server string, method string) (Resolve
 		}
 	}
 
+	lineage := []*Resource{svc.Resource}
 	current := svc.Resource
-	prefix := []string{current.URITemplate.String()}
 	for i, p := range spec[1:] {
 		current, ok = current.Resource(p)
 		if !ok {
 			path := ServiceSpec(spec[0 : i+2]).Path()
 			return nil, fmt.Errorf("resource not found: %q", path)
 		}
-		prefix = append(prefix, current.URITemplate.String())
+		lineage = append(lineage, current)
 	}
 
 	ep := findEndpointOrDefault(current, method, spec)
@@ -162,10 +162,9 @@ func (c *Model) Resolve(spec ServiceSpec, server string, method string) (Resolve
 
 	return &resolvedResource{
 		service:  svc,
-		resource: current,
+		lineage:  lineage,
 		endpoint: ep,
 		server:   svr,
-		uri:      prefix,
 	}, nil
 }
 
@@ -192,7 +191,11 @@ func (r *resolvedResource) Service() *Service {
 }
 
 func (r *resolvedResource) Resource() *Resource {
-	return r.resource
+	return r.lineage[len(r.lineage)-1]
+}
+
+func (r *resolvedResource) Lineage() []*Resource {
+	return r.lineage
 }
 
 func (r *resolvedResource) Endpoint() *Endpoint {
@@ -204,7 +207,11 @@ func (r *resolvedResource) Server() *Server {
 }
 
 func (r *resolvedResource) URL(baseURL *url.URL, vars uritemplates.Vars) (*url.URL, error) {
-	template := path.Join(r.uri...)
+	prefix := make([]string, len(r.lineage))
+	for i, c := range r.lineage {
+		prefix[i] = c.URITemplate.String()
+	}
+	template := path.Join(prefix...)
 	tt, err := uritemplates.Parse(template)
 	if err != nil {
 		return nil, err
@@ -244,8 +251,8 @@ func (r *resolvedResource) Header(vars map[string]any) http.Header {
 	if r.Server() != nil {
 		maps.Copy(result, r.Server().Headers)
 	}
-	if r.Resource() != nil {
-		maps.Copy(result, r.Resource().Headers)
+	for _, l := range r.Lineage() {
+		maps.Copy(result, l.Headers)
 	}
 	if r.Endpoint() != nil {
 		maps.Copy(result, r.Endpoint().Headers)
