@@ -38,8 +38,8 @@ type Resource struct {
 	Trace       *Endpoint  `json:"trace,omitempty"`
 	Patch       *Endpoint  `json:"patch,omitempty"`
 	Query       *Endpoint  `json:"query,omitempty"`
-	Body        string     `json:"body,omitempty"`
-	RawBody     string     `json:"rawBody,omitempty"`
+	Body        any        `json:"body,omitempty"`
+	RawBody     any        `json:"rawBody,omitempty"`
 }
 
 type Endpoint struct {
