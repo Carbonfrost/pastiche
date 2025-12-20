@@ -95,7 +95,7 @@ var _ = Describe("pasticheLocation", func() {
 			nil,
 			nil, // no endpoint
 			testRequest{},
-			nil,)
+			nil)
 
 		req, _ := http.NewRequest("GET", "https://example.com", nil)
 		mw := ctx.Middleware

@@ -34,8 +34,8 @@ type Service struct {
 	Description string
 	Servers     []*Server
 	Links       []Link
-
-	Resource *Resource
+	Resource    *Resource
+	Vars        map[string]any
 }
 
 type Server struct {
@@ -45,6 +45,7 @@ type Server struct {
 	BaseURL     string
 	Headers     map[string][]string
 	Links       []Link
+	Vars        map[string]any
 }
 
 type Resource struct {
@@ -59,6 +60,7 @@ type Resource struct {
 	Command     []string
 	Body        any
 	RawBody     any
+	Vars        map[string]any
 }
 
 type Endpoint struct {
@@ -69,6 +71,7 @@ type Endpoint struct {
 	Links       []Link
 	Body        any
 	RawBody     any
+	Vars        map[string]any
 }
 
 type Link struct {
@@ -235,28 +238,21 @@ func (r *resolvedResource) EvalRequest(baseURL *url.URL, vars map[string]any) (R
 		}
 	}
 
+	combinedVars := r.combinedVars()
+	maps.Copy(combinedVars, vars)
+
 	expander := expr.ComposeExpanders(
 		expr.Prefix("env", func(k string) any {
 			return os.Getenv(k)
 		}),
-		expr.Prefix("var", expr.ExpandMap(vars)),
-		expr.ExpandMap(vars),
+		expr.Prefix("var", expr.ExpandMap(combinedVars)),
+		expr.ExpandMap(combinedVars),
 	)
 
-	result := http.Header{}
-	if r.Server() != nil {
-		maps.Copy(result, r.Server().Headers)
-	}
-	for _, l := range r.Lineage() {
-		maps.Copy(result, l.Headers)
-	}
-	if r.Endpoint() != nil {
-		maps.Copy(result, r.Endpoint().Headers)
-	}
-	headers := expandHeader(result, expander)
+	headers := expandHeader(r.combinedHeaders(), expander)
 
 	body := func() io.ReadCloser {
-		content := r.bodyContent(vars)
+		content := r.bodyContent(combinedVars)
 		if content == nil {
 			return nil
 		}
@@ -306,7 +302,35 @@ func (r request) Vars() map[string]any {
 	return r.vars
 }
 
-func (r *resolvedResource) bodyContent(vars uritemplates.Vars) httpclient.Content {
+func (r *resolvedResource) combinedHeaders() http.Header {
+	result := http.Header{}
+	if r.Server() != nil {
+		maps.Copy(result, r.Server().Headers)
+	}
+	for _, l := range r.Lineage() {
+		maps.Copy(result, l.Headers)
+	}
+	if r.Endpoint() != nil {
+		maps.Copy(result, r.Endpoint().Headers)
+	}
+	return result
+}
+
+func (r *resolvedResource) combinedVars() map[string]any {
+	result := map[string]any{}
+	if r.Server() != nil {
+		maps.Copy(result, r.Server().Vars)
+	}
+	for _, l := range r.Lineage() {
+		maps.Copy(result, l.Vars)
+	}
+	if r.Endpoint() != nil {
+		maps.Copy(result, r.Endpoint().Vars)
+	}
+	return result
+}
+
+func (r *resolvedResource) bodyContent(vars map[string]any) httpclient.Content {
 	if r.Endpoint().Body != "" {
 		return newTemplateContent(r.Endpoint().Body, vars)
 	}

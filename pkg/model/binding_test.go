@@ -99,13 +99,23 @@ var _ = Describe("Header", func() {
 					Name: "a",
 					Servers: []config.Server{
 						{
-							Name:    "default",
-							Headers: config.Header{"Test": []string{"${var}"}},
+							Name: "default",
+							Headers: config.Header{
+								"Test": []string{"${var}"},
+								"S":    []string{"${varServer}"},
+								"R":    []string{"${varResource}"},
+							},
+							Vars: map[string]any{
+								"varServer": "endpoint value from S var set",
+							},
 						},
 					},
 					Resources: []config.Resource{
 						{
 							Name: "b",
+							Vars: map[string]any{
+								"varResource": "endpoint value from R var set",
+							},
 						},
 					},
 				},
@@ -119,6 +129,8 @@ var _ = Describe("Header", func() {
 			"var": "endpoint value from var",
 		})
 		Expect(merged.Header()).To(HaveKeyWithValue("Test", []string{"endpoint value from var"}))
+		Expect(merged.Header()).To(HaveKeyWithValue("S", []string{"endpoint value from S var set"}))
+		Expect(merged.Header()).To(HaveKeyWithValue("R", []string{"endpoint value from R var set"}))
 	})
 })
 

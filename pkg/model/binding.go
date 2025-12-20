@@ -28,6 +28,7 @@ func service(v config.Service) *Service {
 				},
 			},
 		},
+		Vars: v.Vars,
 	}
 }
 
@@ -47,6 +48,7 @@ func server(s config.Server) *Server {
 		Title:       s.Title,
 		Headers:     s.Headers,
 		Links:       links(s.Links),
+		Vars:        s.Vars,
 	}
 }
 
@@ -61,6 +63,7 @@ func resource(r config.Resource) *Resource {
 		Links:       links(r.Links),
 		Body:        r.Body,
 		RawBody:     r.RawBody,
+		Vars:        r.Vars,
 	}
 	if r.Get != nil {
 		res.Endpoints = append(res.Endpoints, endpoint("GET", r.Get))
@@ -115,6 +118,7 @@ func endpoint(method string, r *config.Endpoint) *Endpoint {
 		Links:       links(r.Links),
 		Body:        r.Body,
 		RawBody:     r.RawBody,
+		Vars:        r.Vars,
 	}
 }
 
