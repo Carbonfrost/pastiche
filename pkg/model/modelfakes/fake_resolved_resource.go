@@ -2,27 +2,13 @@
 package modelfakes
 
 import (
-	"io"
-	"net/http"
 	"net/url"
 	"sync"
 
-	"github.com/Carbonfrost/joe-cli-http/uritemplates"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 )
 
 type FakeResolvedResource struct {
-	BodyStub        func(uritemplates.Vars) io.ReadCloser
-	bodyMutex       sync.RWMutex
-	bodyArgsForCall []struct {
-		arg1 uritemplates.Vars
-	}
-	bodyReturns struct {
-		result1 io.ReadCloser
-	}
-	bodyReturnsOnCall map[int]struct {
-		result1 io.ReadCloser
-	}
 	EndpointStub        func() *model.Endpoint
 	endpointMutex       sync.RWMutex
 	endpointArgsForCall []struct {
@@ -33,16 +19,19 @@ type FakeResolvedResource struct {
 	endpointReturnsOnCall map[int]struct {
 		result1 *model.Endpoint
 	}
-	HeaderStub        func(map[string]any) http.Header
-	headerMutex       sync.RWMutex
-	headerArgsForCall []struct {
-		arg1 map[string]any
+	EvalRequestStub        func(*url.URL, map[string]any) (model.Request, error)
+	evalRequestMutex       sync.RWMutex
+	evalRequestArgsForCall []struct {
+		arg1 *url.URL
+		arg2 map[string]any
 	}
-	headerReturns struct {
-		result1 http.Header
+	evalRequestReturns struct {
+		result1 model.Request
+		result2 error
 	}
-	headerReturnsOnCall map[int]struct {
-		result1 http.Header
+	evalRequestReturnsOnCall map[int]struct {
+		result1 model.Request
+		result2 error
 	}
 	LineageStub        func() []*model.Resource
 	lineageMutex       sync.RWMutex
@@ -84,83 +73,8 @@ type FakeResolvedResource struct {
 	serviceReturnsOnCall map[int]struct {
 		result1 *model.Service
 	}
-	URLStub        func(*url.URL, uritemplates.Vars) (*url.URL, error)
-	uRLMutex       sync.RWMutex
-	uRLArgsForCall []struct {
-		arg1 *url.URL
-		arg2 uritemplates.Vars
-	}
-	uRLReturns struct {
-		result1 *url.URL
-		result2 error
-	}
-	uRLReturnsOnCall map[int]struct {
-		result1 *url.URL
-		result2 error
-	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
-}
-
-func (fake *FakeResolvedResource) Body(arg1 uritemplates.Vars) io.ReadCloser {
-	fake.bodyMutex.Lock()
-	ret, specificReturn := fake.bodyReturnsOnCall[len(fake.bodyArgsForCall)]
-	fake.bodyArgsForCall = append(fake.bodyArgsForCall, struct {
-		arg1 uritemplates.Vars
-	}{arg1})
-	stub := fake.BodyStub
-	fakeReturns := fake.bodyReturns
-	fake.recordInvocation("Body", []interface{}{arg1})
-	fake.bodyMutex.Unlock()
-	if stub != nil {
-		return stub(arg1)
-	}
-	if specificReturn {
-		return ret.result1
-	}
-	return fakeReturns.result1
-}
-
-func (fake *FakeResolvedResource) BodyCallCount() int {
-	fake.bodyMutex.RLock()
-	defer fake.bodyMutex.RUnlock()
-	return len(fake.bodyArgsForCall)
-}
-
-func (fake *FakeResolvedResource) BodyCalls(stub func(uritemplates.Vars) io.ReadCloser) {
-	fake.bodyMutex.Lock()
-	defer fake.bodyMutex.Unlock()
-	fake.BodyStub = stub
-}
-
-func (fake *FakeResolvedResource) BodyArgsForCall(i int) uritemplates.Vars {
-	fake.bodyMutex.RLock()
-	defer fake.bodyMutex.RUnlock()
-	argsForCall := fake.bodyArgsForCall[i]
-	return argsForCall.arg1
-}
-
-func (fake *FakeResolvedResource) BodyReturns(result1 io.ReadCloser) {
-	fake.bodyMutex.Lock()
-	defer fake.bodyMutex.Unlock()
-	fake.BodyStub = nil
-	fake.bodyReturns = struct {
-		result1 io.ReadCloser
-	}{result1}
-}
-
-func (fake *FakeResolvedResource) BodyReturnsOnCall(i int, result1 io.ReadCloser) {
-	fake.bodyMutex.Lock()
-	defer fake.bodyMutex.Unlock()
-	fake.BodyStub = nil
-	if fake.bodyReturnsOnCall == nil {
-		fake.bodyReturnsOnCall = make(map[int]struct {
-			result1 io.ReadCloser
-		})
-	}
-	fake.bodyReturnsOnCall[i] = struct {
-		result1 io.ReadCloser
-	}{result1}
 }
 
 func (fake *FakeResolvedResource) Endpoint() *model.Endpoint {
@@ -216,65 +130,69 @@ func (fake *FakeResolvedResource) EndpointReturnsOnCall(i int, result1 *model.En
 	}{result1}
 }
 
-func (fake *FakeResolvedResource) Header(arg1 map[string]any) http.Header {
-	fake.headerMutex.Lock()
-	ret, specificReturn := fake.headerReturnsOnCall[len(fake.headerArgsForCall)]
-	fake.headerArgsForCall = append(fake.headerArgsForCall, struct {
-		arg1 map[string]any
-	}{arg1})
-	stub := fake.HeaderStub
-	fakeReturns := fake.headerReturns
-	fake.recordInvocation("Header", []interface{}{arg1})
-	fake.headerMutex.Unlock()
+func (fake *FakeResolvedResource) EvalRequest(arg1 *url.URL, arg2 map[string]any) (model.Request, error) {
+	fake.evalRequestMutex.Lock()
+	ret, specificReturn := fake.evalRequestReturnsOnCall[len(fake.evalRequestArgsForCall)]
+	fake.evalRequestArgsForCall = append(fake.evalRequestArgsForCall, struct {
+		arg1 *url.URL
+		arg2 map[string]any
+	}{arg1, arg2})
+	stub := fake.EvalRequestStub
+	fakeReturns := fake.evalRequestReturns
+	fake.recordInvocation("EvalRequest", []interface{}{arg1, arg2})
+	fake.evalRequestMutex.Unlock()
 	if stub != nil {
-		return stub(arg1)
+		return stub(arg1, arg2)
 	}
 	if specificReturn {
-		return ret.result1
+		return ret.result1, ret.result2
 	}
-	return fakeReturns.result1
+	return fakeReturns.result1, fakeReturns.result2
 }
 
-func (fake *FakeResolvedResource) HeaderCallCount() int {
-	fake.headerMutex.RLock()
-	defer fake.headerMutex.RUnlock()
-	return len(fake.headerArgsForCall)
+func (fake *FakeResolvedResource) EvalRequestCallCount() int {
+	fake.evalRequestMutex.RLock()
+	defer fake.evalRequestMutex.RUnlock()
+	return len(fake.evalRequestArgsForCall)
 }
 
-func (fake *FakeResolvedResource) HeaderCalls(stub func(map[string]any) http.Header) {
-	fake.headerMutex.Lock()
-	defer fake.headerMutex.Unlock()
-	fake.HeaderStub = stub
+func (fake *FakeResolvedResource) EvalRequestCalls(stub func(*url.URL, map[string]any) (model.Request, error)) {
+	fake.evalRequestMutex.Lock()
+	defer fake.evalRequestMutex.Unlock()
+	fake.EvalRequestStub = stub
 }
 
-func (fake *FakeResolvedResource) HeaderArgsForCall(i int) map[string]any {
-	fake.headerMutex.RLock()
-	defer fake.headerMutex.RUnlock()
-	argsForCall := fake.headerArgsForCall[i]
-	return argsForCall.arg1
+func (fake *FakeResolvedResource) EvalRequestArgsForCall(i int) (*url.URL, map[string]any) {
+	fake.evalRequestMutex.RLock()
+	defer fake.evalRequestMutex.RUnlock()
+	argsForCall := fake.evalRequestArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
 }
 
-func (fake *FakeResolvedResource) HeaderReturns(result1 http.Header) {
-	fake.headerMutex.Lock()
-	defer fake.headerMutex.Unlock()
-	fake.HeaderStub = nil
-	fake.headerReturns = struct {
-		result1 http.Header
-	}{result1}
+func (fake *FakeResolvedResource) EvalRequestReturns(result1 model.Request, result2 error) {
+	fake.evalRequestMutex.Lock()
+	defer fake.evalRequestMutex.Unlock()
+	fake.EvalRequestStub = nil
+	fake.evalRequestReturns = struct {
+		result1 model.Request
+		result2 error
+	}{result1, result2}
 }
 
-func (fake *FakeResolvedResource) HeaderReturnsOnCall(i int, result1 http.Header) {
-	fake.headerMutex.Lock()
-	defer fake.headerMutex.Unlock()
-	fake.HeaderStub = nil
-	if fake.headerReturnsOnCall == nil {
-		fake.headerReturnsOnCall = make(map[int]struct {
-			result1 http.Header
+func (fake *FakeResolvedResource) EvalRequestReturnsOnCall(i int, result1 model.Request, result2 error) {
+	fake.evalRequestMutex.Lock()
+	defer fake.evalRequestMutex.Unlock()
+	fake.EvalRequestStub = nil
+	if fake.evalRequestReturnsOnCall == nil {
+		fake.evalRequestReturnsOnCall = make(map[int]struct {
+			result1 model.Request
+			result2 error
 		})
 	}
-	fake.headerReturnsOnCall[i] = struct {
-		result1 http.Header
-	}{result1}
+	fake.evalRequestReturnsOnCall[i] = struct {
+		result1 model.Request
+		result2 error
+	}{result1, result2}
 }
 
 func (fake *FakeResolvedResource) Lineage() []*model.Resource {
@@ -487,71 +405,6 @@ func (fake *FakeResolvedResource) ServiceReturnsOnCall(i int, result1 *model.Ser
 	fake.serviceReturnsOnCall[i] = struct {
 		result1 *model.Service
 	}{result1}
-}
-
-func (fake *FakeResolvedResource) URL(arg1 *url.URL, arg2 uritemplates.Vars) (*url.URL, error) {
-	fake.uRLMutex.Lock()
-	ret, specificReturn := fake.uRLReturnsOnCall[len(fake.uRLArgsForCall)]
-	fake.uRLArgsForCall = append(fake.uRLArgsForCall, struct {
-		arg1 *url.URL
-		arg2 uritemplates.Vars
-	}{arg1, arg2})
-	stub := fake.URLStub
-	fakeReturns := fake.uRLReturns
-	fake.recordInvocation("URL", []interface{}{arg1, arg2})
-	fake.uRLMutex.Unlock()
-	if stub != nil {
-		return stub(arg1, arg2)
-	}
-	if specificReturn {
-		return ret.result1, ret.result2
-	}
-	return fakeReturns.result1, fakeReturns.result2
-}
-
-func (fake *FakeResolvedResource) URLCallCount() int {
-	fake.uRLMutex.RLock()
-	defer fake.uRLMutex.RUnlock()
-	return len(fake.uRLArgsForCall)
-}
-
-func (fake *FakeResolvedResource) URLCalls(stub func(*url.URL, uritemplates.Vars) (*url.URL, error)) {
-	fake.uRLMutex.Lock()
-	defer fake.uRLMutex.Unlock()
-	fake.URLStub = stub
-}
-
-func (fake *FakeResolvedResource) URLArgsForCall(i int) (*url.URL, uritemplates.Vars) {
-	fake.uRLMutex.RLock()
-	defer fake.uRLMutex.RUnlock()
-	argsForCall := fake.uRLArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2
-}
-
-func (fake *FakeResolvedResource) URLReturns(result1 *url.URL, result2 error) {
-	fake.uRLMutex.Lock()
-	defer fake.uRLMutex.Unlock()
-	fake.URLStub = nil
-	fake.uRLReturns = struct {
-		result1 *url.URL
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeResolvedResource) URLReturnsOnCall(i int, result1 *url.URL, result2 error) {
-	fake.uRLMutex.Lock()
-	defer fake.uRLMutex.Unlock()
-	fake.URLStub = nil
-	if fake.uRLReturnsOnCall == nil {
-		fake.uRLReturnsOnCall = make(map[int]struct {
-			result1 *url.URL
-			result2 error
-		})
-	}
-	fake.uRLReturnsOnCall[i] = struct {
-		result1 *url.URL
-		result2 error
-	}{result1, result2}
 }
 
 func (fake *FakeResolvedResource) Invocations() map[string][][]interface{} {

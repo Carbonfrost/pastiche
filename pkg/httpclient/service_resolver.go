@@ -97,31 +97,36 @@ func (s *serviceResolver) Resolve(c context.Context) ([]httpclient.Location, err
 	}, nil
 }
 
-func newLocation(base *url.URL, vars map[string]any, merged model.ResolvedResource) (*pasticheLocation, error) {
-	loc, err := merged.URL(base, vars)
+func newLocation(base *url.URL, vars map[string]any, resolved model.ResolvedResource) (*pasticheLocation, error) {
+	merged, err := resolved.EvalRequest(base, vars)
+	if err != nil {
+		return nil, err
+	}
+
+	loc, err := merged.URL()
 	if err != nil {
 		return nil, err
 	}
 	var (
 		endpointMethod  httpclient.Middleware
 		requireEndpoint httpclient.MiddlewareFunc = func(req *http.Request) error {
-			if merged.Endpoint() == nil {
+			if resolved.Endpoint() == nil {
 				return errors.New("no endpoint defined for service/spec")
 			}
 			return nil
 		}
 	)
 
-	if merged.Endpoint() != nil {
-		endpointMethod = withMethod(merged.Endpoint().Method)
+	if resolved.Endpoint() != nil {
+		endpointMethod = withMethod(resolved.Endpoint().Method)
 	}
 
 	return &pasticheLocation{
 		Middleware: httpclient.ComposeMiddleware(
 			requireEndpoint,
-			httpclient.WithHeaders(merged.Header(vars)),
+			httpclient.WithHeaders(merged.Header()),
 			endpointMethod,
-			withBody(merged.Body(vars)),
+			withBody(merged.Body()),
 		),
 		u: loc,
 	}, nil

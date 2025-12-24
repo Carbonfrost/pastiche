@@ -79,6 +79,7 @@ type Link struct {
 	Title    string
 }
 
+// ResolvedResource represents the resource which was selected by its name
 type ResolvedResource interface {
 	Service() *Service
 	Resource() *Resource
@@ -86,9 +87,15 @@ type ResolvedResource interface {
 	Endpoint() *Endpoint
 	Server() *Server
 
-	URL(baseURL *url.URL, vars uritemplates.Vars) (*url.URL, error)
-	Body(vars uritemplates.Vars) io.ReadCloser
-	Header(vars map[string]any) http.Header
+	EvalRequest(baseURL *url.URL, vars map[string]any) (Request, error)
+}
+
+// Request represents a request that can be generated
+type Request interface {
+	URL() (*url.URL, error)
+	Body() io.ReadCloser
+	Header() http.Header
+	Vars() map[string]any
 }
 
 type resolvedResource struct {
@@ -96,6 +103,14 @@ type resolvedResource struct {
 	lineage  []*Resource
 	server   *Server
 	service  *Service
+}
+
+type request struct {
+	baseURL *url.URL
+	vars    map[string]any
+	prefix  []string
+	headers http.Header
+	body    io.ReadCloser
 }
 
 func New(c *config.Config) *Model {
@@ -206,27 +221,13 @@ func (r *resolvedResource) Server() *Server {
 	return r.server
 }
 
-func (r *resolvedResource) URL(baseURL *url.URL, vars uritemplates.Vars) (*url.URL, error) {
+func (r *resolvedResource) EvalRequest(baseURL *url.URL, vars map[string]any) (Request, error) {
 	prefix := make([]string, len(r.lineage))
 	for i, c := range r.lineage {
 		prefix[i] = c.URITemplate.String()
 	}
-	template := path.Join(prefix...)
-	tt, err := uritemplates.Parse(template)
-	if err != nil {
-		return nil, err
-	}
 
-	expanded, err := tt.Expand(vars)
-	if err != nil {
-		return nil, err
-	}
-
-	u, err := url.Parse(expanded)
-	if err != nil {
-		return nil, err
-	}
-
+	var err error
 	if baseURL == nil {
 		baseURL, err = url.Parse(r.Server().BaseURL)
 		if err != nil {
@@ -234,11 +235,6 @@ func (r *resolvedResource) URL(baseURL *url.URL, vars uritemplates.Vars) (*url.U
 		}
 	}
 
-	u = baseURL.ResolveReference(u)
-	return u, err
-}
-
-func (r *resolvedResource) Header(vars map[string]any) http.Header {
 	expander := expr.ComposeExpanders(
 		expr.Prefix("env", func(k string) any {
 			return os.Getenv(k)
@@ -257,15 +253,57 @@ func (r *resolvedResource) Header(vars map[string]any) http.Header {
 	if r.Endpoint() != nil {
 		maps.Copy(result, r.Endpoint().Headers)
 	}
-	return expandHeader(result, expander)
+	headers := expandHeader(result, expander)
+
+	body := func() io.ReadCloser {
+		content := r.bodyContent(vars)
+		if content == nil {
+			return nil
+		}
+
+		return io.NopCloser(content.Read())
+	}()
+
+	return request{
+		baseURL: baseURL,
+		vars:    vars,
+		prefix:  prefix,
+		headers: headers,
+		body:    body,
+	}, nil
 }
 
-func (r *resolvedResource) Body(vars uritemplates.Vars) io.ReadCloser {
-	content := r.bodyContent(vars)
-	if content == nil {
-		return nil
+func (r request) URL() (*url.URL, error) {
+	template := path.Join(r.prefix...)
+	tt, err := uritemplates.Parse(template)
+	if err != nil {
+		return nil, err
 	}
-	return io.NopCloser(content.Read())
+
+	expanded, err := tt.Expand(r.vars)
+	if err != nil {
+		return nil, err
+	}
+
+	u, err := url.Parse(expanded)
+	if err != nil {
+		return nil, err
+	}
+
+	u = r.baseURL.ResolveReference(u)
+	return u, err
+}
+
+func (r request) Body() io.ReadCloser {
+	return r.body
+}
+
+func (r request) Header() http.Header {
+	return r.headers
+}
+
+func (r request) Vars() map[string]any {
+	return r.vars
 }
 
 func (r *resolvedResource) bodyContent(vars uritemplates.Vars) httpclient.Content {

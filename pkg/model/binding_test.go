@@ -82,8 +82,9 @@ var _ = Describe("Header", func() {
 		})
 
 		spec := []string{"a", "b", "c"}
-		merged, _ := subject.Resolve(spec, "default", "")
-		Expect(merged.Header(nil)).To(expected)
+		rr, _ := subject.Resolve(spec, "default", "")
+		merged, _ := rr.EvalRequest(nil, nil)
+		Expect(merged.Header()).To(expected)
 	},
 		Entry("copied from resource", HaveKeyWithValue("X-From-Resource", []string{"resource"})),
 		Entry("copied from endpoint", HaveKeyWithValue("X-From-Endpoint", []string{"endpoint"})),
@@ -113,10 +114,11 @@ var _ = Describe("Header", func() {
 
 		spec := []string{"a", "b"}
 
-		merged, _ := subject.Resolve(spec, "default", "")
-		Expect(merged.Header(uritemplates.Vars{
+		rr, _ := subject.Resolve(spec, "default", "")
+		merged, _ := rr.EvalRequest(nil, uritemplates.Vars{
 			"var": "endpoint value from var",
-		})).To(HaveKeyWithValue("Test", []string{"endpoint value from var"}))
+		})
+		Expect(merged.Header()).To(HaveKeyWithValue("Test", []string{"endpoint value from var"}))
 	})
 })
 
@@ -131,10 +133,11 @@ var _ = Describe("ResolvedReference", func() {
 				},
 			})
 
-			merged, err := subject.Resolve(spec, "", "")
+			rr, err := subject.Resolve(spec, "", "")
 			Expect(err).NotTo(HaveOccurred())
 
-			url, err := merged.URL(nil, vars)
+			merged, _ := rr.EvalRequest(nil, vars)
+			url, err := merged.URL()
 			Expect(err).NotTo(HaveOccurred())
 
 			Expect(url.String()).To(Equal(expected))

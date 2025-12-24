@@ -1,11 +1,9 @@
-// Copyright 2023 The Pastiche Authors. All rights reserved.
+// Copyright 2023, 2025 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 package httpclient // intentional
 
 import (
-	"maps"
-	"net/http"
 	"net/url"
 
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
@@ -18,6 +16,7 @@ func NewLocation(
 	service *model.Service,
 	server *model.Server,
 	ep *model.Endpoint,
+	req model.Request,
 	u *url.URL) *pasticheLocation {
 
 	loc, _ := newLocation(nil, nil, &modelfakes.FakeResolvedResource{
@@ -33,21 +32,8 @@ func NewLocation(
 		EndpointStub: func() *model.Endpoint {
 			return ep
 		},
-		URLStub: func(*url.URL, uritemplates.Vars) (*url.URL, error) {
-			return u, nil
-		},
-		HeaderStub: func(m map[string]any) http.Header {
-			copy := http.Header{}
-			if resource != nil {
-				maps.Copy(copy, resource.Headers)
-			}
-			if server != nil {
-				maps.Copy(copy, server.Headers)
-			}
-			if ep != nil {
-				maps.Copy(copy, ep.Headers)
-			}
-			return copy
+		EvalRequestStub: func(u *url.URL, m map[string]any) (model.Request, error) {
+			return req, nil
 		},
 	})
 	return loc
