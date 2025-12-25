@@ -29,16 +29,22 @@ const (
 
 func New() *Client {
 	cfg, _ := config.Load()
+	sr := NewServiceResolver(
+		model.New(cfg),
+		lateBinding[*model.ServiceSpec]("service"),
+		lateBinding[string]("server"),
+		lateBinding[string]("method"),
+	)
 	client := httpclient.New(
 		httpclient.WithDefaultUserAgent(defaultUserAgent()),
 		httpclient.WithLocationResolver(
-			NewServiceResolver(
-				model.New(cfg),
-				lateBinding[*model.ServiceSpec]("service"),
-				lateBinding[string]("server"),
-				lateBinding[string]("method"),
-			),
+			sr,
 		),
+		func(c *httpclient.Client) {
+			c.UseDownloadMiddleware(func(downloader httpclient.Downloader) httpclient.Downloader {
+				return newHistoryDownloader(downloader, sr.(*serviceResolver))
+			})
+		},
 	)
 	res := &Client{
 		Client: client,
