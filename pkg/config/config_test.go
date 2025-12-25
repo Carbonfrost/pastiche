@@ -36,6 +36,15 @@ var _ = Describe("Config", func() {
 					)),
 				),
 			),
+			Entry(
+				"multi",
+				"multi.yml",
+				haveServices(ContainElements(
+					config.Service{Name: "foo"},
+					config.Service{Name: "bar"},
+					config.Service{Name: "baz"},
+				)),
+			),
 		)
 
 		DescribeTable("errors",
@@ -49,11 +58,22 @@ var _ = Describe("Config", func() {
 				"error_unsupported.html",
 				MatchError(config.ErrUnsupportedFileFormat),
 			),
+			Entry(
+				"both service and service list",
+				"error_serviceList.yml",
+				MatchError("must contain either service definition or services list, but not both"),
+			),
 		)
 
 	})
 
 })
+
+func haveServices(m OmegaMatcher) OmegaMatcher {
+	return WithTransform(func(cfg any) any {
+		return cfg.(*config.File).Services
+	}, m)
+}
 
 func haveServers(m OmegaMatcher) OmegaMatcher {
 	return WithTransform(func(cfg any) any {

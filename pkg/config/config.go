@@ -57,18 +57,22 @@ func LoadFile(f fs.FS, filename string) (*File, error) {
 			return nil, err
 		}
 
+		if len(result.Services) > 0 && result.Service != nil {
+			return nil, fmt.Errorf("must contain either service definition or services list, but not both")
+		}
+
 		return result, nil
 	}
 
 	return nil, fmt.Errorf("load file %s: %w", filename, ErrUnsupportedFileFormat)
 }
 
-func (c *Config) appendService(s Service) {
-	c.Services = append(c.Services, s)
+func (c *Config) appendServices(s ...Service) {
+	c.Services = append(c.Services, s...)
 }
 
 func (c *Config) loadExamples() error {
-	c.appendService(ExampleHTTPBinorg)
+	c.appendServices(ExampleHTTPBinorg)
 	return nil
 }
 
@@ -104,7 +108,10 @@ func (c *Config) loadFiles(root string) error {
 			return nil
 		}
 
-		c.appendService(*file.Service)
+		if file.Service != nil {
+			c.appendServices(*file.Service)
+		}
+		c.appendServices(file.Services...)
 
 		return nil
 	})

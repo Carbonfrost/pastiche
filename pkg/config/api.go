@@ -5,6 +5,8 @@ package config
 
 type File struct {
 	*Service
+
+	Services []Service `json:"services,omitempty"`
 }
 
 type Service struct {
