@@ -112,6 +112,7 @@ func resources(resources []config.Resource) []*Resource {
 func endpoint(method string, r *config.Endpoint) *Endpoint {
 	return &Endpoint{
 		Name:        r.Name,
+		Title:       r.Title,
 		Description: r.Description,
 		Method:      method,
 		Headers:     r.Headers,

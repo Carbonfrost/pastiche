@@ -50,6 +50,7 @@ type Resource struct {
 
 type Endpoint struct {
 	Name        string         `json:"name,omitempty"`
+	Title       string         `json:"title,omitempty"`
 	Description string         `json:"description,omitempty"`
 	Headers     Header         `json:"headers,omitempty"`
 	Links       []Link         `json:"links,omitempty"`

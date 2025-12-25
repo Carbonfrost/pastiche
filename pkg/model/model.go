@@ -64,7 +64,8 @@ type Resource struct {
 }
 
 type Endpoint struct {
-	Name        any
+	Name        string
+	Title       string
 	Description string
 	Method      string
 	Headers     map[string][]string
