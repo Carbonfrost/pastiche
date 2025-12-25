@@ -5,6 +5,8 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -25,6 +27,8 @@ var unmarshalers = map[string]unmarshaler{
 	".yml":  unmarshalYaml,
 }
 
+var ErrUnsupportedFileFormat = errors.New("unsupported file format")
+
 func Load() (sc *Config, err error) {
 	sc = &Config{}
 	if err = sc.loadExamples(); err != nil {
@@ -38,6 +42,25 @@ func Load() (sc *Config, err error) {
 	}
 
 	return
+}
+
+// LoadFile loads the given file from the file system and name
+func LoadFile(f fs.FS, filename string) (*File, error) {
+	if unmarshal, ok := unmarshalers[filepath.Ext(filename)]; ok {
+		data, err := fs.ReadFile(f, filename)
+		if err != nil {
+			return nil, err
+		}
+
+		result := new(File)
+		if err := unmarshal(data, result); err != nil {
+			return nil, err
+		}
+
+		return result, nil
+	}
+
+	return nil, fmt.Errorf("load file %s: %w", filename, ErrUnsupportedFileFormat)
 }
 
 func (c *Config) appendService(s Service) {
@@ -66,31 +89,22 @@ func (c *Config) loadFromWorkspace() error {
 }
 
 func (c *Config) loadFiles(root string) error {
-	return fs.WalkDir(os.DirFS(root), ".", func(name string, d fs.DirEntry, err error) error {
+	rootFS := os.DirFS(root)
+	return fs.WalkDir(rootFS, ".", func(name string, d fs.DirEntry, err error) error {
 		if d == nil || d.IsDir() {
 			return nil
 		}
-
-		file := filepath.Join(root, name)
 		if err != nil {
 			return err
 		}
 
-		if unmarshal, ok := unmarshalers[filepath.Ext(file)]; ok {
-			data, err := os.ReadFile(file)
-			if err != nil {
-				log.Warn(err)
-				return nil
-			}
-
-			service := new(Service)
-			if err := unmarshal(data, service); err != nil {
-				log.Warn(err)
-				return nil
-			}
-
-			c.appendService(*service)
+		file, err := LoadFile(rootFS, name)
+		if err != nil && !errors.Is(err, ErrUnsupportedFileFormat) {
+			log.Warn(err)
+			return nil
 		}
+
+		c.appendService(*file.Service)
 
 		return nil
 	})

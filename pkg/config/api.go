@@ -3,6 +3,10 @@
 // license that can be found in the LICENSE file.
 package config
 
+type File struct {
+	*Service
+}
+
 type Service struct {
 	Name        string         `json:"name"`
 	Title       string         `json:"title,omitempty"`

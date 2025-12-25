@@ -1,0 +1,7 @@
+name: basic
+servers:
+  - name: production
+    baseUrl: https://example.sh/
+resources:
+  - name: r
+    uri: /api/{name}.json
