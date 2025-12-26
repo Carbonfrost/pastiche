@@ -95,16 +95,25 @@ func (c *Config) loadFromWorkspace() error {
 func (c *Config) loadFiles(root string) error {
 	rootFS := os.DirFS(root)
 	return fs.WalkDir(rootFS, ".", func(name string, d fs.DirEntry, err error) error {
-		if d == nil || d.IsDir() {
+		if d == nil {
 			return nil
 		}
+
+		// TODO This should follow rules specified in .ignore files instead
+		if d.IsDir() && d.Name() == "logs" {
+			return fs.SkipDir
+		}
+		if d.IsDir() {
+			return nil
+		}
+
 		if err != nil {
 			return err
 		}
 
 		file, err := LoadFile(rootFS, name)
 		if err != nil && !errors.Is(err, ErrUnsupportedFileFormat) {
-			log.Warn(err)
+			log.Warnf("%s: %v", filepath.Join(root, name), err)
 			return nil
 		}
 
