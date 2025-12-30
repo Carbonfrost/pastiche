@@ -142,6 +142,39 @@ var _ = Describe("ResolvedReference", func() {
 			subject := model.New(&config.Config{
 				Services: []config.Service{
 					config.ExampleHTTPBinorg,
+					{
+						Name: "a",
+						Servers: []config.Server{
+							{
+								Vars: map[string]any{
+									"baseURL": "http://server.example",
+								},
+							},
+						},
+						Resources: []config.Resource{
+							{
+								Name: "get",
+								URI:  "{+baseURL}/get",
+							},
+						},
+					},
+					{
+						Name: "b",
+						Servers: []config.Server{
+							{
+								BaseURL: "{+baseURL}",
+								Vars: map[string]any{
+									"baseURL": "http://var.example:8080",
+								},
+							},
+						},
+						Resources: []config.Resource{
+							{
+								Name: "make",
+								URI:  "make",
+							},
+						},
+					},
 				},
 			})
 
@@ -163,6 +196,16 @@ var _ = Describe("ResolvedReference", func() {
 				[]string{"httpbin", "status", "codes"},
 				map[string]any{"codes": 200},
 				"https://httpbin.org/status/200",
+			),
+			Entry("using vars",
+				[]string{"a", "get"},
+				nil,
+				"http://server.example/get",
+			),
+			Entry("baseURL also using vars",
+				[]string{"b", "make"},
+				nil,
+				"http://var.example:8080/make",
 			),
 		)
 

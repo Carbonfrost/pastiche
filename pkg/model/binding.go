@@ -20,7 +20,7 @@ func service(v config.Service) *Service {
 		Servers:     servers,
 		Resource: &Resource{
 			Name:        "/",
-			URITemplate: mustParseURITemplate("/"),
+			URITemplate: mustParseURITemplate(""),
 			Resources:   resources(v.Resources),
 			Endpoints: []*Endpoint{
 				{

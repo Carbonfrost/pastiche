@@ -110,11 +110,11 @@ type resolvedResource struct {
 }
 
 type request struct {
-	baseURL *url.URL
-	vars    map[string]any
-	prefix  []string
-	headers http.Header
-	body    io.ReadCloser
+	baseURITemplate *uritemplates.URITemplate
+	vars            map[string]any
+	prefix          []string
+	headers         http.Header
+	body            io.ReadCloser
 }
 
 func New(c *config.Config) *Model {
@@ -232,11 +232,15 @@ func (r *resolvedResource) EvalRequest(baseURL *url.URL, vars map[string]any) (R
 	}
 
 	var err error
+	var baseURITemplate *uritemplates.URITemplate
 	if baseURL == nil {
-		baseURL, err = url.Parse(r.Server().BaseURL)
+		// Treat server baseURL as a potential URI template
+		baseURITemplate, err = uritemplates.Parse(r.Server().BaseURL)
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		baseURITemplate, _ = uritemplates.Parse(baseURL.String())
 	}
 
 	combinedVars := r.combinedVars()
@@ -262,16 +266,21 @@ func (r *resolvedResource) EvalRequest(baseURL *url.URL, vars map[string]any) (R
 	}()
 
 	return request{
-		baseURL: baseURL,
-		vars:    vars,
-		prefix:  prefix,
-		headers: headers,
-		body:    body,
+		baseURITemplate: baseURITemplate,
+		vars:            combinedVars,
+		prefix:          prefix,
+		headers:         headers,
+		body:            body,
 	}, nil
 }
 
 func (r request) URL() (*url.URL, error) {
-	template := path.Join(r.prefix...)
+	base := r.baseURITemplate.String()
+	if base != "" {
+		base = base + "/"
+	}
+	template := base + path.Join(r.prefix...)
+
 	tt, err := uritemplates.Parse(template)
 	if err != nil {
 		return nil, err
@@ -281,14 +290,12 @@ func (r request) URL() (*url.URL, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	u, err := url.Parse(expanded)
 	if err != nil {
 		return nil, err
 	}
 
-	u = r.baseURL.ResolveReference(u)
-	return u, err
+	return u.JoinPath(), nil
 }
 
 func (r request) Body() io.ReadCloser {
