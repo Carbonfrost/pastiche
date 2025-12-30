@@ -112,7 +112,11 @@ func (c *Config) loadFiles(root string) error {
 		}
 
 		file, err := LoadFile(rootFS, name)
-		if err != nil && !errors.Is(err, ErrUnsupportedFileFormat) {
+		if err != nil {
+			if errors.Is(err, ErrUnsupportedFileFormat) {
+				return nil
+			}
+
 			log.Warnf("%s: %v", filepath.Join(root, name), err)
 			return nil
 		}
