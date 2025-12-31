@@ -64,6 +64,7 @@ func resource(r config.Resource) *Resource {
 		Body:        r.Body,
 		RawBody:     r.RawBody,
 		Vars:        r.Vars,
+		Form:        r.Form,
 	}
 	if r.Get != nil {
 		res.Endpoints = append(res.Endpoints, endpoint("GET", r.Get))
@@ -120,6 +121,7 @@ func endpoint(method string, r *config.Endpoint) *Endpoint {
 		Body:        r.Body,
 		RawBody:     r.RawBody,
 		Vars:        r.Vars,
+		Form:        r.Form,
 	}
 }
 

@@ -35,6 +35,7 @@ type Resource struct {
 	Resources   []Resource     `json:"resources,omitempty"`
 	URI         string         `json:"uri,omitempty"`
 	Headers     Header         `json:"headers,omitempty"`
+	Form        Form           `json:"form,omitempty"`
 	Links       []Link         `json:"links,omitempty"`
 	Get         *Endpoint      `json:"get,omitempty"`
 	Put         *Endpoint      `json:"put,omitempty"`
@@ -55,6 +56,7 @@ type Endpoint struct {
 	Title       string         `json:"title,omitempty"`
 	Description string         `json:"description,omitempty"`
 	Headers     Header         `json:"headers,omitempty"`
+	Form        Form           `json:"form,omitempty"`
 	Links       []Link         `json:"links,omitempty"`
 	Body        any            `json:"body,omitempty"`
 	RawBody     any            `json:"rawBody,omitempty"`

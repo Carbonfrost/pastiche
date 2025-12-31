@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"text/template"
 
 	joehttpclient "github.com/Carbonfrost/joe-cli-http/httpclient"
@@ -23,6 +24,10 @@ type templateContent struct {
 	tpl string
 }
 
+type formContent struct {
+	*contentSupport
+}
+
 type Expander = expr.Expander
 
 type objectContent struct {
@@ -31,13 +36,13 @@ type objectContent struct {
 }
 
 type contentSupport struct {
-	form map[string]any
+	form url.Values
 	vars map[string]any
 }
 
 func newContentSupport(vars map[string]any) *contentSupport {
 	return &contentSupport{
-		form: map[string]any{},
+		form: url.Values{},
 		vars: vars,
 	}
 }
@@ -58,6 +63,15 @@ func resolveVar(exp Expander) func(...string) (any, error) {
 			}
 		}
 		return "", fmt.Errorf("var not found: %q", vars[0])
+	}
+}
+
+func newFormContent(form map[string][]string, vars map[string]any) joehttpclient.Content {
+	return &formContent{
+		contentSupport: &contentSupport{
+			form: form,
+			vars: vars,
+		},
 	}
 }
 
@@ -127,17 +141,24 @@ func (t *objectContent) Read() io.Reader {
 	return bytes.NewReader(result.Bytes())
 }
 
+func (t *formContent) Read() io.Reader {
+	expander := t.Expander()
+	values := expandObject(t.form, expander).(url.Values)
+
+	return strings.NewReader(values.Encode())
+}
+
 func (t *contentSupport) Expander() Expander {
 	return expr.ComposeExpanders(
 		expr.Prefix("var", expr.ExpandMap(t.vars)),
-		expr.Prefix("form", expr.ExpandMap(t.form)),
-		expr.ExpandMap(t.form),
+		expr.Prefix("form", expandURLValues(t.form)),
+		expandURLValues(t.form),
 		expr.ExpandMap(t.vars),
 	)
 }
 
 func (t *contentSupport) Set(name, value string) error {
-	t.form[name] = value
+	t.form.Add(name, value)
 	return nil
 }
 
@@ -180,6 +201,8 @@ func expandObject(v any, e Expander) any {
 		return newValues
 	case http.Header:
 		return http.Header(expandHeader(value, e))
+	case url.Values:
+		return url.Values(expandHeader(value, e))
 
 	case map[string][]string:
 		return expandHeader(value, e)
@@ -202,4 +225,13 @@ func expandHeader(value map[string][]string, e Expander) map[string][]string {
 
 func expandString(s string, e Expander) string {
 	return expr.SyntaxRecursive.CompilePattern(s, "${", "}").Expand(e)
+}
+
+func expandURLValues(u url.Values) expr.Expander {
+	return func(s string) any {
+		if u.Has(s) {
+			return strings.Join(u[s], ",")
+		}
+		return nil
+	}
 }

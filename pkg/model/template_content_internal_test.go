@@ -19,6 +19,8 @@ var _ = Describe("newTemplateContent", func() {
 			c := newTemplateContent(tpl, map[string]any{"found": "found", "v": "var"})
 
 			c.Set("v", "form")
+			c.Set("multi", "value1")
+			c.Set("multi", "value2")
 
 			rendered, _ := io.ReadAll(c.Read())
 			Expect(string(rendered)).To(Equal(expected))
@@ -26,6 +28,7 @@ var _ = Describe("newTemplateContent", func() {
 			Entry("var fallback literal", `{{ var "notfound" "fallback" }}`, "fallback"),
 			Entry("var fallback var", `{{ var "notfound" "found" "fallback" }}`, "found"),
 			Entry("form wins over var", `{{ var "v" }}`, `form`),
+			Entry("form is comma-delimited", `{{ var "multi" }}`, `value1,value2`),
 		)
 
 		DescribeTable("errors", func(tpl, expected string) {
@@ -117,6 +120,26 @@ var _ = Describe("expandObject", func() {
 			map[string][]string{"Prefer": {"1value", "2value"}},
 		),
 	)
+
+})
+
+var _ = Describe("newFormContent", func() {
+
+	Describe("Read", func() {
+
+		It("encodes as URL string", func() {
+			form := map[string][]string{
+				"client_id":     []string{"${var.client_id}"},
+				"client_secret": []string{"${var.client_secret}"},
+			}
+			expected := "client_id=CLIENT_ID&client_secret=CLIENT_SECRET"
+			c := newFormContent(form, map[string]any{"client_id": "CLIENT_ID", "client_secret": "CLIENT_SECRET"})
+
+			rendered, _ := io.ReadAll(c.Read())
+			Expect(string(rendered)).To(Equal(expected))
+		})
+
+	})
 
 })
 

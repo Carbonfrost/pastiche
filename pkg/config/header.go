@@ -11,17 +11,33 @@ import (
 // Header represents the key-value pairs in an HTTP header.
 type Header map[string][]string
 
+// Form represents the key-value pairs in an encoded form.
+type Form map[string][]string
+
 func (h *Header) UnmarshalJSON(d []byte) error {
-	values := map[string]any{}
-	err := json.Unmarshal(d, &values)
+	head, err := makeHeader(*h, d)
 	if err != nil {
 		return err
 	}
-	return makeHeader(h, values)
+	*h = head
+	return nil
 }
 
-func makeHeader(h *Header, values map[string]any) error {
-	head := *h
+func (f *Form) UnmarshalJSON(d []byte) error {
+	head, err := makeHeader(*f, d)
+	if err != nil {
+		return err
+	}
+	*f = head
+	return nil
+}
+
+func makeHeader[H ~map[string][]string](head H, data []byte) (map[string][]string, error) {
+	values := map[string]any{}
+	err := json.Unmarshal(data, &values)
+	if err != nil {
+		return nil, err
+	}
 	if head == nil {
 		head = map[string][]string{}
 	}
@@ -36,13 +52,13 @@ func makeHeader(h *Header, values map[string]any) error {
 			}
 			head[k] = strs
 		default:
-			return fmt.Errorf("unexpected type in header: %T", val)
+			return nil, fmt.Errorf("unexpected type in %T: %T", head, val)
 		}
 	}
-	*h = head
-	return nil
+	return head, nil
 }
 
 var (
 	_ json.Unmarshaler = (*Header)(nil)
+	_ json.Unmarshaler = (*Form)(nil)
 )

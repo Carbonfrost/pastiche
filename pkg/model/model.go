@@ -44,6 +44,7 @@ type Server struct {
 	Title       string
 	BaseURL     string
 	Headers     map[string][]string
+	Form        map[string][]string
 	Links       []Link
 	Vars        map[string]any
 }
@@ -56,6 +57,7 @@ type Resource struct {
 	Endpoints   []*Endpoint
 	URITemplate *uritemplates.URITemplate
 	Headers     map[string][]string
+	Form        map[string][]string
 	Links       []Link
 	Command     []string
 	Body        any
@@ -69,6 +71,7 @@ type Endpoint struct {
 	Description string
 	Method      string
 	Headers     map[string][]string
+	Form        map[string][]string
 	Links       []Link
 	Body        any
 	RawBody     any
@@ -339,11 +342,17 @@ func (r *resolvedResource) combinedVars() map[string]any {
 }
 
 func (r *resolvedResource) bodyContent(vars map[string]any) httpclient.Content {
+	if r.Endpoint().Form != nil {
+		return newFormContent(r.Endpoint().Form, vars)
+	}
 	if r.Endpoint().Body != "" {
 		return newTemplateContent(r.Endpoint().Body, vars)
 	}
 	if r.Endpoint().RawBody != "" {
 		return newRawContent(r.Endpoint().RawBody)
+	}
+	if r.Resource().Form != nil {
+		return newFormContent(r.Resource().Form, vars)
 	}
 	if r.Resource().Body != "" {
 		return newTemplateContent(r.Resource().Body, vars)
