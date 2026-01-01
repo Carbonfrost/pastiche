@@ -5,6 +5,7 @@ package client
 
 import (
 	"bytes"
+	"context"
 
 	"github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
@@ -13,8 +14,23 @@ import (
 	"github.com/Carbonfrost/pastiche/pkg/model"
 )
 
+// Do provides the default action of the client which is to invoke it and print the results.
+// This can be assigned to the Uses pipeline to set up necessary prerequisites. The actual action
+// is [FetchAndPrint]
 func Do() cli.Action {
 	return invokeUsingMethod()
+}
+
+// FetchAndPrint invokes the client and prints the results.
+func FetchAndPrint() cli.Action {
+	return cli.ActionOf(func(ctx context.Context) error {
+		c := FromContext(ctx)
+		if c.Type() == ClientTypeHTTP {
+			return cli.Do(ctx, httpclient.FetchAndPrint())
+		}
+
+		panic("not implemented")
+	})
 }
 
 func invokeUsingMethod() cli.Action {
@@ -56,7 +72,7 @@ func invokeUsingMethod() cli.Action {
 				}...),
 			),
 			Action: cli.Pipeline(
-				httpclient.FetchAndPrint(),
+				FetchAndPrint(),
 			),
 		})
 }

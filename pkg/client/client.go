@@ -15,11 +15,19 @@ import (
 	"github.com/Carbonfrost/pastiche/pkg/model"
 )
 
-type Client struct {
-	*httpclient.Client
+// ClientType enumerates the client types available to Pastiche client
+type ClientType int
 
+type Client struct {
+	cli.Action
+
+	http   *httpclient.Client
 	filter Filter
 }
+
+const (
+	ClientTypeHTTP ClientType = iota
+)
 
 const (
 	pasticheURL = "https://github.com/Carbonfrost/pastiche"
@@ -47,8 +55,9 @@ func New() *Client {
 		},
 	)
 	res := &Client{
-		Client: client,
+		http: client,
 	}
+	res.Action = defaultAction(res)
 	client.UseDownloadMiddleware(res.filterResponse)
 	return res
 }
@@ -60,21 +69,22 @@ func (c *Client) filterResponse(d httpclient.Downloader) httpclient.Downloader {
 	return NewFilterDownloader(c.filter, d)
 }
 
+func (*Client) Type() ClientType {
+	return ClientTypeHTTP
+}
+
 // FromContext obtains the client stored in the context
 func FromContext(c context.Context) *Client {
 	return c.Value(servicesKey).(*Client)
 }
 
-func (c *Client) Execute(ctx context.Context) error {
-	return cli.Do(
-		ctx,
-		cli.Pipeline(
-			c.Client,
-			cli.RemoveArg(0), // Remove URL contributed by http client
-			FilterRegistry,
-			FlagsAndArgs(),
-			ContextValue(c),
-		),
+func defaultAction(c *Client) cli.Action {
+	return cli.Pipeline(
+		c.http,
+		cli.RemoveArg(0), // Remove URL contributed by http client
+		FilterRegistry,
+		FlagsAndArgs(),
+		ContextValue(c),
 	)
 }
 
