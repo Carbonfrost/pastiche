@@ -1,7 +1,7 @@
 // Copyright 2023, 2025 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
-package httpclient_test
+package client_test
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
-	phttpclient "github.com/Carbonfrost/pastiche/pkg/httpclient"
+	phttpclient "github.com/Carbonfrost/pastiche/pkg/client"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 	"github.com/Carbonfrost/pastiche/pkg/model/modelfakes"
 

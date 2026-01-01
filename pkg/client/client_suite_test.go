@@ -1,7 +1,7 @@
-// Copyright 2022 The Pastiche Authors. All rights reserved.
+// Copyright 2022, 2025 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
-package httpclient_test
+package client_test
 
 import (
 	"testing"
@@ -10,7 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestHttpclient(t *testing.T) {
+func TestClient(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Httpclient Suite")
+	RunSpecs(t, "Client Suite")
 }

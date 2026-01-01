@@ -11,7 +11,7 @@ import (
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli/extensions/color"
 	"github.com/Carbonfrost/joe-cli/extensions/table"
-	phttpclient "github.com/Carbonfrost/pastiche/pkg/httpclient"
+	phttpclient "github.com/Carbonfrost/pastiche/pkg/client"
 	"github.com/Carbonfrost/pastiche/pkg/internal/build"
 )
 
