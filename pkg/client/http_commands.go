@@ -1,7 +1,7 @@
 // Copyright 2025 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
-package pastiche
+package client
 
 import (
 	"bytes"
@@ -12,6 +12,10 @@ import (
 	"github.com/Carbonfrost/pastiche/pkg/config"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 )
+
+func Do() cli.Action {
+	return invokeUsingMethod()
+}
 
 func invokeUsingMethod() cli.Action {
 	return cli.Pipeline(

@@ -69,7 +69,7 @@ func NewApp() *cli.App {
 				},
 				Uses: cli.HandleCommandNotFound(nil),
 			},
-			{Name: "fetch", Uses: invokeUsingMethod()},
+			{Name: "fetch", Uses: phttpclient.Do()},
 		},
 		Flags: []*cli.Flag{
 			{
