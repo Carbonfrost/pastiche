@@ -42,7 +42,7 @@ var (
 			"jmespath": {
 				Factory: provider.Factory(newJMESPath),
 				Defaults: map[string]string{
-					"query": ".",
+					"query": "@",
 				},
 				HelpText: "Use JMES Path to select matching JSON data",
 			},
