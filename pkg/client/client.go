@@ -11,6 +11,7 @@ import (
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli/extensions/provider"
 	"github.com/Carbonfrost/pastiche/pkg/config"
+	"github.com/Carbonfrost/pastiche/pkg/grpcclient"
 	"github.com/Carbonfrost/pastiche/pkg/internal/build"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 )
@@ -19,6 +20,7 @@ type Client struct {
 	cli.Action
 
 	http       *httpclient.Client
+	grpc       *grpcclient.Client
 	clientType ClientType
 	filter     Filter
 }
@@ -50,6 +52,11 @@ func New() *Client {
 	)
 	res := &Client{
 		http: client,
+		grpc: grpcclient.New(
+			grpcclient.WithLocationResolver(
+				sr,
+			),
+		),
 	}
 	res.Action = defaultAction(res)
 	client.UseDownloadMiddleware(res.filterResponse)
@@ -76,6 +83,11 @@ func defaultAction(c *Client) cli.Action {
 	return cli.Pipeline(
 		c.http,
 		cli.RemoveArg(0), // Remove URL contributed by http client
+
+		c.grpc,
+		cli.RemoveArg(0), // Remove address and symbol contributed by client
+		cli.RemoveArg(0),
+
 		FilterRegistry,
 		FlagsAndArgs(),
 		ContextValue(c),
