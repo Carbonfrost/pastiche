@@ -1,4 +1,4 @@
-// Copyright 2025 The Pastiche Authors. All rights reserved.
+// Copyright 2025, 2026 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 package client
@@ -15,19 +15,13 @@ import (
 	"github.com/Carbonfrost/pastiche/pkg/model"
 )
 
-// ClientType enumerates the client types available to Pastiche client
-type ClientType int
-
 type Client struct {
 	cli.Action
 
-	http   *httpclient.Client
-	filter Filter
+	http       *httpclient.Client
+	clientType ClientType
+	filter     Filter
 }
-
-const (
-	ClientTypeHTTP ClientType = iota
-)
 
 const (
 	pasticheURL = "https://github.com/Carbonfrost/pastiche"
@@ -69,8 +63,8 @@ func (c *Client) filterResponse(d httpclient.Downloader) httpclient.Downloader {
 	return NewFilterDownloader(c.filter, d)
 }
 
-func (*Client) Type() ClientType {
-	return ClientTypeHTTP
+func (c *Client) Type() ClientType {
+	return c.clientType
 }
 
 // FromContext obtains the client stored in the context
@@ -97,6 +91,7 @@ func FlagsAndArgs() cli.Action {
 		cli.AddFlags([]*cli.Flag{
 			{Uses: ListFilters()},
 			{Uses: SetFilter()},
+			{Uses: SetClientType()},
 		}...),
 	)
 }
@@ -112,6 +107,11 @@ func (c *Client) setFilterHelper(v *provider.Value) error {
 
 func (c *Client) SetFilter(f Filter) error {
 	c.filter = f
+	return nil
+}
+
+func (c *Client) SetClientType(t ClientType) error {
+	c.clientType = t
 	return nil
 }
 

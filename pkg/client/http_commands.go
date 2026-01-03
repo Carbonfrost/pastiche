@@ -1,4 +1,4 @@
-// Copyright 2025 The Pastiche Authors. All rights reserved.
+// Copyright 2025, 2026 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 package client
@@ -11,8 +11,20 @@ import (
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
 	"github.com/Carbonfrost/pastiche/pkg/config"
+	"github.com/Carbonfrost/pastiche/pkg/grpcclient"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 )
+
+func SetClientType(v ...ClientType) cli.Action {
+	return cli.Pipeline(
+		&cli.Prototype{
+			Name:     "client",
+			Aliases:  []string{"g"},
+			HelpText: "Specify the client that will be used",
+		},
+		withBinding((*Client).SetClientType, v),
+	)
+}
 
 // Do provides the default action of the client which is to invoke it and print the results.
 // This can be assigned to the Uses pipeline to set up necessary prerequisites. The actual action
@@ -25,11 +37,11 @@ func Do() cli.Action {
 func FetchAndPrint() cli.Action {
 	return cli.ActionOf(func(ctx context.Context) error {
 		c := FromContext(ctx)
-		if c.Type() == ClientTypeHTTP {
-			return cli.Do(ctx, httpclient.FetchAndPrint())
+		if c.Type() == ClientTypeGRPC {
+			return cli.Do(ctx, grpcclient.FetchAndPrint())
 		}
 
-		panic("not implemented")
+		return cli.Do(ctx, httpclient.FetchAndPrint())
 	})
 }
 
