@@ -1,4 +1,4 @@
-// Copyright 2025 The Pastiche Authors. All rights reserved.
+// Copyright 2025, 2026 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 package config
@@ -7,9 +7,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/Carbonfrost/pastiche/pkg/internal/log"
 	"sigs.k8s.io/yaml"
@@ -17,6 +19,10 @@ import (
 
 type Config struct {
 	Services []Service
+}
+
+type sourcer struct {
+	f fs.FS
 }
 
 type unmarshaler func([]byte, any) error
@@ -59,6 +65,12 @@ func LoadFile(f fs.FS, filename string) (*File, error) {
 
 		if len(result.Services) > 0 && result.Service != nil {
 			return nil, fmt.Errorf("must contain either service definition or services list, but not both")
+		}
+
+		src := sourcer{f: f}
+		err = src.source(filename, result)
+		if err != nil {
+			return nil, err
 		}
 
 		return result, nil
@@ -107,6 +119,10 @@ func (c *Config) loadFiles(root string) error {
 			return nil
 		}
 
+		if strings.HasPrefix(name, "_") {
+			return nil
+		}
+
 		if err != nil {
 			return err
 		}
@@ -130,6 +146,100 @@ func (c *Config) loadFiles(root string) error {
 	})
 }
 
+func (s sourcer) source(basefilename string, v any) error {
+	var file string
+
+	switch a := v.(type) {
+	case *File:
+		if a.Service == nil {
+			return nil
+		}
+		return s.source(basefilename, a.Service)
+	case *Service:
+		if a == nil {
+			return nil
+		}
+		file = a.Source
+	case *Server:
+		if a == nil {
+			return nil
+		}
+		file = a.Source
+	case *Resource:
+		if a == nil {
+			return nil
+		}
+		file = a.Source
+	case *Endpoint:
+		if a == nil {
+			return nil
+		}
+		file = a.Source
+	}
+
+	if file != "" {
+		resolvedFile := filepath.Join(filepath.Dir(basefilename), file)
+		reader, err := s.f.Open(resolvedFile)
+		if err != nil {
+			return err
+		}
+
+		data, err := io.ReadAll(reader)
+		if err != nil {
+			return err
+		}
+		unmarshal, ok := unmarshalers[filepath.Ext(file)]
+		if !ok {
+			return fmt.Errorf("%s: %w", file, ErrUnsupportedFileFormat)
+		}
+		unmarshal(data, v)
+	}
+
+	switch a := v.(type) {
+	case *Service:
+		err := sources(s, file, a.Servers)
+		if err != nil {
+			return err
+		}
+		return sources(s, file, a.Resources)
+
+	case *Server:
+		// Nothing to do for servers
+
+	case *Resource:
+		err := sources(s, file, a.Resources)
+		if err != nil {
+			return err
+		}
+		return s.sources(file, a.Get, a.Put, a.Post, a.Delete, a.Options, a.Head, a.Trace, a.Patch, a.Query)
+
+	case *Endpoint:
+		// Nothing to do for endpoints
+	}
+	return nil
+}
+
+func (s sourcer) sources(basefilename string, values ...any) error {
+	for _, v := range values {
+		err := s.source(basefilename, v)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func unmarshalYaml(data []byte, v any) error {
 	return yaml.UnmarshalStrict(data, v)
+}
+
+func sources[V any](s sourcer, basefilename string, values []V) error {
+	for i, v := range values {
+		err := s.source(basefilename, &v)
+		values[i] = v
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

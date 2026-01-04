@@ -1,4 +1,4 @@
-// Copyright 2025 The Pastiche Authors. All rights reserved.
+// Copyright 2025, 2026 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 package config_test
@@ -9,6 +9,7 @@ import (
 	"github.com/Carbonfrost/pastiche/pkg/config"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega/gstruct"
 	"github.com/onsi/gomega/types"
 )
 
@@ -45,6 +46,26 @@ var _ = Describe("Config", func() {
 					config.Service{Name: "baz"},
 				)),
 			),
+			Entry(
+				"include",
+				"include.yml",
+				haveResources(ContainElements(
+					MatchFields(IgnoreExtras,
+						// TODO The Source attribute for the source of
+						// the included document remains unchanged, so we do a fieldwise
+						// comparison
+						Fields{
+							"Name": Equal("resource"),
+							"URI":  Equal("/api/{name}.json"),
+						}),
+					MatchFields(IgnoreExtras,
+						Fields{
+							// This contains a relative path ./group/_a.resource.json
+							"Name": Equal("a"),
+							"URI":  Equal("/v2/{name}.json"),
+						}),
+				)),
+			),
 		)
 
 		DescribeTable("errors",
@@ -62,6 +83,11 @@ var _ = Describe("Config", func() {
 				"both service and service list",
 				"error_serviceList.yml",
 				MatchError("must contain either service definition or services list, but not both"),
+			),
+			Entry(
+				"missing included file",
+				"error_includeNotFound.yml",
+				MatchError(ContainSubstring("no such file or directory")),
 			),
 		)
 

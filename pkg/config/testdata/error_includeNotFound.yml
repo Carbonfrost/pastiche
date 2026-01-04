@@ -1,0 +1,6 @@
+name: includeNotFound
+servers:
+  - name: production
+    baseUrl: https://example.sh/
+resources:
+  - source: _missing_file.yml

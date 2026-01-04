@@ -1,0 +1,7 @@
+name: include
+servers:
+  - name: production
+    baseUrl: https://example.sh/
+resources:
+  - source: _basic.resource.yml
+  - source: ./group/_a.resource.json

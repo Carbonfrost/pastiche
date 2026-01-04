@@ -1,4 +1,4 @@
-// Copyright 2025 The Pastiche Authors. All rights reserved.
+// Copyright 2025, 2026 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 package config
@@ -11,6 +11,7 @@ type File struct {
 
 type Service struct {
 	Name        string         `json:"name"`
+	Source      string         `json:"source,omitempty"`
 	Title       string         `json:"title,omitempty"`
 	Description string         `json:"description,omitempty"`
 	Servers     []Server       `json:"servers,omitempty"`
@@ -20,6 +21,7 @@ type Service struct {
 
 type Server struct {
 	Name        string         `json:"name"`
+	Source      string         `json:"source,omitempty"`
 	Description string         `json:"description"`
 	Title       string         `json:"title"`
 	BaseURL     string         `json:"baseUrl"`
@@ -30,6 +32,7 @@ type Server struct {
 
 type Resource struct {
 	Name        string         `json:"name,omitempty"`
+	Source      string         `json:"source,omitempty"`
 	Title       string         `json:"title,omitempty"`
 	Description string         `json:"description,omitempty"`
 	Resources   []Resource     `json:"resources,omitempty"`
@@ -54,6 +57,7 @@ type Resource struct {
 type Endpoint struct {
 	Name        string         `json:"name,omitempty"`
 	Title       string         `json:"title,omitempty"`
+	Source      string         `json:"source,omitempty"`
 	Description string         `json:"description,omitempty"`
 	Headers     Header         `json:"headers,omitempty"`
 	Form        Form           `json:"form,omitempty"`
