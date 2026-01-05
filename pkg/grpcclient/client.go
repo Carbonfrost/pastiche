@@ -28,6 +28,8 @@ type Client struct {
 	symbol  string
 	creds   credentials.TransportCredentials
 
+	headers []string
+
 	// interop with httpclient
 	locationResolver httpclient.LocationResolver
 }
@@ -51,7 +53,6 @@ func defaultAction(c *Client) cli.Action {
 	return cli.Pipeline(
 		FlagsAndArgs(),
 		ContextValue(c),
-		cli.At(cli.ActionTiming, FetchAndPrint()),
 	)
 }
 
@@ -73,7 +74,7 @@ func (c *Client) Do(ctx context.Context) ([]*Response, error) {
 		}
 
 	} else {
-		resp, err := fetchAndPrintCore(ctx, c.address, c.symbol)
+		resp, err := fetchAndPrintCore(ctx, c, c.address, c.symbol)
 		if err != nil {
 			return nil, err
 		}
@@ -92,7 +93,7 @@ func (c *Client) doOne(ctx context.Context, l httpclient.Location) (*Response, e
 
 	address := u.Host
 	symbol := strings.TrimPrefix(u.Path, "/")
-	return fetchAndPrintCore(uctx, address, symbol)
+	return fetchAndPrintCore(uctx, c, address, symbol)
 }
 
 func WithLocationResolver(value httpclient.LocationResolver) Option {
@@ -113,12 +114,18 @@ func WithSymbol(value string) Option {
 	}
 }
 
+func WithHeader(name, value string) Option {
+	return func(c *Client) {
+		c.headers = append(c.headers, fmt.Sprintf("%s:%s", name, value))
+	}
+}
+
 func (o Option) Execute(c context.Context) error {
 	o(FromContext(c))
 	return nil
 }
 
-func fetchAndPrintCore(ctx context.Context, target, methodName string) (*Response, error) {
+func fetchAndPrintCore(ctx context.Context, c *Client, target, methodName string) (*Response, error) {
 	options := grpcurl.FormatOptions{
 		EmitJSONDefaultFields: true,
 		IncludeTextSeparator:  true,
@@ -126,6 +133,7 @@ func fetchAndPrintCore(ctx context.Context, target, methodName string) (*Respons
 	}
 
 	var addlHeaders []string
+	addlHeaders = append(addlHeaders, c.headers...)
 
 	// TODO Read document from correct source
 	in := os.Stdin
