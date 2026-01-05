@@ -43,7 +43,11 @@ func Do(c *cli.Context) ([]*Response, error) {
 func FlagsAndArgs() cli.Action {
 	return cli.Pipeline(
 		cli.AddFlags(
-			[]*cli.Flag{}...,
+			[]*cli.Flag{
+				{Uses: SetPlaintext()},
+				{Uses: SetDisableReflection()},
+				{Uses: SetProtoset()},
+			}...,
 		),
 		cli.AddArgs(
 			[]*cli.Arg{
@@ -58,6 +62,45 @@ func FlagsAndArgs() cli.Action {
 // of all flags that are initialized from this package
 func SourceAnnotation() (string, string) {
 	return "Source", pkgPath
+}
+
+func SetPlaintext(s ...bool) cli.Action {
+	return cli.Pipeline(
+		&cli.Prototype{
+			Name:     "plaintext",
+			HelpText: "Activate plaintext mode and disable TLS",
+			Category: requestOptions,
+		},
+		bindAction(WithPlaintext, bind.Exact(s...)),
+		tagged,
+	)
+}
+
+func SetDisableReflection(s ...bool) cli.Action {
+	return cli.Pipeline(
+		&cli.Prototype{
+			Name:     "disable-reflection",
+			HelpText: "Disable server gRPC schema reflection",
+			Category: requestOptions,
+		},
+		bindAction(WithDisableReflection, bind.Exact(s...)),
+		tagged,
+	)
+}
+
+// TODO joe@futures should allow this to be typed as File
+
+func SetProtoset(s ...string) cli.Action {
+	return cli.Pipeline(
+		&cli.Prototype{
+			Name:     "protoset",
+			HelpText: "Provide FILE with grpc protoset schema",
+			Category: requestOptions,
+			Options:  cli.MustExist | cli.EachOccurrence,
+		},
+		bindAction(WithProtoset, bind.Exact(s...)),
+		tagged,
+	)
 }
 
 func SetAddr(s ...string) cli.Action {

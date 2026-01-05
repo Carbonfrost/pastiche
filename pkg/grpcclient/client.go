@@ -6,14 +6,18 @@ package grpcclient
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
+	"github.com/Carbonfrost/pastiche/pkg/internal/build"
 	"github.com/fullstorydev/grpcurl"
 	"github.com/jhump/protoreflect/grpcreflect"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 )
@@ -28,7 +32,12 @@ type Client struct {
 	symbol  string
 	creds   credentials.TransportCredentials
 
-	headers []string
+	protoset          []string
+	disableReflection bool
+	plaintext         bool
+
+	headers           []string
+	reflectionHeaders []string // TODO Allow setting reflection headers
 
 	// interop with httpclient
 	locationResolver httpclient.LocationResolver
@@ -39,6 +48,7 @@ type Option func(*Client)
 type contextKey string
 
 const servicesKey contextKey = "grpcclient_services"
+const pasticheURL = "https://github.com/Carbonfrost/pastiche"
 
 func New(opts ...Option) *Client {
 	c := &Client{}
@@ -102,6 +112,24 @@ func WithLocationResolver(value httpclient.LocationResolver) Option {
 	}
 }
 
+func WithDisableReflection(value bool) Option {
+	return func(c *Client) {
+		c.disableReflection = value
+	}
+}
+
+func WithProtoset(value string) Option {
+	return func(c *Client) {
+		c.protoset = append(c.protoset, value)
+	}
+}
+
+func WithPlaintext(value bool) Option {
+	return func(c *Client) {
+		c.plaintext = value
+	}
+}
+
 func WithAddr(value string) Option {
 	return func(c *Client) {
 		c.address = value
@@ -125,6 +153,65 @@ func (o Option) Execute(c context.Context) error {
 	return nil
 }
 
+func (c *Client) dial(ctx context.Context, target string) (*grpc.ClientConn, error) {
+	// TODO Should support customized dial and connect timeouts
+	dialTime := 10 * time.Second
+	ctx, cancel := context.WithTimeout(ctx, dialTime)
+	defer cancel()
+
+	var opts []grpc.DialOption
+	var creds credentials.TransportCredentials
+
+	if c.plaintext {
+		// TODO Should support configuring authority
+
+	} else {
+		tlsConf := clientTLSConfig(ctx)
+		creds = credentials.NewTLS(tlsConf)
+	}
+
+	opts = append(opts, grpc.WithUserAgent(defaultUserAgent()))
+
+	cc, err := grpcurl.BlockingDial(ctx, "", target, creds, opts...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to dial target host %q: %w", target, err)
+	}
+	return cc, nil
+}
+
+func (c *Client) descSource(ctx context.Context, target string) (grpcurl.DescriptorSource, error) {
+	var fileSource grpcurl.DescriptorSource
+	if len(c.protoset) > 0 {
+		var err error
+		fileSource, err = grpcurl.DescriptorSourceFromProtoSets(c.protoset...)
+		if err != nil {
+			return nil, fmt.Errorf("failed to process proto descriptor sets: %w", err)
+		}
+	}
+
+	if !c.disableReflection {
+		md := grpcurl.MetadataFromHeaders(append(c.headers, c.reflectionHeaders...))
+		refCtx := metadata.NewOutgoingContext(ctx, md)
+
+		cc, err := c.dial(ctx, target)
+		if err != nil {
+			return nil, fmt.Errorf("failed to reflect service: %w", err)
+		}
+
+		refClient := grpcreflect.NewClientAuto(refCtx, cc)
+		refClient.AllowMissingFileDescriptors()
+		reflSource := grpcurl.DescriptorSourceFromServer(ctx, refClient)
+		if fileSource != nil {
+			panic("not implemented: composite reflection and file source")
+
+		} else {
+			return reflSource, nil
+		}
+	} else {
+		return fileSource, nil
+	}
+}
+
 func fetchAndPrintCore(ctx context.Context, c *Client, target, methodName string) (*Response, error) {
 	options := grpcurl.FormatOptions{
 		EmitJSONDefaultFields: true,
@@ -138,21 +225,15 @@ func fetchAndPrintCore(ctx context.Context, c *Client, target, methodName string
 	// TODO Read document from correct source
 	in := os.Stdin
 
-	// Apply reflection
-	md := grpcurl.MetadataFromHeaders(addlHeaders)
-	refCtx := metadata.NewOutgoingContext(ctx, md)
-	var creds credentials.TransportCredentials
-
-	cc, err := grpcurl.BlockingDial(ctx, "", target, creds)
+	cc, err := c.dial(ctx, target)
 	if err != nil {
 		return nil, fmt.Errorf("failed to dial target host %q: %w", target, err)
 	}
 
-	refClient := grpcreflect.NewClientAuto(refCtx, cc)
-	refClient.AllowMissingFileDescriptors()
-	reflSource := grpcurl.DescriptorSourceFromServer(ctx, refClient)
-
-	descSource := reflSource
+	descSource, err := c.descSource(ctx, target)
+	if err != nil {
+		return nil, err
+	}
 
 	rf, formatter, err := grpcurl.RequestParserAndFormatter(
 		grpcurl.Format(grpcurl.FormatJSON),
@@ -170,6 +251,19 @@ func fetchAndPrintCore(ctx context.Context, c *Client, target, methodName string
 
 	// TODO Actually provide response and filter support
 	return nil, grpcurl.InvokeRPC(ctx, descSource, cc, methodName, addlHeaders, eventHandler, rf.Next)
+}
+
+func defaultUserAgent() string {
+	version := build.Version
+	if len(version) == 0 {
+		version = "development"
+	}
+	return fmt.Sprintf("Go-http-client/1.1 (pastiche/%s, +%s)", version, pasticheURL)
+}
+
+func clientTLSConfig(c context.Context) *tls.Config {
+	// TODO Requires an update to joe-cli-http@future to use the TLS-specific package
+	return httpclient.FromContext(c).TLSConfig()
 }
 
 var _ cli.Action = Option(nil)
