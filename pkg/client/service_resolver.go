@@ -35,7 +35,7 @@ type pasticheLocation struct {
 
 type contextKey string
 
-var looksLikeURLPattern = regexp.MustCompile(`^https?://`)
+var looksLikeURLPattern = regexp.MustCompile(`^(unix|https?)://`)
 
 func NewServiceResolver(
 	c *model.Model,
@@ -163,6 +163,9 @@ func withBody(body io.ReadCloser) httpclient.MiddlewareFunc {
 }
 
 func looksLikeURL(s string) bool {
+	if strings.HasPrefix(s, "@") {
+		return false
+	}
 	// This works because service names are not allowed to contain dot
 	// This should therefore be a valid IPv4 or IPv6 address
 	return strings.HasPrefix(s, "/") ||

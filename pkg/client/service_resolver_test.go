@@ -32,6 +32,19 @@ var _ = Describe("ServiceResolver", func() {
 						URITemplate: mustParseURITemplate("https://example.com"),
 					},
 				},
+				"@example/test": {
+					Servers: []*model.Server{
+						{
+							BaseURL: "https://foo.example/",
+						},
+					},
+					Resource: &model.Resource{
+						URITemplate: mustParseURITemplate(""),
+						Endpoints: []*model.Endpoint{
+							{},
+						},
+					},
+				},
 			},
 		}
 
@@ -81,6 +94,11 @@ var _ = Describe("ServiceResolver", func() {
 			// IP addresses should get treated as URLs
 			Entry("IPv4", "192.168.1.19", "http://192.168.1.19"),
 			Entry("IPv6", "2001:db8::8a2e:370:7334", "http://2001:db8::8a2e:370:7334"),
+			// Supporting grpc
+			// TODO Requires update from joe-cli-http@futures to support correctly
+			XEntry("unix", "unix:///tmp/tmp.srKIC1Mk2e", "unix:///tmp/tmp.srKIC1Mk2e"),
+
+			Entry("allow @ in service names", "@example/test", "https://foo.example/"),
 		)
 	})
 
