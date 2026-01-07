@@ -1,0 +1,4 @@
+services:
+  - source: basic.yml
+  - source: bodyTemplate.yml
+  - source: bodyTemplate_map.yml

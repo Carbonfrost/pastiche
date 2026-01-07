@@ -1,0 +1,9 @@
+name: t
+resources:
+- name: post
+  uri: /post
+  post:
+    body: |2
+      {
+        "runtimes": "{{ env "ENG_ENABLED_RUNTIMES" }}"
+      }

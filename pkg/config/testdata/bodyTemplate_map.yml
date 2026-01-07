@@ -1,0 +1,7 @@
+name: t_map
+resources:
+- name: post
+  uri: /post
+  post:
+    body:
+      runtimes: ${env.ENG_ENABLED_RUNTIMES}

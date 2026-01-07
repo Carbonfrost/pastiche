@@ -66,6 +66,15 @@ var _ = Describe("Config", func() {
 						}),
 				)),
 			),
+			Entry(
+				"include services",
+				"include_services.yml",
+				haveServices(ContainElements(
+					MatchFields(IgnoreExtras, Fields{"Name": Equal("basic")}),
+					MatchFields(IgnoreExtras, Fields{"Name": Equal("t")}),
+					MatchFields(IgnoreExtras, Fields{"Name": Equal("t_map")}),
+				)),
+			),
 		)
 
 		DescribeTable("errors",

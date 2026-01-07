@@ -152,7 +152,7 @@ func (s sourcer) source(basefilename string, v any) error {
 	switch a := v.(type) {
 	case *File:
 		if a.Service == nil {
-			return nil
+			return sources(s, basefilename, a.Services)
 		}
 		return s.source(basefilename, a.Service)
 	case *Service:
