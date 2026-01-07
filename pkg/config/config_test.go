@@ -67,6 +67,23 @@ var _ = Describe("Config", func() {
 				)),
 			),
 			Entry(
+				"include finds relatives",
+				"include_relatives.yml",
+				haveServices(ContainElements(
+					MatchFields(IgnoreExtras,
+						Fields{
+							"Name": Equal("b"),
+							"Resources": ContainElements(
+								MatchFields(IgnoreExtras,
+									Fields{
+										"Name": Equal("a"),
+										"URI":  Equal("/v2/{name}.json"),
+									}),
+							),
+						}),
+				)),
+			),
+			Entry(
 				"include services",
 				"include_services.yml",
 				haveServices(ContainElements(

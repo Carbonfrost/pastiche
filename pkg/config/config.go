@@ -193,6 +193,9 @@ func (s sourcer) source(basefilename string, v any) error {
 			return fmt.Errorf("%s: %w", file, ErrUnsupportedFileFormat)
 		}
 		unmarshal(data, v)
+
+		// Further references in recursive includes use this new base file
+		file = resolvedFile
 	}
 
 	switch a := v.(type) {

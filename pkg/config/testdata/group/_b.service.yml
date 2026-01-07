@@ -1,0 +1,4 @@
+name: b
+resources:
+  # A relative path resolved from this file
+  - source: _a.resource.json
