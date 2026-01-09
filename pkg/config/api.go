@@ -16,6 +16,7 @@ type Service struct {
 	Description string         `json:"description,omitempty"`
 	Servers     []Server       `json:"servers,omitempty"`
 	Resources   []Resource     `json:"resources,omitempty"`
+	Links       []Link         `json:"links,omitempty"`
 	Vars        map[string]any `json:"vars,omitempty"`
 }
 

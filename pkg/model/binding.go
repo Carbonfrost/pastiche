@@ -28,7 +28,8 @@ func service(v config.Service) *Service {
 				},
 			},
 		},
-		Vars: v.Vars,
+		Links: links(v.Links),
+		Vars:  v.Vars,
 	}
 }
 
