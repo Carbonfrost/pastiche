@@ -6,6 +6,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"os"
 
 	cli "github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
@@ -87,6 +88,12 @@ func defaultAction(c *Client) cli.Action {
 		c.grpc,
 		cli.RemoveArg(0), // Remove address and symbol contributed by client
 		cli.RemoveArg(0),
+
+		// TODO This will be available from joe-cli-http@futures
+		cli.Customize(
+			"-param",
+			cli.ValueTransform(cli.TransformOptionalFileReference(cli.NewSysFS(cli.DirFS("."), os.Stdin, os.Stdout))),
+		),
 
 		FilterRegistry,
 		FlagsAndArgs(),
