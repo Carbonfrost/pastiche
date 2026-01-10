@@ -1,6 +1,7 @@
-// Copyright 2023 The Pastiche Authors. All rights reserved.
+// Copyright 2023, 2026 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+
 package model_test
 
 import (
@@ -38,6 +39,26 @@ var _ = Describe("ServiceSpecCounter", func() {
 				[]string{"homebrew", "formula", "formula=wget"},
 				2,
 				MatchError(cli.EndOfArguments),
+			),
+		)
+	})
+})
+
+var _ = Describe("ServiceSpec", func() {
+
+	Describe("Path", func() {
+
+		DescribeTable("examples", func(spec []string, expected string) {
+			subject := model.ServiceSpec(spec)
+			Expect(subject.Path()).To(Equal(expected))
+		},
+			Entry("nominal",
+				[]string{"homebrew", "formula"},
+				"homebrew/formula",
+			),
+			Entry("split with dots",
+				[]string{"@homebrew/formula", "keg"},
+				"@homebrew/formula.keg",
 			),
 		)
 	})

@@ -1,6 +1,7 @@
-// Copyright 2023 The Pastiche Authors. All rights reserved.
+// Copyright 2023, 2026 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+
 package model
 
 import (
@@ -43,6 +44,9 @@ func (s ServiceSpec) String() string {
 }
 
 func (s ServiceSpec) Path() string {
+	if strings.ContainsAny(s[0], "/") {
+		return strings.Join(s, ".")
+	}
 	return strings.Join(s, "/")
 }
 
