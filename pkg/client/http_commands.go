@@ -6,10 +6,13 @@ package client
 import (
 	"bytes"
 	"context"
+	"fmt"
 
 	"github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
+	"github.com/Carbonfrost/joe-cli/extensions/bind"
+	"github.com/Carbonfrost/joe-cli/extensions/exec"
 	"github.com/Carbonfrost/pastiche/pkg/config"
 	"github.com/Carbonfrost/pastiche/pkg/grpcclient"
 	"github.com/Carbonfrost/pastiche/pkg/model"
@@ -33,6 +36,32 @@ func Do() cli.Action {
 	return invokeUsingMethod()
 }
 
+// Open
+func Open() cli.Action {
+	return cli.Pipeline(
+		cli.Prototype{
+			Description: "View a given service configuration or link",
+		},
+		cli.AddArgs([]*cli.Arg{
+			{
+				Name:       "service",
+				Value:      new(model.ServiceSpec),
+				Completion: completeServices(),
+				// TODO Dubious - but perhaps Description should be displaye
+			},
+		}...),
+		cli.AddFlags([]*cli.Flag{
+			{
+				Name:     "rel",
+				Aliases:  []string{"r"},
+				HelpText: "Follow the given link by RELATIONSHIP",
+				Value:    new(string),
+			},
+		}...),
+		bind.Action2(openSpec, bind.Value[*model.ServiceSpec]("service"), bind.String("rel")),
+	)
+}
+
 // FetchAndPrint invokes the client and prints the results.
 func FetchAndPrint() cli.Action {
 	return cli.ActionOf(func(ctx context.Context) error {
@@ -45,8 +74,37 @@ func FetchAndPrint() cli.Action {
 	})
 }
 
+func openSpec(ss *model.ServiceSpec, rel string) cli.Action {
+	return cli.ActionFunc(func(c *cli.Context) error {
+		cfg, _ := config.Load()
+
+		mo := model.New(cfg)
+
+		merged, err := mo.Resolve(*ss, "", "")
+		if err != nil {
+			return err
+		}
+		request, err := merged.EvalRequest(nil, nil)
+		if err != nil {
+			return err
+		}
+		if rel == "" {
+			panic("not implemented: file-based resolution")
+		}
+		for _, l := range request.Links() {
+			if l.Rel == rel {
+				return exec.Open(l.HRef)
+			}
+		}
+		return fmt.Errorf("unknown rel %s in %q", rel, ss.Path())
+	})
+}
+
 func invokeUsingMethod() cli.Action {
 	return cli.Pipeline(
+		cli.Prototype{
+			Description: "Make a request using the given service",
+		},
 		cli.Setup{
 			Uses: cli.Pipeline(
 				cli.Category("Invoke HTTP client"),

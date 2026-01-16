@@ -103,6 +103,7 @@ type Request interface {
 	Body() io.ReadCloser
 	Header() http.Header
 	Vars() map[string]any
+	Links() []Link
 }
 
 type resolvedResource struct {
@@ -118,6 +119,7 @@ type request struct {
 	prefix          []string
 	headers         http.Header
 	body            io.ReadCloser
+	links           []Link
 }
 
 func New(c *config.Config) *Model {
@@ -258,6 +260,7 @@ func (r *resolvedResource) EvalRequest(baseURL *url.URL, vars map[string]any) (R
 	)
 
 	headers := expandHeader(r.combinedHeaders(), expander)
+	links := r.combinedLinks()
 
 	body := func() io.ReadCloser {
 		content := r.bodyContent(combinedVars)
@@ -274,6 +277,7 @@ func (r *resolvedResource) EvalRequest(baseURL *url.URL, vars map[string]any) (R
 		prefix:          prefix,
 		headers:         headers,
 		body:            body,
+		links:           links,
 	}, nil
 }
 
@@ -313,6 +317,10 @@ func (r request) Vars() map[string]any {
 	return r.vars
 }
 
+func (r request) Links() []Link {
+	return r.links
+}
+
 func (r *resolvedResource) combinedHeaders() http.Header {
 	result := http.Header{}
 	if r.Server() != nil {
@@ -337,6 +345,20 @@ func (r *resolvedResource) combinedVars() map[string]any {
 	}
 	if r.Endpoint() != nil {
 		maps.Copy(result, r.Endpoint().Vars)
+	}
+	return result
+}
+
+func (r *resolvedResource) combinedLinks() []Link {
+	var result []Link
+	if r.Server() != nil {
+		result = append(result, r.Server().Links...)
+	}
+	for _, l := range r.Lineage() {
+		result = append(result, l.Links...)
+	}
+	if r.Endpoint() != nil {
+		result = append(result, r.Endpoint().Links...)
 	}
 	return result
 }
