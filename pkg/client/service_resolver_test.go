@@ -1,6 +1,7 @@
 // Copyright 2023, 2025 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+
 package client_test
 
 import (
@@ -172,6 +173,9 @@ func (t testRequest) Body() io.ReadCloser {
 }
 func (t testRequest) Header() http.Header {
 	return t.headers
+}
+func (t testRequest) Links() []model.Link {
+	return nil
 }
 func (t testRequest) Vars() map[string]any {
 	return nil
