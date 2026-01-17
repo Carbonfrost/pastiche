@@ -1,11 +1,13 @@
-// Copyright 2023, 2025 The Pastiche Authors. All rights reserved.
+// Copyright 2023, 2025, 2026 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+
 package client_test
 
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -39,6 +41,42 @@ var _ = Describe("FilterDownloader", func() {
 			_ = writer.Close()
 			Expect(buf.String()).To(Equal(fmt.Sprintf("%q\n", "120")))
 		})
+	})
+
+	Context("when DigFilter", func() {
+
+		It("writes to the output of inner downloader", func() {
+			testResponse := &joehttpclient.Response{
+				Response: &http.Response{
+					Body: io.NopCloser(bytes.NewBufferString(`{"a": { "b": "240"} }`)),
+				},
+			}
+
+			var buf bytes.Buffer
+			d := client.NewFilterDownloader(
+				must(client.NewDigFilter("a.b")),
+				joehttpclient.NewDownloaderTo(&buf),
+			)
+
+			writer, _ := d.OpenDownload(context.Background(), testResponse)
+			_ = testResponse.CopyTo(writer)
+			_ = writer.Close()
+			Expect(buf.String()).To(Equal(fmt.Sprintf("%q\n", "240")))
+		})
+
+		DescribeTable("examples", func(dataJSON, query string, expected any) {
+			f := must(client.NewDigFilter(query))
+
+			var data any
+			_ = json.Unmarshal([]byte(dataJSON), &data)
+
+			actual, err := f.Search(data)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(actual).To(Equal(expected))
+		},
+			Entry("nominal", `{"a": { "b": 3} }`, "a.b", float64(3)),
+			Entry("into array", `[ 1, 2, 3 ]`, "0", float64(1)),
+		)
 	})
 
 })
