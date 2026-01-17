@@ -9,6 +9,16 @@ import (
 )
 
 type FakeResolvedResource struct {
+	ClientStub        func() model.Client
+	clientMutex       sync.RWMutex
+	clientArgsForCall []struct {
+	}
+	clientReturns struct {
+		result1 model.Client
+	}
+	clientReturnsOnCall map[int]struct {
+		result1 model.Client
+	}
 	EndpointStub        func() *model.Endpoint
 	endpointMutex       sync.RWMutex
 	endpointArgsForCall []struct {
@@ -75,6 +85,59 @@ type FakeResolvedResource struct {
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
+}
+
+func (fake *FakeResolvedResource) Client() model.Client {
+	fake.clientMutex.Lock()
+	ret, specificReturn := fake.clientReturnsOnCall[len(fake.clientArgsForCall)]
+	fake.clientArgsForCall = append(fake.clientArgsForCall, struct {
+	}{})
+	stub := fake.ClientStub
+	fakeReturns := fake.clientReturns
+	fake.recordInvocation("Client", []interface{}{})
+	fake.clientMutex.Unlock()
+	if stub != nil {
+		return stub()
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeResolvedResource) ClientCallCount() int {
+	fake.clientMutex.RLock()
+	defer fake.clientMutex.RUnlock()
+	return len(fake.clientArgsForCall)
+}
+
+func (fake *FakeResolvedResource) ClientCalls(stub func() model.Client) {
+	fake.clientMutex.Lock()
+	defer fake.clientMutex.Unlock()
+	fake.ClientStub = stub
+}
+
+func (fake *FakeResolvedResource) ClientReturns(result1 model.Client) {
+	fake.clientMutex.Lock()
+	defer fake.clientMutex.Unlock()
+	fake.ClientStub = nil
+	fake.clientReturns = struct {
+		result1 model.Client
+	}{result1}
+}
+
+func (fake *FakeResolvedResource) ClientReturnsOnCall(i int, result1 model.Client) {
+	fake.clientMutex.Lock()
+	defer fake.clientMutex.Unlock()
+	fake.ClientStub = nil
+	if fake.clientReturnsOnCall == nil {
+		fake.clientReturnsOnCall = make(map[int]struct {
+			result1 model.Client
+		})
+	}
+	fake.clientReturnsOnCall[i] = struct {
+		result1 model.Client
+	}{result1}
 }
 
 func (fake *FakeResolvedResource) Endpoint() *model.Endpoint {

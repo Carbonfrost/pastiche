@@ -8,6 +8,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/pastiche/pkg/internal/build"
+	"github.com/Carbonfrost/pastiche/pkg/model"
 	"github.com/fullstorydev/grpcurl"
 	"github.com/jhump/protoreflect/grpcreflect"
 	"google.golang.org/grpc"
@@ -36,11 +38,16 @@ type Client struct {
 	disableReflection bool
 	plaintext         bool
 
+	body              io.ReadCloser
 	headers           []string
 	reflectionHeaders []string // TODO Allow setting reflection headers
 
 	// interop with httpclient
 	locationResolver httpclient.LocationResolver
+}
+
+type modelLocation interface {
+	Resolved() model.ResolvedResource
 }
 
 type Option func(*Client)
@@ -83,6 +90,9 @@ func (c *Client) Do(ctx context.Context) ([]*Response, error) {
 		}
 
 	} else {
+		// TODO Read document from correct source
+		c.body = os.Stdin
+
 		resp, err := fetchAndPrintCore(ctx, c, c.address, c.symbol)
 		if err != nil {
 			return nil, err
@@ -100,9 +110,47 @@ func (c *Client) doOne(ctx context.Context, l httpclient.Location) (*Response, e
 		return nil, err
 	}
 
+	// TODO Like httpclient, it would be better to communicate with the underlying
+	// layer via Middleware or another convention rather than depend upon model.
+
+	// TODO Would be better to apply opts to the specific invocation than globally
+	// to the client
+	if m, ok := l.(modelLocation); ok {
+		c.copyOpts(m.Resolved().Client())
+
+		// TODO Use variables from the location resolver
+		request, err := m.Resolved().EvalRequest(nil, nil)
+		if err != nil {
+			return nil, err
+		}
+		c.headers = formatHeaders(request.Headers())
+		c.body = request.Body()
+	}
+
 	address := u.Host
 	symbol := strings.TrimPrefix(u.Path, "/")
 	return fetchAndPrintCore(uctx, c, address, symbol)
+}
+
+func (c *Client) copyOpts(clientOpts model.Client) {
+	opts, _ := clientOpts.(*model.GRPCClient)
+	if opts == nil {
+		return
+	}
+
+	c.disableReflection = opts.DisableReflection
+	c.plaintext = opts.Plaintext
+	if opts.ProtoSet != "" {
+		c.protoset = []string{opts.ProtoSet}
+	}
+}
+
+func formatHeaders(m map[string][]string) []string {
+	var res []string
+	for k, v := range m {
+		res = append(res, fmt.Sprintf("%s: %s", k, strings.Join(v, ",")))
+	}
+	return res
 }
 
 func WithLocationResolver(value httpclient.LocationResolver) Option {
@@ -221,8 +269,7 @@ func fetchAndPrintCore(ctx context.Context, c *Client, target, methodName string
 	var addlHeaders []string
 	addlHeaders = append(addlHeaders, c.headers...)
 
-	// TODO Read document from correct source
-	in := os.Stdin
+	in := c.body
 
 	cc, err := c.dial(ctx, target)
 	if err != nil {

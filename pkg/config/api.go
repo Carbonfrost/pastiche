@@ -1,6 +1,7 @@
 // Copyright 2025, 2026 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+
 package config
 
 type File struct {
@@ -18,6 +19,7 @@ type Service struct {
 	Resources   []Resource     `json:"resources,omitempty"`
 	Links       []Link         `json:"links,omitempty"`
 	Vars        map[string]any `json:"vars,omitempty"`
+	Client      *Client        `json:"client,omitempty"`
 }
 
 type Server struct {
@@ -53,6 +55,20 @@ type Resource struct {
 	Body        any            `json:"body,omitempty"`
 	RawBody     any            `json:"rawBody,omitempty"`
 	Vars        map[string]any `json:"vars,omitempty"`
+}
+
+type Client struct {
+	HTTP *HTTPClient `json:"http,omitempty"`
+	GRPC *GRPCClient `json:"grpc,omitempty"`
+}
+
+type HTTPClient struct {
+}
+
+type GRPCClient struct {
+	DisableReflection bool   `json:"disableReflection,omitzero"`
+	ProtoSet          string `json:"protoset,omitempty"`
+	Plaintext         bool   `json:"plaintext,omitzero"`
 }
 
 type Endpoint struct {

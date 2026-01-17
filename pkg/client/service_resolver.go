@@ -1,6 +1,7 @@
-// Copyright 2025 The Pastiche Authors. All rights reserved.
+// Copyright 2025, 2026 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+
 package client
 
 import (
@@ -18,6 +19,14 @@ import (
 	"github.com/Carbonfrost/pastiche/pkg/model"
 )
 
+// Location represents an HTTP client location and its resolved resource or
+// operation in the configuration
+type Location interface {
+	httpclient.Location
+
+	Resolved() model.ResolvedResource
+}
+
 type serviceResolver struct {
 	root   func(context.Context) *model.ServiceSpec
 	server func(context.Context) string
@@ -30,7 +39,8 @@ type serviceResolver struct {
 type pasticheLocation struct {
 	httpclient.Middleware
 
-	u *url.URL
+	u        *url.URL
+	resolved model.ResolvedResource
 }
 
 type contextKey string
@@ -139,12 +149,17 @@ func newLocation(base *url.URL, vars map[string]any, resolved model.ResolvedReso
 			endpointMethod,
 			withBody(merged.Body()),
 		),
-		u: loc,
+		resolved: resolved,
+		u:        loc,
 	}, nil
 }
 
 func (l *pasticheLocation) URL(ctx context.Context) (context.Context, *url.URL, error) {
 	return ctx, l.u, nil
+}
+
+func (l *pasticheLocation) Resolved() model.ResolvedResource {
+	return l.resolved
 }
 
 func withMethod(method string) httpclient.MiddlewareFunc {
@@ -178,4 +193,5 @@ func looksLikeURL(s string) bool {
 var (
 	_ httpclient.LocationResolver = (*serviceResolver)(nil)
 	_ httpclient.Middleware       = (*pasticheLocation)(nil)
+	_ Location                    = (*pasticheLocation)(nil)
 )

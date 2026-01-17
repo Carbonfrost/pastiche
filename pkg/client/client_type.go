@@ -13,7 +13,8 @@ import (
 type ClientType int
 
 const (
-	ClientTypeHTTP ClientType = iota
+	ClientTypeUnspecified ClientType = iota
+	ClientTypeHTTP
 	ClientTypeGRPC
 	maxClientType
 )

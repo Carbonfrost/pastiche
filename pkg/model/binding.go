@@ -1,6 +1,7 @@
-// Copyright 2025 The Pastiche Authors. All rights reserved.
+// Copyright 2025, 2026 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+
 package model
 
 import (
@@ -28,8 +29,9 @@ func service(v config.Service) *Service {
 				},
 			},
 		},
-		Links: links(v.Links),
-		Vars:  v.Vars,
+		Links:  links(v.Links),
+		Vars:   v.Vars,
+		Client: client(v.Client),
 	}
 }
 
@@ -138,4 +140,22 @@ func links(links []config.Link) []Link {
 		}
 	}
 	return res
+}
+
+func client(c *config.Client) Client {
+	if c == nil {
+		return nil
+	}
+	if c.GRPC != nil {
+		return &GRPCClient{
+			DisableReflection: c.GRPC.DisableReflection,
+			ProtoSet:          c.GRPC.ProtoSet,
+			Plaintext:         c.GRPC.Plaintext,
+		}
+	}
+	if c.HTTP != nil {
+		return &HTTPClient{}
+	}
+
+	return &HTTPClient{}
 }

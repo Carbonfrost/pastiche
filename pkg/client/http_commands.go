@@ -68,12 +68,38 @@ func Open() cli.Action {
 func FetchAndPrint() cli.Action {
 	return cli.ActionOf(func(ctx context.Context) error {
 		c := FromContext(ctx)
-		if c.Type() == ClientTypeGRPC {
+
+		clientType := c.Type()
+		// TODO This should delegate to respective location methods rather than
+		// have them resolve this again within. This also assumes only one location
+		// is ever returned
+
+		if clientType == ClientTypeUnspecified {
+			locations, err := c.locationResolver.Resolve(ctx)
+			if err != nil {
+				return err
+			}
+			if p, ok := locations[0].(Location); ok {
+				clientType = fromClientType(p.Resolved().Client())
+			}
+		}
+
+		if clientType == ClientTypeGRPC {
 			return cli.Do(ctx, cli.Pipeline(httpClientInterop, grpcclient.FetchAndPrint()))
 		}
 
 		return cli.Do(ctx, httpclient.FetchAndPrint())
 	})
+}
+
+func fromClientType(c model.Client) ClientType {
+	if _, ok := c.(*model.GRPCClient); ok {
+		return ClientTypeGRPC
+	}
+	if _, ok := c.(*model.HTTPClient); ok {
+		return ClientTypeHTTP
+	}
+	return ClientTypeUnspecified
 }
 
 func openSpec(ss *model.ServiceSpec, rel string) cli.Action {

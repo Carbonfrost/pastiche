@@ -1,6 +1,7 @@
-// Copyright 2025 The Pastiche Authors. All rights reserved.
+// Copyright 2025, 2026 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+
 package model
 
 import (
@@ -37,6 +38,7 @@ type Service struct {
 	Links       []Link
 	Resource    *Resource
 	Vars        map[string]any
+	Client      Client
 }
 
 type Server struct {
@@ -87,6 +89,19 @@ type Link struct {
 	Title    string
 }
 
+type Client interface {
+	clientSigil()
+}
+
+type GRPCClient struct {
+	DisableReflection bool
+	ProtoSet          string
+	Plaintext         bool
+}
+
+type HTTPClient struct {
+}
+
 // ResolvedResource represents the resource which was selected by its name
 type ResolvedResource interface {
 	Service() *Service
@@ -94,6 +109,7 @@ type ResolvedResource interface {
 	Lineage() []*Resource
 	Endpoint() *Endpoint
 	Server() *Server
+	Client() Client
 
 	EvalRequest(baseURL *url.URL, vars map[string]any) (Request, error)
 }
@@ -334,6 +350,17 @@ func (r request) Links() []Link {
 	return r.links
 }
 
+func (r *resolvedResource) Client() Client {
+	var client Client = &HTTPClient{}
+
+	if r.Service() != nil && r.Service().Client != nil {
+		client = r.Service().Client
+	}
+
+	// TODO Allow combinations of client via lineage
+	return client
+}
+
 func (r *resolvedResource) combinedHeaders() http.Header {
 	result := http.Header{}
 	if r.Server() != nil {
@@ -416,3 +443,6 @@ func findEndpointOrDefault(resource *Resource, method string, spec ServiceSpec) 
 	}
 	return nil
 }
+
+func (*GRPCClient) clientSigil() {}
+func (*HTTPClient) clientSigil() {}
