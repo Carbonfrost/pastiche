@@ -24,20 +24,23 @@ type Client struct {
 	grpc       *grpcclient.Client
 	clientType ClientType
 	filter     Filter
+
+	locationResolver httpclient.LocationResolver
 }
+
+type Option func(*Client)
 
 const (
 	servicesKey contextKey = "pastiche.client"
 )
 
-func New() *Client {
-	cfg, _ := config.Load()
-	sr := NewServiceResolver(
-		model.New(cfg),
-		lateBinding[*model.ServiceSpec]("service"),
-		lateBinding[string]("server"),
-		lateBinding[string]("method"),
-	)
+func New(opts ...Option) *Client {
+	res := &Client{}
+	for _, o := range opts {
+		o(res)
+	}
+
+	sr := res.locationResolver
 	client := httpclient.New(
 		httpclient.WithDefaultUserAgent(build.DefaultUserAgent()),
 		httpclient.WithLocationResolver(
@@ -49,14 +52,13 @@ func New() *Client {
 			})
 		},
 	)
-	res := &Client{
-		http: client,
-		grpc: grpcclient.New(
-			grpcclient.WithLocationResolver(
-				sr,
-			),
+
+	res.http = client
+	res.grpc = grpcclient.New(
+		grpcclient.WithLocationResolver(
+			sr,
 		),
-	}
+	)
 	res.Action = defaultAction(res)
 	client.UseDownloadMiddleware(res.filterResponse)
 	return res
@@ -130,6 +132,28 @@ func (c *Client) SetFilter(f Filter) error {
 func (c *Client) SetClientType(t ClientType) error {
 	c.clientType = t
 	return nil
+}
+
+func (o Option) Execute(c context.Context) error {
+	o(FromContext(c))
+	return nil
+}
+
+func WithLocationResolver(value httpclient.LocationResolver) Option {
+	return func(c *Client) {
+		c.locationResolver = value
+	}
+}
+
+func WithDefaultLocationResolver() Option {
+	cfg, _ := config.Load()
+	sr := NewServiceResolver(
+		model.New(cfg),
+		lateBinding[*model.ServiceSpec]("service"),
+		lateBinding[string]("server"),
+		lateBinding[string]("method"),
+	)
+	return WithLocationResolver(sr)
 }
 
 func withBinding[V any](binder func(*Client, V) error, args []V) cli.Action {
