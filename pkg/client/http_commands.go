@@ -8,6 +8,7 @@ import (
 	"cmp"
 	"context"
 	"fmt"
+	"io"
 	"slices"
 
 	"github.com/Carbonfrost/joe-cli"
@@ -18,6 +19,7 @@ import (
 	"github.com/Carbonfrost/pastiche/pkg/config"
 	"github.com/Carbonfrost/pastiche/pkg/grpcclient"
 	"github.com/Carbonfrost/pastiche/pkg/model"
+	"sigs.k8s.io/yaml"
 )
 
 // SetClientType provides an action which sets the client type
@@ -50,7 +52,7 @@ func Open() cli.Action {
 				Name:       "service",
 				Value:      new(model.ServiceSpec),
 				Completion: completeServices(),
-				// TODO Dubious - but perhaps Description should be displaye
+				// TODO Dubious - but perhaps Description should be displayed
 			},
 		}...),
 		cli.AddFlags([]*cli.Flag{
@@ -62,6 +64,38 @@ func Open() cli.Action {
 			},
 		}...),
 		bind.Action2(openSpec, bind.Value[*model.ServiceSpec]("service"), bind.String("rel")),
+	)
+}
+
+// Import provides the action for importing a definition
+func Import() cli.Action {
+	return cli.Pipeline(
+		cli.Prototype{
+			Description: "Import a service configuration from another format",
+		},
+		cli.AddArgs([]*cli.Arg{
+			{
+				Name:       "service",
+				Value:      new(model.ServiceSpec),
+				Completion: completeServices(),
+				// TODO Dubious - but perhaps Description should be displayed
+			},
+		}...),
+		cli.AddFlags([]*cli.Flag{
+			{
+				Name:     "name",
+				HelpText: "Set the name of the resource",
+			},
+			{
+				Name:     "title",
+				HelpText: "Set the title of the resource",
+			},
+			{
+				Name:     "description",
+				HelpText: "Set the description of the resource",
+			},
+		}...),
+		cli.At(cli.ActionTiming, cli.ActionFunc(importSpec)),
 	)
 }
 
@@ -127,6 +161,52 @@ func openSpec(ss *model.ServiceSpec, rel string) cli.Action {
 		}
 		return fmt.Errorf("unknown rel %s in %q", rel, ss.Path())
 	})
+}
+
+func importSpec(c *cli.Context) error {
+	in, err := io.ReadAll(c.Stdin)
+	if err != nil {
+		return err
+	}
+
+	call, err := model.ParseJSFetchCall(string(in))
+	if err != nil {
+		return err
+	}
+
+	endpoint := call.ToEndpoint()
+	endpoint.Name = c.String("name")
+	endpoint.Description = c.String("description")
+	endpoint.Title = c.String("title")
+
+	ss := *c.Value("service").(*model.ServiceSpec)
+	mo := &model.Model{
+		Services: []*model.Service{
+			{
+				Name:     ss[0],
+				Resource: &model.Resource{},
+			},
+		},
+	}
+
+	current := mo.Services[0].Resource
+	for _, s := range ss[1:] {
+		newChild := &model.Resource{
+			Name: s,
+		}
+		current.Resources = append(current.Resources, newChild)
+		current = newChild
+	}
+	current.Endpoints = append(current.Endpoints, endpoint)
+
+	// TODO Actually persist in the config location specified
+	data, err := yaml.Marshal(model.ToConfig(mo))
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(data))
+
+	return nil
 }
 
 func invokeUsingMethod() cli.Action {
