@@ -48,7 +48,6 @@ type Option func(*Client)
 type contextKey string
 
 const servicesKey contextKey = "grpcclient_services"
-const pasticheURL = "https://github.com/Carbonfrost/pastiche"
 
 func New(opts ...Option) *Client {
 	c := &Client{}
@@ -170,7 +169,7 @@ func (c *Client) dial(ctx context.Context, target string) (*grpc.ClientConn, err
 		creds = credentials.NewTLS(tlsConf)
 	}
 
-	opts = append(opts, grpc.WithUserAgent(defaultUserAgent()))
+	opts = append(opts, grpc.WithUserAgent(build.DefaultUserAgent()))
 
 	cc, err := grpcurl.BlockingDial(ctx, "", target, creds, opts...)
 	if err != nil {
@@ -251,14 +250,6 @@ func fetchAndPrintCore(ctx context.Context, c *Client, target, methodName string
 
 	// TODO Actually provide response and filter support
 	return nil, grpcurl.InvokeRPC(ctx, descSource, cc, methodName, addlHeaders, eventHandler, rf.Next)
-}
-
-func defaultUserAgent() string {
-	version := build.Version
-	if len(version) == 0 {
-		version = "development"
-	}
-	return fmt.Sprintf("Go-http-client/1.1 (pastiche/%s, +%s)", version, pasticheURL)
 }
 
 func clientTLSConfig(c context.Context) *tls.Config {

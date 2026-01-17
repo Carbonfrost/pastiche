@@ -1,11 +1,11 @@
 // Copyright 2025, 2026 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+
 package client
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	cli "github.com/Carbonfrost/joe-cli"
@@ -27,8 +27,6 @@ type Client struct {
 }
 
 const (
-	pasticheURL = "https://github.com/Carbonfrost/pastiche"
-
 	servicesKey contextKey = "pastiche.client"
 )
 
@@ -41,7 +39,7 @@ func New() *Client {
 		lateBinding[string]("method"),
 	)
 	client := httpclient.New(
-		httpclient.WithDefaultUserAgent(defaultUserAgent()),
+		httpclient.WithDefaultUserAgent(build.DefaultUserAgent()),
 		httpclient.WithLocationResolver(
 			sr,
 		),
@@ -150,12 +148,4 @@ func lateBinding[V any](name string) func(context.Context) V {
 		ss := c.(*cli.Context).Value(name).(V)
 		return ss
 	}
-}
-
-func defaultUserAgent() string {
-	version := build.Version
-	if len(version) == 0 {
-		version = "development"
-	}
-	return fmt.Sprintf("Go-http-client/1.1 (pastiche/%s, +%s)", version, pasticheURL)
 }
