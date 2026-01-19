@@ -1,0 +1,2 @@
+services:
+  - source: unknown-attributes.yml

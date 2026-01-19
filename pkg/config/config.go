@@ -192,7 +192,10 @@ func (s sourcer) source(basefilename string, v any) error {
 		if !ok {
 			return fmt.Errorf("%s: %w", file, ErrUnsupportedFileFormat)
 		}
-		unmarshal(data, v)
+		err = unmarshal(data, v)
+		if err != nil {
+			return fmt.Errorf("%s: %w", file, err)
+		}
 
 		// Further references in recursive includes use this new base file
 		file = resolvedFile

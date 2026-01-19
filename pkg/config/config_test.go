@@ -96,7 +96,7 @@ var _ = Describe("Config", func() {
 
 		DescribeTable("errors",
 			func(filename string, expected types.GomegaMatcher) {
-				_, err := config.LoadFile(os.DirFS("testdata"), filename)
+				_, err := config.LoadFile(os.DirFS("testdata/err-examples"), filename)
 				Expect(err).To(expected)
 			},
 
@@ -114,6 +114,16 @@ var _ = Describe("Config", func() {
 				"missing included file",
 				"error_includeNotFound.yml",
 				MatchError(ContainSubstring("no such file or directory")),
+			),
+			Entry(
+				"unknown attributes",
+				"unknown-attributes.yml",
+				MatchError(ContainSubstring(`unknown field "unknownAttribute"`)),
+			),
+			Entry(
+				"included file with unknown attributes",
+				"include-unknown-attributes.yml",
+				MatchError(MatchRegexp(`unknown-attributes.yml: .+ unknown field "unknownAttribute"`)),
 			),
 		)
 
