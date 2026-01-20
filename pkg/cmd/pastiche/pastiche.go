@@ -57,7 +57,10 @@ func NewApp() *cli.App {
 			{
 				Name:     "init",
 				HelpText: "Initialize the current directory with a new service definition",
-				Uses:     InitCommand(),
+				Uses: cli.Pipeline(
+					disallowPersistentHTTPFlags(),
+					InitCommand(),
+				),
 			},
 			{
 				Name:     "describe",
@@ -66,14 +69,22 @@ func NewApp() *cli.App {
 					{
 						Name:    "service",
 						Aliases: []string{"services", "svc"},
-						Uses:    DescribeServiceCommand(),
-						Before:  disallowPersistentHTTPFlags,
+						Uses: cli.Pipeline(
+							disallowPersistentHTTPFlags(),
+							DescribeServiceCommand(),
+						),
 					},
 				},
 				Uses: cli.HandleCommandNotFound(nil),
 			},
 			{Name: "fetch", Uses: phttpclient.Do()},
-			{Name: "open", Uses: phttpclient.Open()},
+			{
+				Name: "open",
+				Uses: cli.Pipeline(
+					disallowPersistentHTTPFlags(),
+					phttpclient.Open(),
+				),
+			},
 		},
 		Flags: []*cli.Flag{
 			{
@@ -116,7 +127,11 @@ func suppressHTTPClientHelpByDefault() cli.ActionFunc {
 // disallowPersistentHTTPFlags is an action which returns an error if one
 // of the httpclient flags is present.  This is to allow them to be persistently
 // defined but not actually usable within certain contexts
-func disallowPersistentHTTPFlags(c *cli.Context) error {
+func disallowPersistentHTTPFlags() cli.Action {
+	return cli.Before(cli.ActionFunc(disallowPersistentHTTPFlagsFunc))
+}
+
+func disallowPersistentHTTPFlagsFunc(c *cli.Context) error {
 	src, tag := httpclient.SourceAnnotation()
 	for _, k := range c.BindingLookup().BindingNames() {
 		f, ok := c.LookupFlag(k)
