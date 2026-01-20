@@ -1,6 +1,7 @@
 // Copyright 2025, 2026 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+
 package client
 
 import (
@@ -18,6 +19,7 @@ import (
 	"github.com/Carbonfrost/pastiche/pkg/model"
 )
 
+// SetClientType provides an action which sets the client type
 func SetClientType(v ...ClientType) cli.Action {
 	return cli.Pipeline(
 		&cli.Prototype{
@@ -36,7 +38,7 @@ func Do() cli.Action {
 	return invokeUsingMethod()
 }
 
-// Open
+// Open reveals a particular file or link in the editor or web browser
 func Open() cli.Action {
 	return cli.Pipeline(
 		cli.Prototype{

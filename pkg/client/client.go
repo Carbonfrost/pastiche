@@ -17,6 +17,8 @@ import (
 	"github.com/Carbonfrost/pastiche/pkg/model"
 )
 
+// Client provides the Pastiche client, which can invoke underlying HTTP or gRPC
+// services
 type Client struct {
 	cli.Action
 
@@ -28,12 +30,14 @@ type Client struct {
 	locationResolver httpclient.LocationResolver
 }
 
+// Option identifies a client option
 type Option func(*Client)
 
 const (
 	servicesKey contextKey = "pastiche.client"
 )
 
+// New initializes a new client with the given set of options.
 func New(opts ...Option) *Client {
 	res := &Client{}
 	for _, o := range opts {
@@ -71,6 +75,7 @@ func (c *Client) filterResponse(d httpclient.Downloader) httpclient.Downloader {
 	return NewFilterDownloader(c.filter, d)
 }
 
+// Type gets the client type that was requested
 func (c *Client) Type() ClientType {
 	return c.clientType
 }
@@ -101,10 +106,13 @@ func defaultAction(c *Client) cli.Action {
 	)
 }
 
+// ContextValue provides an action which sets the client into the context.
 func ContextValue(c *Client) cli.Action {
 	return cli.ContextValue(servicesKey, c)
 }
 
+// FlagsAndArgs provides an action which sets up flags and args used by the client.
+// Despite its name, the action contributes no args.
 func FlagsAndArgs() cli.Action {
 	return cli.Pipeline(
 		cli.AddFlags([]*cli.Flag{
@@ -139,12 +147,16 @@ func (o Option) Execute(c context.Context) error {
 	return nil
 }
 
+// WithLocationResolver sets the location resolver used by the client
 func WithLocationResolver(value httpclient.LocationResolver) Option {
 	return func(c *Client) {
 		c.locationResolver = value
 	}
 }
 
+// WithDefaultLocationResolver provides a client option which sets up the
+// default location resolver, which uses the CLI arguments and flags named
+// "service", "server", and "method"
 func WithDefaultLocationResolver() Option {
 	cfg, _ := config.Load()
 	sr := NewServiceResolver(

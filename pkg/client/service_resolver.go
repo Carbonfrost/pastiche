@@ -37,6 +37,7 @@ type contextKey string
 
 var looksLikeURLPattern = regexp.MustCompile(`^(unix|https?)://`)
 
+// NewServiceResolver creates a service resolver compatible with the client.
 func NewServiceResolver(
 	c *model.Model,
 	root func(context.Context) *model.ServiceSpec,

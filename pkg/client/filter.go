@@ -19,15 +19,18 @@ import (
 	"github.com/jmespath/go-jmespath"
 )
 
+// Filter applies a search to the response data.
 type Filter interface {
 	Search(data any) (any, error)
 }
 
+// NewDigFilter creates a filter which resolves a qualified name in
+// a response value.
 func NewDigFilter(query string) (Filter, error) {
 	return digFilter(query), nil
 }
 
-func newDig(opts filterOpts) (Filter, error) { // FIXME opts
+func newDig(opts filterOpts) (Filter, error) {
 	return NewDigFilter(opts.Query)
 }
 
@@ -50,6 +53,7 @@ type filteredWriter struct {
 }
 
 var (
+	// FilterRegistry contains all filters available to the client.
 	FilterRegistry = &provider.Registry{
 		Name: "filter",
 		Providers: provider.Details{
@@ -71,6 +75,8 @@ var (
 	}
 )
 
+// NewJMESPathFilter provides a filter which uses the given query to search
+// a data structure with JSON semantics using JMESPath.
 func NewJMESPathFilter(query string) (Filter, error) {
 	return jmespath.Compile(query)
 }
@@ -79,6 +85,7 @@ func newJMESPath(opts filterOpts) (Filter, error) {
 	return NewJMESPathFilter(opts.Query)
 }
 
+// NewFilterDownloader applies the filter to an underlying downloader.
 func NewFilterDownloader(f Filter, d joehttpclient.Downloader) joehttpclient.Downloader {
 	return &filteredDownload{
 		filter:     f,
@@ -177,6 +184,7 @@ func index[T any](values []T, index string) (any, error) {
 	return nil, fmt.Errorf("cannot index array with `%s'", index)
 }
 
+// ListFilters provides an action which lists all filters available to the filter registry.
 func ListFilters() cli.Action {
 	return cli.Pipeline(
 		&cli.Prototype{
@@ -187,6 +195,8 @@ func ListFilters() cli.Action {
 	)
 }
 
+// SetFilter provides an action which sets the filter which will be used in the response.
+// This also provides an accessory flag.
 func SetFilter(f ...*provider.Value) cli.Action {
 	return cli.Pipeline(
 		&cli.Prototype{
