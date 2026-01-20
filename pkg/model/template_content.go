@@ -17,6 +17,7 @@ import (
 	joehttpclient "github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli-http/httpclient/expr"
 	"github.com/Carbonfrost/pastiche/pkg/internal/log"
+	"github.com/Carbonfrost/pastiche/pkg/template/funcs"
 )
 
 type templateContent struct {
@@ -109,8 +110,11 @@ func (t *templateContent) Read() io.Reader {
 		return firstReadError{err}
 	}
 
+	data := map[string]any{}
+	funcs.AddTo(data)
+
 	var result bytes.Buffer
-	err = tpl.Execute(&result, nil)
+	err = tpl.Execute(&result, data)
 	if err != nil {
 		log.Warn("error executing template", err)
 		return firstReadError{err}

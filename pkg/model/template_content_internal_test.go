@@ -29,6 +29,8 @@ var _ = Describe("newTemplateContent", func() {
 			Entry("var fallback var", `{{ var "notfound" "found" "fallback" }}`, "found"),
 			Entry("form wins over var", `{{ var "v" }}`, `form`),
 			Entry("form is comma-delimited", `{{ var "multi" }}`, `value1,value2`),
+
+			Entry("base64 encode", `{{ .base64.Encode "secret" }}`, `c2VjcmV0`),
 		)
 
 		DescribeTable("errors", func(tpl, expected string) {
