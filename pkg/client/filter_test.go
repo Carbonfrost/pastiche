@@ -76,6 +76,7 @@ var _ = Describe("FilterDownloader", func() {
 		},
 			Entry("nominal", `{"a": { "b": 3} }`, "a.b", float64(3)),
 			Entry("into array", `[ 1, 2, 3 ]`, "0", float64(1)),
+			Entry("ignore leading dot", `[ 1, 2, 3 ]`, ".0", float64(1)),
 		)
 	})
 

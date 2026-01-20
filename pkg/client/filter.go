@@ -130,7 +130,7 @@ func (c *filteredWriter) Close() error {
 
 func (d digFilter) Search(data any) (any, error) {
 	var err error
-	for _, name := range strings.Split(string(d), ".") {
+	for name := range strings.SplitSeq(strings.TrimLeft(string(d), "."), ".") {
 		data, err = dig(data, name)
 		if err != nil {
 			break
