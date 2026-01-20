@@ -86,3 +86,9 @@ tool (
 	github.com/onsi/ginkgo/v2/ginkgo
 	honnef.co/go/tools/cmd/staticcheck
 )
+
+ignore (
+	.github
+	bin
+	eng
+)
