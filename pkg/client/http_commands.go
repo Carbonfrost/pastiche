@@ -107,7 +107,6 @@ func invokeUsingMethod() cli.Action {
 		},
 		cli.Setup{
 			Uses: cli.Pipeline(
-				cli.Category("Invoke HTTP client"),
 				cli.AddArgs([]*cli.Arg{
 					{
 						Name:       "service",
