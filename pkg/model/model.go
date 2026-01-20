@@ -25,7 +25,8 @@ import (
 //counterfeiter:generate . ResolvedResource
 
 type Model struct {
-	Services map[string]*Service
+	Services    []*Service
+	cacheByName map[string]*Service
 }
 
 type Service struct {
@@ -124,10 +125,10 @@ type request struct {
 
 func New(c *config.Config) *Model {
 	res := &Model{
-		Services: map[string]*Service{},
+		Services: make([]*Service, len(c.Services)),
 	}
-	for _, v := range c.Services {
-		res.Services[v.Name] = service(v)
+	for i, v := range c.Services {
+		res.Services[i] = service(v)
 	}
 	return res
 }
@@ -141,9 +142,21 @@ func (s *Service) Server(name string) (*Server, bool) {
 	return nil, false
 }
 
-func (c *Model) Service(name string) (*Service, bool) {
-	svc, ok := c.Services[name]
+func (m *Model) Service(name string) (*Service, bool) {
+	svc, ok := m.byName()[name]
 	return svc, ok
+}
+
+func (m *Model) byName() map[string]*Service {
+	if m.cacheByName == nil {
+		m.cacheByName = map[string]*Service{}
+		for _, v := range m.Services {
+			if v.Name != "" {
+				m.cacheByName[v.Name] = v
+			}
+		}
+	}
+	return m.cacheByName
 }
 
 func (c *Model) Resolve(spec ServiceSpec, server string, method string) (ResolvedResource, error) {

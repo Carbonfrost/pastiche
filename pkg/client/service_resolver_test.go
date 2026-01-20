@@ -25,15 +25,16 @@ var _ = Describe("ServiceResolver", func() {
 
 	var (
 		exampleModel = &model.Model{
-			Services: map[string]*model.Service{
-				"hasNoServers": {
+			Services: []*model.Service{
+				{
 					Name:    "hasNoServers",
 					Servers: []*model.Server{},
 					Resource: &model.Resource{
 						URITemplate: mustParseURITemplate("https://example.com"),
 					},
 				},
-				"@example/test": {
+				{
+					Name: "@example/test",
 					Servers: []*model.Server{
 						{
 							BaseURL: "https://foo.example/",

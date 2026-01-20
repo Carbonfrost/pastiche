@@ -224,7 +224,8 @@ var _ = Describe("New", func() {
 			},
 		})
 
-		Expect(subject.Services["s"].Resource.Resources[0]).To(match)
+		s, _ := subject.Service("s")
+		Expect(s.Resource.Resources[0]).To(match)
 	},
 		Entry("assume GET when no endpoint is defined",
 			config.Resource{

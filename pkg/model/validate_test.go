@@ -20,8 +20,8 @@ var _ = Describe("Validate", func() {
 	},
 		Entry("invalid service name",
 			&model.Model{
-				Services: map[string]*model.Service{
-					"": {
+				Services: []*model.Service{
+					{
 						Name: "invalid name",
 					},
 				},
@@ -30,8 +30,8 @@ var _ = Describe("Validate", func() {
 		),
 		Entry("invalid package service name",
 			&model.Model{
-				Services: map[string]*model.Service{
-					"": {
+				Services: []*model.Service{
+					{
 						Name: "@hello/three/parts",
 					},
 				},
@@ -40,8 +40,8 @@ var _ = Describe("Validate", func() {
 		),
 		Entry("invalid package service name",
 			&model.Model{
-				Services: map[string]*model.Service{
-					"": {
+				Services: []*model.Service{
+					{
 						Name: "@hello/invalid name",
 					},
 				},
@@ -50,8 +50,8 @@ var _ = Describe("Validate", func() {
 		),
 		Entry("invalid resource name",
 			&model.Model{
-				Services: map[string]*model.Service{
-					"": {
+				Services: []*model.Service{
+					{
 						Name: "@httpbin/name",
 						Resource: &model.Resource{
 							Name: "invalid resource",
