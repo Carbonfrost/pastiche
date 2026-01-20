@@ -84,7 +84,7 @@ var _ = Describe("Header", func() {
 		spec := []string{"a", "b", "c"}
 		rr, _ := subject.Resolve(spec, "default", "")
 		merged, _ := rr.EvalRequest(nil, nil)
-		Expect(merged.Header()).To(expected)
+		Expect(merged.Headers()).To(expected)
 	},
 		Entry("copied from resource", HaveKeyWithValue("X-From-Resource", []string{"resource"})),
 		Entry("copied from endpoint", HaveKeyWithValue("X-From-Endpoint", []string{"endpoint"})),
@@ -128,9 +128,9 @@ var _ = Describe("Header", func() {
 		merged, _ := rr.EvalRequest(nil, uritemplates.Vars{
 			"var": "endpoint value from var",
 		})
-		Expect(merged.Header()).To(HaveKeyWithValue("Test", []string{"endpoint value from var"}))
-		Expect(merged.Header()).To(HaveKeyWithValue("S", []string{"endpoint value from S var set"}))
-		Expect(merged.Header()).To(HaveKeyWithValue("R", []string{"endpoint value from R var set"}))
+		Expect(merged.Headers()).To(HaveKeyWithValue("Test", []string{"endpoint value from var"}))
+		Expect(merged.Headers()).To(HaveKeyWithValue("S", []string{"endpoint value from S var set"}))
+		Expect(merged.Headers()).To(HaveKeyWithValue("R", []string{"endpoint value from R var set"}))
 	})
 })
 

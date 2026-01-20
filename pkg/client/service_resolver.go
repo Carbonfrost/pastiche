@@ -135,7 +135,7 @@ func newLocation(base *url.URL, vars map[string]any, resolved model.ResolvedReso
 	return &pasticheLocation{
 		Middleware: httpclient.ComposeMiddleware(
 			requireEndpoint,
-			httpclient.WithHeaders(merged.Header()),
+			httpclient.WithHeaders(merged.Headers()),
 			endpointMethod,
 			withBody(merged.Body()),
 		),

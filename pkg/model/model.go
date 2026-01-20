@@ -102,7 +102,7 @@ type ResolvedResource interface {
 type Request interface {
 	URL() (*url.URL, error)
 	Body() io.ReadCloser
-	Header() http.Header
+	Headers() http.Header
 	Vars() map[string]any
 	Links() []Link
 }
@@ -322,7 +322,7 @@ func (r request) Body() io.ReadCloser {
 	return r.body
 }
 
-func (r request) Header() http.Header {
+func (r request) Headers() http.Header {
 	return r.headers
 }
 

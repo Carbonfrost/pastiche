@@ -172,7 +172,7 @@ func (t testRequest) URL() (*url.URL, error) {
 func (t testRequest) Body() io.ReadCloser {
 	return nil
 }
-func (t testRequest) Header() http.Header {
+func (t testRequest) Headers() http.Header {
 	return t.headers
 }
 func (t testRequest) Links() []model.Link {
