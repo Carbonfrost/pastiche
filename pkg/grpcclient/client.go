@@ -50,6 +50,10 @@ type modelLocation interface {
 	Resolved() model.ResolvedResource
 }
 
+type modelLocationResolver interface {
+	Vars() map[string]any
+}
+
 type Option func(*Client)
 
 type contextKey string
@@ -118,8 +122,7 @@ func (c *Client) doOne(ctx context.Context, l httpclient.Location) (*Response, e
 	if m, ok := l.(modelLocation); ok {
 		c.copyOpts(m.Resolved().Client())
 
-		// TODO Use variables from the location resolver
-		request, err := m.Resolved().EvalRequest(nil, nil)
+		request, err := m.Resolved().EvalRequest(nil, c.vars())
 		if err != nil {
 			return nil, err
 		}
@@ -143,6 +146,13 @@ func (c *Client) copyOpts(clientOpts model.Client) {
 	if opts.ProtoSet != "" {
 		c.protoset = []string{opts.ProtoSet}
 	}
+}
+
+func (c *Client) vars() map[string]any {
+	if m, ok := c.locationResolver.(modelLocationResolver); ok {
+		return m.Vars()
+	}
+	return nil
 }
 
 func formatHeaders(m map[string][]string) []string {

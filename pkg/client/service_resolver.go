@@ -27,6 +27,13 @@ type Location interface {
 	Resolved() model.ResolvedResource
 }
 
+// LocationResolver represents an HTTP client location resolver
+type LocationResolver interface {
+	httpclient.LocationResolver
+
+	Vars() map[string]any
+}
+
 type serviceResolver struct {
 	root   func(context.Context) *model.ServiceSpec
 	server func(context.Context) string
@@ -53,13 +60,13 @@ func NewServiceResolver(
 	root func(context.Context) *model.ServiceSpec,
 	server func(context.Context) string,
 	method func(context.Context) string,
-) httpclient.LocationResolver {
+) LocationResolver {
 	return &serviceResolver{
 		root:   root,
 		server: server,
 		method: method,
 		config: c,
-		vars:   uritemplates.Vars{},
+		vars:   map[string]any{},
 	}
 }
 
@@ -70,6 +77,10 @@ func (s *serviceResolver) Add(location string) error {
 func (s *serviceResolver) AddVar(v *uritemplates.Var) error {
 	s.vars.Add(v)
 	return nil
+}
+
+func (s *serviceResolver) Vars() map[string]any {
+	return s.vars
 }
 
 func (s *serviceResolver) SetBase(base *url.URL) error {
