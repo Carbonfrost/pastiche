@@ -87,6 +87,7 @@ type Link struct {
 	Audience string
 	Rel      string
 	Title    string
+	Type     string
 }
 
 type Client interface {

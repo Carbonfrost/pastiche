@@ -90,4 +90,5 @@ type Link struct {
 	Audience string `json:"audience,omitempty"`
 	Rel      string `json:"rel,omitempty"`
 	Title    string `json:"title,omitempty"`
+	Type     string `json:"title,omitempty"`
 }

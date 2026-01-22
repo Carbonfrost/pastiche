@@ -137,6 +137,7 @@ func links(links []config.Link) []Link {
 			Audience: l.Audience,
 			Rel:      l.Rel,
 			Title:    l.Title,
+			Type:     l.Type,
 		}
 	}
 	return res
