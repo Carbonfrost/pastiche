@@ -1,0 +1,4 @@
+name: r
+client:
+  grpc:
+    protoset: ../my.protoset

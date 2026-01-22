@@ -177,7 +177,9 @@ func (s sourcer) source(basefilename string, v any) error {
 		file = a.Source
 	}
 
-	if file != "" {
+	if file == "" {
+		file = basefilename
+	} else {
 		resolvedFile := filepath.Join(filepath.Dir(basefilename), file)
 		reader, err := s.f.Open(resolvedFile)
 		if err != nil {
@@ -206,6 +208,9 @@ func (s sourcer) source(basefilename string, v any) error {
 		err := sources(s, file, a.Servers)
 		if err != nil {
 			return err
+		}
+		if a.Client != nil && a.Client.GRPC != nil {
+			fixRelative(basefilename, &a.Client.GRPC.ProtoSet)
 		}
 		return sources(s, file, a.Resources)
 
@@ -248,4 +253,12 @@ func sources[V any](s sourcer, basefilename string, values []V) error {
 		}
 	}
 	return nil
+}
+
+func fixRelative(basefilename string, path *string) {
+	if path == nil {
+		return
+	}
+	resolvedFile := filepath.Join(filepath.Dir(basefilename), *path)
+	*path = resolvedFile
 }

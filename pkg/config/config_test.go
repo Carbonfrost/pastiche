@@ -19,7 +19,7 @@ var _ = Describe("Config", func() {
 
 		DescribeTable("examples",
 			func(filename string, expected types.GomegaMatcher) {
-				file, err := config.LoadFile(os.DirFS("testdata"), filename)
+				file, err := config.LoadFile(os.DirFS("testdata"), "valid-examples/"+filename)
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(file).To(expected)
@@ -92,6 +92,18 @@ var _ = Describe("Config", func() {
 					MatchFields(IgnoreExtras, Fields{"Name": Equal("t_map")}),
 				)),
 			),
+			Entry(
+				"relative protoset",
+				"relative_protoset.yml",
+				haveService(
+					PointTo(
+						MatchFields(IgnoreExtras, Fields{"Client": Equal(&config.Client{
+							GRPC: &config.GRPCClient{
+								ProtoSet: "my.protoset",
+							},
+						})})),
+				),
+			),
 		)
 
 		DescribeTable("errors",
@@ -130,6 +142,12 @@ var _ = Describe("Config", func() {
 	})
 
 })
+
+func haveService(m OmegaMatcher) OmegaMatcher {
+	return WithTransform(func(cfg any) any {
+		return cfg.(*config.File).Service
+	}, m)
+}
 
 func haveServices(m OmegaMatcher) OmegaMatcher {
 	return WithTransform(func(cfg any) any {
