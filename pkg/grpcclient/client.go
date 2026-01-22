@@ -20,8 +20,10 @@ import (
 	"github.com/fullstorydev/grpcurl"
 	"github.com/jhump/protoreflect/grpcreflect"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 type Response = httpclient.Response
@@ -306,12 +308,56 @@ func fetchAndPrintCore(ctx context.Context, c *Client, target, methodName string
 	}
 
 	// TODO Actually provide response and filter support
-	return nil, grpcurl.InvokeRPC(ctx, descSource, cc, methodName, addlHeaders, eventHandler, rf.Next)
+	err = grpcurl.InvokeRPC(ctx, descSource, cc, methodName, addlHeaders, eventHandler, rf.Next)
+	return nil, handleStatus(err)
 }
 
 func clientTLSConfig(c context.Context) *tls.Config {
 	// TODO Requires an update to joe-cli-http@future to use the TLS-specific package
 	return httpclient.FromContext(c).TLSConfig()
+}
+
+func handleStatus(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	if stat, ok := status.FromError(err); ok {
+		if stat.Code() != codes.OK {
+			w := os.Stderr
+			formatter := grpcurl.NewTextFormatter(true)
+			fmt.Fprintf(w, "ERROR:\n  Code: %s\n  Message: %s\n", stat.Code().String(), stat.Message())
+
+			statpb := stat.Proto()
+			if len(statpb.Details) > 0 {
+				fmt.Fprintf(w, "  Details:\n")
+				for i, det := range statpb.Details {
+					prefix := fmt.Sprintf("  %d)", i+1)
+					fmt.Fprintf(w, "%s\t", prefix)
+					prefix = strings.Repeat(" ", len(prefix)) + "\t"
+
+					output, err := formatter(det)
+					if err != nil {
+						fmt.Fprintf(w, "Error parsing detail message: %v\n", err)
+
+					} else {
+						lines := strings.Split(output, "\n")
+						for i, line := range lines {
+							if i == 0 {
+								// first line is already indented
+								fmt.Fprintf(w, "%s\n", line)
+							} else {
+								fmt.Fprintf(w, "%s%s\n", prefix, line)
+							}
+						}
+					}
+				}
+			}
+
+			return cli.Exit(2 + int(stat.Code()))
+		}
+	}
+	return nil
 }
 
 var _ cli.Action = Option(nil)
