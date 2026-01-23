@@ -1,9 +1,11 @@
-// Copyright 2023 The Pastiche Authors. All rights reserved.
+// Copyright 2023, 2026 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 package model_test
 
 import (
+	"strings"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -47,6 +49,88 @@ var _ = Describe("Resolve", func() {
 			},
 		),
 	)
+
+	Describe("Auth", func() {
+
+		DescribeTable("examples", func(spec string, m *model.Model) {
+			rr, _ := m.Resolve(strings.Fields(spec), "default", "")
+			merged, _ := rr.EvalRequest(nil, nil)
+			Expect(merged.Auth()).To(Equal(&model.BasicAuth{User: "expected"}))
+		},
+			Entry("from endpoint", "a b", model.New(&config.Config{
+				Services: []config.Service{
+					{
+						Name: "a",
+						Servers: []config.Server{
+							{Name: "default"},
+						},
+						Resources: []config.Resource{
+							{
+								Name: "b",
+								Get: &config.Endpoint{
+									Auth: &config.Auth{
+										Basic: &config.BasicAuth{
+											User: "expected",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			})),
+			Entry("from resource", "a b", model.New(&config.Config{
+				Services: []config.Service{
+					{
+						Name: "a",
+						Servers: []config.Server{
+							{Name: "default"},
+						},
+						Resources: []config.Resource{
+							{
+								Name: "b",
+								Auth: &config.Auth{
+									Basic: &config.BasicAuth{
+										User: "expected",
+									},
+								},
+							},
+						},
+					},
+				},
+			})),
+			Entry("from nested resource", "a b c", model.New(&config.Config{
+				Services: []config.Service{
+					{
+						Name: "a",
+						Servers: []config.Server{
+							{Name: "default"},
+						},
+						Resources: []config.Resource{
+							{
+								Name: "b",
+								Auth: &config.Auth{
+									Basic: &config.BasicAuth{
+										User: "should be overridden by descendant",
+									},
+								},
+								Resources: []config.Resource{
+									{
+										Name: "c",
+										Auth: &config.Auth{
+											Basic: &config.BasicAuth{
+												User: "expected",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			})),
+		)
+	})
 })
 
 var _ = Describe("Header", func() {

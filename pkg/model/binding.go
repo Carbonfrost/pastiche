@@ -32,6 +32,7 @@ func service(v config.Service) *Service {
 		Links:  links(v.Links),
 		Vars:   v.Vars,
 		Client: client(v.Client),
+		Auth:   auth(v.Auth),
 	}
 }
 
@@ -52,6 +53,7 @@ func server(s config.Server) *Server {
 		Headers:     s.Headers,
 		Links:       links(s.Links),
 		Vars:        s.Vars,
+		Auth:        auth(s.Auth),
 	}
 }
 
@@ -68,6 +70,7 @@ func resource(r config.Resource) *Resource {
 		RawBody:     r.RawBody,
 		Vars:        r.Vars,
 		Form:        r.Form,
+		Auth:        auth(r.Auth),
 	}
 	if r.Get != nil {
 		res.Endpoints = append(res.Endpoints, endpoint("GET", r.Get))
@@ -125,6 +128,7 @@ func endpoint(method string, r *config.Endpoint) *Endpoint {
 		RawBody:     r.RawBody,
 		Vars:        r.Vars,
 		Form:        r.Form,
+		Auth:        auth(r.Auth),
 	}
 }
 
@@ -159,4 +163,18 @@ func client(c *config.Client) Client {
 	}
 
 	return &HTTPClient{}
+}
+
+func auth(a *config.Auth) Auth {
+	if a == nil {
+		return nil
+	}
+	if a.Basic != nil {
+		return &BasicAuth{
+			User:     a.Basic.User,
+			Password: a.Basic.Password,
+		}
+	}
+
+	return nil
 }

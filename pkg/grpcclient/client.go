@@ -42,7 +42,8 @@ type Client struct {
 
 	body              io.ReadCloser
 	headers           []string
-	reflectionHeaders []string // TODO Allow setting reflection headers
+	reflectionHeaders []string   // TODO Allow setting reflection headers
+	auth              model.Auth // TODO Would be better to use package-owned auth
 
 	// interop with httpclient
 	locationResolver httpclient.LocationResolver
@@ -130,6 +131,7 @@ func (c *Client) doOne(ctx context.Context, l httpclient.Location) (*Response, e
 		}
 		c.headers = formatHeaders(request.Headers())
 		c.body = request.Body()
+		c.auth = request.Auth()
 	}
 
 	address := u.Host
@@ -227,6 +229,9 @@ func (c *Client) dial(ctx context.Context, target string) (*grpc.ClientConn, err
 	} else {
 		tlsConf := clientTLSConfig(ctx)
 		creds = credentials.NewTLS(tlsConf)
+	}
+	if c.auth != nil {
+		opts = append(opts, withAuth(c.auth))
 	}
 
 	opts = append(opts, grpc.WithUserAgent(build.DefaultUserAgent()))

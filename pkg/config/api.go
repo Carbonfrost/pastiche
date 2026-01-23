@@ -20,6 +20,7 @@ type Service struct {
 	Links       []Link         `json:"links,omitempty"`
 	Vars        map[string]any `json:"vars,omitempty"`
 	Client      *Client        `json:"client,omitempty"`
+	Auth        *Auth          `json:"auth,omitempty"`
 }
 
 type Server struct {
@@ -31,6 +32,7 @@ type Server struct {
 	Headers     Header         `json:"headers"`
 	Links       []Link         `json:"links,omitempty"`
 	Vars        map[string]any `json:"vars,omitempty"`
+	Auth        *Auth          `json:"auth,omitempty"`
 }
 
 type Resource struct {
@@ -55,6 +57,7 @@ type Resource struct {
 	Body        any            `json:"body,omitempty"`
 	RawBody     any            `json:"rawBody,omitempty"`
 	Vars        map[string]any `json:"vars,omitempty"`
+	Auth        *Auth          `json:"auth,omitempty"`
 }
 
 type Client struct {
@@ -71,6 +74,15 @@ type GRPCClient struct {
 	Plaintext         bool   `json:"plaintext,omitzero"`
 }
 
+type Auth struct {
+	Basic *BasicAuth `json:"basic,omitempty"`
+}
+
+type BasicAuth struct {
+	User     string `json:"user,omitempty"`
+	Password string `json:"password,omitempty"`
+}
+
 type Endpoint struct {
 	Name        string         `json:"name,omitempty"`
 	Title       string         `json:"title,omitempty"`
@@ -82,6 +94,7 @@ type Endpoint struct {
 	Body        any            `json:"body,omitempty"`
 	RawBody     any            `json:"rawBody,omitempty"`
 	Vars        map[string]any `json:"vars,omitempty"`
+	Auth        *Auth          `json:"auth,omitempty"`
 }
 
 type Link struct {

@@ -6,6 +6,7 @@ package client
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -159,6 +160,7 @@ func newLocation(base *url.URL, vars map[string]any, resolved model.ResolvedReso
 			httpclient.WithHeaders(merged.Headers()),
 			endpointMethod,
 			withBody(merged.Body()),
+			withAuth(merged.Auth()),
 		),
 		resolved: resolved,
 		u:        loc,
@@ -184,6 +186,20 @@ func withBody(body io.ReadCloser) httpclient.MiddlewareFunc {
 	return func(r *http.Request) error {
 		if body != nil {
 			r.Body = body
+		}
+		return nil
+	}
+}
+
+func withAuth(a model.Auth) httpclient.MiddlewareFunc {
+	if a == nil {
+		return nil
+	}
+	return func(r *http.Request) error {
+		switch auth := a.(type) {
+		case *model.BasicAuth:
+			encodedAuth := base64.StdEncoding.EncodeToString([]byte(auth.User + ":" + auth.Password))
+			r.Header.Add("authorization", "Basic "+encodedAuth)
 		}
 		return nil
 	}

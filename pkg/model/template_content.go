@@ -239,3 +239,14 @@ func expandURLValues(u url.Values) expr.Expander {
 		return nil
 	}
 }
+
+func expandAuth(a Auth, e Expander) Auth {
+	switch auth := a.(type) {
+	case *BasicAuth:
+		return &BasicAuth{
+			User:     expandString(auth.User, e),
+			Password: expandString(auth.Password, e),
+		}
+	}
+	return a
+}

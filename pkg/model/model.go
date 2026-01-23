@@ -39,6 +39,7 @@ type Service struct {
 	Resource    *Resource
 	Vars        map[string]any
 	Client      Client
+	Auth        Auth
 }
 
 type Server struct {
@@ -50,6 +51,7 @@ type Server struct {
 	Form        map[string][]string
 	Links       []Link
 	Vars        map[string]any
+	Auth        Auth
 }
 
 type Resource struct {
@@ -66,6 +68,7 @@ type Resource struct {
 	Body        any
 	RawBody     any
 	Vars        map[string]any
+	Auth        Auth
 }
 
 type Endpoint struct {
@@ -79,6 +82,7 @@ type Endpoint struct {
 	Body        any
 	RawBody     any
 	Vars        map[string]any
+	Auth        Auth
 }
 
 type Link struct {
@@ -103,6 +107,15 @@ type GRPCClient struct {
 type HTTPClient struct {
 }
 
+type Auth interface {
+	authSigil()
+}
+
+type BasicAuth struct {
+	User     string
+	Password string
+}
+
 // ResolvedResource represents the resource which was selected by its name
 type ResolvedResource interface {
 	Service() *Service
@@ -122,6 +135,7 @@ type Request interface {
 	Headers() http.Header
 	Vars() map[string]any
 	Links() []Link
+	Auth() Auth
 }
 
 type resolvedResource struct {
@@ -138,6 +152,7 @@ type request struct {
 	headers         http.Header
 	body            io.ReadCloser
 	links           []Link
+	auth            Auth
 }
 
 func New(c *config.Config) *Model {
@@ -308,6 +323,7 @@ func (r *resolvedResource) EvalRequest(baseURL *url.URL, vars map[string]any) (R
 		headers:         headers,
 		body:            body,
 		links:           links,
+		auth:            expandAuth(r.combinedAuth(), expander),
 	}, nil
 }
 
@@ -349,6 +365,10 @@ func (r request) Vars() map[string]any {
 
 func (r request) Links() []Link {
 	return r.links
+}
+
+func (r request) Auth() Auth {
+	return r.auth
 }
 
 func (r *resolvedResource) Client() Client {
@@ -404,6 +424,49 @@ func (r *resolvedResource) combinedLinks() []Link {
 	return result
 }
 
+func (r *resolvedResource) combinedAuth() Auth {
+	return locate(
+		r,
+		mergeAuth,
+		(*Endpoint).auth,
+		(*Resource).auth,
+		(*Server).auth,
+		(*Service).auth,
+	)
+}
+
+func locate[T comparable](
+	r *resolvedResource,
+	reducer func(T, T) T,
+	onEndpoint func(*Endpoint) T,
+	onResource func(*Resource) T,
+	onServer func(*Server) T,
+	onService func(*Service) T) T {
+
+	var res T
+
+	if onEndpoint != nil && r.Endpoint() != nil {
+		res = reducer(res, onEndpoint(r.Endpoint()))
+	}
+
+	if onResource != nil {
+		if r.Resource() != nil {
+			res = reducer(res, onResource(r.Resource()))
+		}
+		for _, l := range r.Lineage() {
+			res = reducer(res, onResource(l))
+		}
+	}
+	if onServer != nil && r.Server() != nil {
+		res = reducer(res, onServer(r.Server()))
+	}
+	if onService != nil && r.Service() != nil {
+		res = reducer(res, onService(r.Service()))
+	}
+
+	return res
+}
+
 func (r *resolvedResource) bodyContent(vars map[string]any) httpclient.Content {
 	if r.Endpoint().Form != nil {
 		return newFormContent(r.Endpoint().Form, vars)
@@ -445,5 +508,19 @@ func findEndpointOrDefault(resource *Resource, method string, spec ServiceSpec) 
 	return nil
 }
 
+func (e *Endpoint) auth() Auth { return e.Auth }
+func (r *Resource) auth() Auth { return r.Auth }
+func (s *Server) auth() Auth   { return s.Auth }
+func (s *Service) auth() Auth  { return s.Auth }
+
+func mergeAuth(x, y Auth) Auth {
+	// TODO This should merge compatible auths rather than replace
+	if y == nil {
+		return x
+	}
+	return y
+}
+
 func (*GRPCClient) clientSigil() {}
 func (*HTTPClient) clientSigil() {}
+func (*BasicAuth) authSigil()    {}

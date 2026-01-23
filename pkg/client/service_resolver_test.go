@@ -181,3 +181,6 @@ func (t testRequest) Links() []model.Link {
 func (t testRequest) Vars() map[string]any {
 	return nil
 }
+func (t testRequest) Auth() model.Auth {
+	return nil
+}
