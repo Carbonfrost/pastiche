@@ -32,6 +32,7 @@ type Model struct {
 
 type Service struct {
 	Name        string
+	Comment     string
 	Title       string
 	Description string
 	Servers     []*Server
@@ -44,6 +45,7 @@ type Service struct {
 
 type Server struct {
 	Name        string
+	Comment     string
 	Description string
 	Title       string
 	BaseURL     string
@@ -56,6 +58,7 @@ type Server struct {
 
 type Resource struct {
 	Name        string
+	Comment     string
 	Title       string
 	Description string
 	Resources   []*Resource
@@ -73,6 +76,7 @@ type Resource struct {
 
 type Endpoint struct {
 	Name        string
+	Comment     string
 	Title       string
 	Description string
 	Method      string

@@ -16,6 +16,7 @@ func service(v config.Service) *Service {
 	}
 	return &Service{
 		Name:        v.Name,
+		Comment:     v.Comment,
 		Title:       v.Title,
 		Description: v.Description,
 		Servers:     servers,
@@ -47,6 +48,7 @@ func mustParseURITemplate(t string) *uritemplates.URITemplate {
 func server(s config.Server) *Server {
 	return &Server{
 		Name:        s.Name,
+		Comment:     s.Comment,
 		BaseURL:     s.BaseURL,
 		Description: s.Description,
 		Title:       s.Title,
@@ -61,6 +63,7 @@ func resource(r config.Resource) *Resource {
 	uri, _ := uritemplates.Parse(r.URI)
 	res := &Resource{
 		Name:        r.Name,
+		Comment:     r.Comment,
 		Title:       r.Title,
 		Description: r.Description,
 		URITemplate: uri,
@@ -119,6 +122,7 @@ func resources(resources []config.Resource) []*Resource {
 func endpoint(method string, r *config.Endpoint) *Endpoint {
 	return &Endpoint{
 		Name:        r.Name,
+		Comment:     r.Comment,
 		Title:       r.Title,
 		Description: r.Description,
 		Method:      method,

@@ -104,6 +104,16 @@ var _ = Describe("Config", func() {
 						})})),
 				),
 			),
+			Entry(
+				"preprocessed",
+				"preprocessed.yml",
+				haveService(
+					PointTo(MatchFields(IgnoreExtras, Fields{"Servers": ConsistOf(config.Server{
+						Name:  "s",
+						Title: "t",
+					})})),
+				),
+			),
 		)
 
 		DescribeTable("errors",

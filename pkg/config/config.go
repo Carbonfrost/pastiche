@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -241,7 +242,7 @@ func (s sourcer) sources(basefilename string, values ...any) error {
 }
 
 func unmarshalYaml(data []byte, v any) error {
-	return yaml.UnmarshalStrict(data, v)
+	return yaml.UnmarshalStrict(preprocessYAML(data), v)
 }
 
 func sources[V any](s sourcer, basefilename string, values []V) error {
@@ -261,4 +262,23 @@ func fixRelative(basefilename string, path *string) {
 	}
 	resolvedFile := filepath.Join(filepath.Dir(basefilename), *path)
 	*path = resolvedFile
+}
+
+func preprocessYAML(data []byte) []byte {
+	// If input is a map, remove root-level keys starting with ".".
+	// Other types such as slices, etc. and invalid YAML can be ignored
+	var doc map[string]any
+	if err := yaml.Unmarshal(data, &doc); err != nil {
+		return data
+	}
+
+	maps.DeleteFunc(doc, func(k string, _ any) bool {
+		return strings.HasPrefix(k, ".")
+	})
+
+	output, err := yaml.Marshal(doc)
+	if err != nil {
+		return data
+	}
+	return output
 }

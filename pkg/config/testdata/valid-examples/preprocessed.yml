@@ -1,0 +1,7 @@
+.server: &server
+  name: s
+  title: t
+
+name: p
+servers:
+  - <<: *server

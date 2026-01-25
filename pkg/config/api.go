@@ -5,13 +5,17 @@
 package config
 
 type File struct {
+	Schema string `json:"$schema,omitempty"`
+
 	*Service
 
 	Services []Service `json:"services,omitempty"`
 }
 
 type Service struct {
+	Schema      string         `json:"$schema,omitempty"`
 	Name        string         `json:"name"`
+	Comment     string         `json:"comment,omitempty"`
 	Source      string         `json:"source,omitempty"`
 	Title       string         `json:"title,omitempty"`
 	Description string         `json:"description,omitempty"`
@@ -24,7 +28,9 @@ type Service struct {
 }
 
 type Server struct {
+	Schema      string         `json:"$schema,omitempty"`
 	Name        string         `json:"name"`
+	Comment     string         `json:"comment,omitempty"`
 	Source      string         `json:"source,omitempty"`
 	Description string         `json:"description"`
 	Title       string         `json:"title"`
@@ -36,7 +42,9 @@ type Server struct {
 }
 
 type Resource struct {
+	Schema      string         `json:"$schema,omitempty"`
 	Name        string         `json:"name,omitempty"`
+	Comment     string         `json:"comment,omitempty"`
 	Source      string         `json:"source,omitempty"`
 	Title       string         `json:"title,omitempty"`
 	Description string         `json:"description,omitempty"`
@@ -84,7 +92,9 @@ type BasicAuth struct {
 }
 
 type Endpoint struct {
+	Schema      string         `json:"$schema,omitempty"`
 	Name        string         `json:"name,omitempty"`
+	Comment     string         `json:"comment,omitempty"`
 	Title       string         `json:"title,omitempty"`
 	Source      string         `json:"source,omitempty"`
 	Description string         `json:"description,omitempty"`
@@ -103,5 +113,5 @@ type Link struct {
 	Audience string `json:"audience,omitempty"`
 	Rel      string `json:"rel,omitempty"`
 	Title    string `json:"title,omitempty"`
-	Type     string `json:"title,omitempty"`
+	Type     string `json:"type,omitempty"`
 }
