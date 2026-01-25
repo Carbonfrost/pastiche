@@ -15,11 +15,7 @@ import (
 var _ = Describe("ToConfig", func() {
 
 	It("converts to a config value", func() {
-		subject := model.New(&config.Config{
-			Services: []config.Service{
-				config.ExampleHTTPBinorg(),
-			},
-		})
+		subject := model.New(config.BuiltinFiles()...)
 
 		Expect(func() {
 			model.ToConfig(subject)

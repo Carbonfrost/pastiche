@@ -24,7 +24,7 @@ type resolveResultMatches struct {
 var _ = Describe("Resolve", func() {
 
 	DescribeTable("examples", func(spec []string, match resolveResultMatches) {
-		subject := model.New(&config.Config{
+		subject := model.New(&config.File{
 			Services: []config.Service{
 				config.ExampleHTTPBinorg(),
 			},
@@ -56,7 +56,7 @@ var _ = Describe("Resolve", func() {
 		Describe("Href", func() {
 
 			It("resolves href variables", func() {
-				m := model.New(&config.Config{
+				m := model.New(&config.File{
 					Services: []config.Service{
 						{
 							Name: "a",
@@ -89,7 +89,7 @@ var _ = Describe("Resolve", func() {
 			merged, _ := rr.EvalRequest(nil, nil)
 			Expect(merged.Auth).To(Equal(&model.BasicAuth{User: "expected"}))
 		},
-			Entry("from endpoint", "a b", model.New(&config.Config{
+			Entry("from endpoint", "a b", model.New(&config.File{
 				Services: []config.Service{
 					{
 						Name: "a",
@@ -111,7 +111,7 @@ var _ = Describe("Resolve", func() {
 					},
 				},
 			})),
-			Entry("from resource", "a b", model.New(&config.Config{
+			Entry("from resource", "a b", model.New(&config.File{
 				Services: []config.Service{
 					{
 						Name: "a",
@@ -131,7 +131,7 @@ var _ = Describe("Resolve", func() {
 					},
 				},
 			})),
-			Entry("from nested resource", "a b c", model.New(&config.Config{
+			Entry("from nested resource", "a b c", model.New(&config.File{
 				Services: []config.Service{
 					{
 						Name: "a",
@@ -168,7 +168,7 @@ var _ = Describe("Resolve", func() {
 var _ = Describe("Header", func() {
 
 	DescribeTable("examples", func(expected types.GomegaMatcher) {
-		subject := model.New(&config.Config{
+		subject := model.New(&config.File{
 			Services: []config.Service{
 				{
 					Name: "a",
@@ -209,7 +209,7 @@ var _ = Describe("Header", func() {
 	)
 
 	It("expands variables", func() {
-		subject := model.New(&config.Config{
+		subject := model.New(&config.File{
 			Services: []config.Service{
 				{
 					Name: "a",
@@ -255,7 +255,7 @@ var _ = Describe("ResolvedReference", func() {
 	Describe("URL", func() {
 
 		DescribeTable("examples", func(spec []string, vars map[string]any, expected string) {
-			subject := model.New(&config.Config{
+			subject := model.New(&config.File{
 				Services: []config.Service{
 					config.ExampleHTTPBinorg(),
 					{
@@ -329,7 +329,7 @@ var _ = Describe("ResolvedReference", func() {
 var _ = Describe("New", func() {
 
 	DescribeTable("resource binding", func(r config.Resource, match types.GomegaMatcher) {
-		subject := model.New(&config.Config{
+		subject := model.New(&config.File{
 			Services: []config.Service{
 				{
 					Name:      "s",

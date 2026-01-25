@@ -956,11 +956,6 @@
     ],
     "flags": [
         {
-            "name": "chdir",
-            "helpText": "Change directory into the specified working {DIRECTORY}",
-            "options": "WORKING_DIRECTORY, NON_PERSISTENT"
-        },
-        {
             "name": "all",
             "helpText": "Facilitates displaying help text that is suppressed by default (used with --help)",
             "options": "NON_PERSISTENT"
@@ -978,6 +973,15 @@
             "data": {
                 "Source": "github.com/Carbonfrost/joe-cli/extensions/color"
             }
+        },
+        {
+            "name": "chdir",
+            "helpText": "Run the command as if started in a working DIRECTORY",
+            "options": "MUST_EXIST"
+        },
+        {
+            "name": "pastiche-dir",
+            "helpText": "Set the path to the configuration DIRECTORY"
         },
         {
             "name": "help",
@@ -1015,7 +1019,7 @@
     ],
     "helpText": "Make requests to HTTP APIs using their OpenAPI schemas and definitions.",
     "version": "(devel)",
-    "buildDate": "2026-04-01T22:33:14.646258982-07:00",
+    "buildDate": "2026-04-02T17:59:25.142514826-07:00",
     "comment": "Smart OpenAPI client",
     "options": "SORTED_FLAGS, SORTED_COMMANDS, SORTED_EXPRS"
 }

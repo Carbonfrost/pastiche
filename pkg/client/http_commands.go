@@ -15,7 +15,7 @@ import (
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli/extensions/bind"
 	"github.com/Carbonfrost/joe-cli/extensions/exec"
-	"github.com/Carbonfrost/pastiche/pkg/config"
+	"github.com/Carbonfrost/pastiche/pkg/contextual"
 	"github.com/Carbonfrost/pastiche/pkg/grpcclient"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 	"sigs.k8s.io/yaml"
@@ -55,9 +55,12 @@ func Do() cli.Action {
 		cli.Prototype{
 			HelpText: "Make a request using the given service",
 		},
-		New(
-			WithDefaultLocationResolver(),
-		),
+		func(ctx context.Context) error {
+			ws := contextual.Workspace(ctx)
+			return cli.Do(ctx, New(
+				WithDefaultLocationResolver(ws.Model()),
+			))
+		},
 		useRequest(),
 		cli.Setup{
 			Action: cli.Pipeline(
@@ -82,8 +85,7 @@ func Describe(paramsopt ...*DescribeParams) cli.Action {
 }
 
 func describeSpec(c *cli.Context, params *DescribeParams) error {
-	cfg, _ := config.Load()
-	mo := model.New(cfg)
+	mo := contextual.Workspace(c).Model()
 	req := params.Request
 	merged, err := mo.Resolve(*req.Spec, req.Server, req.Method)
 	if err != nil {
@@ -216,9 +218,8 @@ func openSpec(r *Request, rel string) cli.Action {
 }
 
 func resolveRequest(c context.Context, req *Request) (*model.Request, error) {
-	cfg, _ := config.Load()
 	sr := httpclient.FromContext(c).LocationResolver.(LocationResolver)
-	mo := model.New(cfg)
+	mo := contextual.Workspace(c).Model()
 
 	merged, err := mo.Resolve(*req.Spec, req.Server, req.Method)
 	if err != nil {
@@ -337,9 +338,9 @@ func useRequest() bind.ActionBinder[*Request] {
 
 func completeServices() cli.CompletionFunc {
 	return func(cc *cli.Context) []cli.CompletionItem {
-		cfg, _ := config.Load()
-		names := make([]string, 0, len(cfg.Services))
-		for _, s := range cfg.Services {
+		mo := contextual.Workspace(cc).Model()
+		names := make([]string, 0, len(mo.Services))
+		for _, s := range mo.Services {
 			names = append(names, s.Name)
 		}
 		return cli.CompletionValues(names...).Complete(cc)
@@ -380,12 +381,7 @@ func tryContextResolve(c *cli.Context) (service *model.Service, res *model.Resou
 	if !found {
 		return
 	}
-	cfg, err := config.Load()
-	if err != nil {
-		return
-	}
-
-	mo := model.New(cfg)
+	mo := contextual.Workspace(c).Model()
 	merged, err := mo.Resolve(*v, server, method)
 	service = merged.Service()
 	res = merged.Resource()
@@ -399,8 +395,7 @@ func tryContextResolve(c *cli.Context) (service *model.Service, res *model.Resou
 
 func setDescription(c *cli.Context) error {
 	servicesData := func() any {
-		cfg, _ := config.Load()
-		mo := model.New(cfg)
+		mo := contextual.Workspace(c).Model()
 
 		items := slices.Clone(mo.Services)
 		slices.SortFunc(items, func(x, y *model.Service) int {

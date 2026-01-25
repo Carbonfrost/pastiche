@@ -199,18 +199,26 @@ type resolvedResource struct {
 
 var looksLikeURLPattern = regexp.MustCompile(`^(unix|https?)://`)
 
-func New(c *config.Config) *Model {
-	res := &Model{
-		Services: make([]*Service, len(c.Services)),
+// New creates a new model from configuration files
+func New(files ...*config.File) *Model {
+	services := []*Service{}
+
+	for _, file := range files {
+		if file.Service != nil {
+			services = append(services, service(*file.Service))
+		}
+		for _, s := range file.Services {
+			services = append(services, service(s))
+		}
 	}
 
-	for i, v := range slices.SortedFunc(slices.Values(c.Services), serviceByName) {
-		res.Services[i] = service(v)
+	slices.SortStableFunc(services, serviceByName2)
+	return &Model{
+		Services: services,
 	}
-	return res
 }
 
-func serviceByName(x, y config.Service) int {
+func serviceByName2(x, y *Service) int {
 	return cmp.Compare(x.Name, y.Name)
 }
 

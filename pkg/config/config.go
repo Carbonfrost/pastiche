@@ -11,11 +11,9 @@ import (
 	"io"
 	"io/fs"
 	"maps"
-	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/Carbonfrost/pastiche/pkg/internal/log"
 	"sigs.k8s.io/yaml"
 )
 
@@ -36,21 +34,6 @@ var unmarshalers = map[string]unmarshaler{
 }
 
 var ErrUnsupportedFileFormat = errors.New("unsupported file format")
-
-func Load() (sc *Config, err error) {
-	sc = &Config{}
-	if err = sc.loadExamples(); err != nil {
-		return
-	}
-	if err = sc.loadFromUser(); err != nil {
-		return
-	}
-	if err = sc.loadFromWorkspace(); err != nil {
-		return
-	}
-
-	return
-}
 
 // LoadFile loads the given file from the file system and name
 func LoadFile(f fs.FS, filename string) (*File, error) {
@@ -80,73 +63,6 @@ func LoadFile(f fs.FS, filename string) (*File, error) {
 	}
 
 	return nil, fmt.Errorf("load file %s: %w", filename, ErrUnsupportedFileFormat)
-}
-
-func (c *Config) appendServices(s ...Service) {
-	c.Services = append(c.Services, s...)
-}
-
-func (c *Config) loadExamples() error {
-	c.appendServices(Builtins()...)
-	return nil
-}
-
-func (c *Config) loadFromUser() error {
-	root, err := filepath.Abs(os.ExpandEnv("$HOME/.pastiche"))
-	if err != nil {
-		return err
-	}
-	return c.loadFiles(root)
-}
-
-func (c *Config) loadFromWorkspace() error {
-	root, err := filepath.Abs(".pastiche")
-	if err != nil {
-		return err
-	}
-	return c.loadFiles(root)
-}
-
-func (c *Config) loadFiles(root string) error {
-	rootFS := os.DirFS(root)
-	return fs.WalkDir(rootFS, ".", func(name string, d fs.DirEntry, err error) error {
-		if d == nil {
-			return nil
-		}
-
-		// TODO This should follow rules specified in .ignore files instead
-		if d.IsDir() && d.Name() == "logs" {
-			return fs.SkipDir
-		}
-		if d.IsDir() {
-			return nil
-		}
-
-		if strings.HasPrefix(name, "_") {
-			return nil
-		}
-
-		if err != nil {
-			return err
-		}
-
-		file, err := LoadFile(rootFS, name)
-		if err != nil {
-			if errors.Is(err, ErrUnsupportedFileFormat) {
-				return nil
-			}
-
-			log.Warnf("%s: %v", filepath.Join(root, name), err)
-			return nil
-		}
-
-		if file.Service != nil {
-			c.appendServices(*file.Service)
-		}
-		c.appendServices(file.Services...)
-
-		return nil
-	})
 }
 
 func (s sourcer) source(basefilename string, v any) error {

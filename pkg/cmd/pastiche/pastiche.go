@@ -46,8 +46,9 @@ func NewApp() *cli.App {
 				Features: table.AllFeatures &^ table.UseTablesInHelpTemplate,
 			},
 			cli.RegisterTemplate("PasticheServices", serviceTemplate),
-
 			cli.ImplicitCommand("fetch"),
+
+			workspace.New(),
 		),
 		Before: cli.Pipeline(
 			suppressHTTPClientHelpByDefault(),
@@ -93,12 +94,6 @@ func NewApp() *cli.App {
 			},
 		},
 		Flags: []*cli.Flag{
-			{
-				Name:     "chdir",
-				HelpText: "Change directory into the specified working {DIRECTORY}",
-				Value:    new(cli.File),
-				Options:  cli.WorkingDirectory | cli.NonPersistent,
-			},
 			{
 				Name:        "all",
 				HelpText:    "Facilitates displaying help text that is suppressed by default (used with --help)",
