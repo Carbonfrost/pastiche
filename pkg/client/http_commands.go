@@ -5,9 +5,10 @@
 package client
 
 import (
-	"bytes"
+	"cmp"
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
@@ -140,9 +141,7 @@ func invokeUsingMethod() cli.Action {
 						Name:       "service",
 						Value:      new(model.ServiceSpec),
 						Completion: completeServices(),
-						Uses: func(c *cli.Context) {
-							c.Arg().Description = renderServices(c)
-						},
+						Uses:       setDescription,
 					},
 					{
 						Name:       "args",
@@ -236,23 +235,26 @@ func tryContextResolve(c *cli.Context) (service *model.Service, res *model.Resou
 	return
 }
 
-func renderServices(c *cli.Context) string {
-	cfg, _ := config.Load()
-	mo := model.New(cfg)
-	items := []*model.Service{}
-	for _, v := range mo.Services {
-		items = append(items, v)
+func setDescription(c *cli.Context) error {
+	servicesData := func() any {
+		cfg, _ := config.Load()
+		mo := model.New(cfg)
+
+		items := slices.Clone(mo.Services)
+		slices.SortFunc(items, func(x, y *model.Service) int {
+			return cmp.Compare(x.Name, y.Name)
+		})
+
+		return struct {
+			Services []*model.Service
+		}{
+			Services: items,
+		}
 	}
 
-	data := struct {
-		Services []*model.Service
-	}{
-		Services: items,
-	}
-
-	var buf bytes.Buffer
-	c.Template("PasticheServices").Execute(&buf, data)
-	return buf.String()
+	return c.SetDescription(
+		c.Template("PasticheServices").BindFunc(servicesData),
+	)
 }
 
 // TODO Allow grpcclient to have standalone support for headers
