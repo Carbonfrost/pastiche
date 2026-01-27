@@ -10,12 +10,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 	"strings"
+	"text/template"
 
 	cli "github.com/Carbonfrost/joe-cli"
 	joehttpclient "github.com/Carbonfrost/joe-cli-http/httpclient"
+	"github.com/Carbonfrost/joe-cli-http/httpclient/expr"
 	"github.com/Carbonfrost/joe-cli/extensions/provider"
+	"github.com/Carbonfrost/pastiche/pkg/template/funcs"
 	"github.com/jmespath/go-jmespath"
 )
 
@@ -24,14 +28,13 @@ type Filter interface {
 	Search(data any) (any, error)
 }
 
-// NewDigFilter creates a filter which resolves a qualified name in
-// a response value.
-func NewDigFilter(query string) (Filter, error) {
-	return digFilter(query), nil
+type templateFilter struct {
+	loader func() (string, error)
 }
 
-func newDig(opts filterOpts) (Filter, error) {
-	return NewDigFilter(opts.Query)
+type templateOpts struct {
+	Text string `mapstructure:"text"`
+	File string `mapstructure:"file"`
 }
 
 type digFilter string
@@ -71,6 +74,14 @@ var (
 				},
 				HelpText: "Use a simple expression to retrieve a value",
 			},
+			"gotpl": {
+				Factory: provider.Factory(newTemplate),
+				Defaults: map[string]string{
+					"text": "Result: {{ .Result }}",
+					"file": "",
+				},
+				HelpText: "Use Go template to manipulate matching data",
+			},
 		},
 	}
 )
@@ -83,6 +94,16 @@ func NewJMESPathFilter(query string) (Filter, error) {
 
 func newJMESPath(opts filterOpts) (Filter, error) {
 	return NewJMESPathFilter(opts.Query)
+}
+
+// NewDigFilter creates a filter which resolves a qualified name in
+// a response value.
+func NewDigFilter(query string) (Filter, error) {
+	return digFilter(query), nil
+}
+
+func newDig(opts filterOpts) (Filter, error) {
+	return NewDigFilter(opts.Query)
 }
 
 // NewFilterDownloader applies the filter to an underlying downloader.
@@ -123,10 +144,16 @@ func (c *filteredWriter) Close() error {
 		return err
 	}
 
-	e := json.NewEncoder(c.output)
-	err = e.Encode(res)
-	if err != nil {
-		return err
+	// Write directly if the filter is to []byte, else codec output
+	if out, ok := res.([]byte); ok {
+		c.output.Write(out)
+
+	} else {
+		e := json.NewEncoder(c.output)
+		err = e.Encode(res)
+		if err != nil {
+			return err
+		}
 	}
 
 	if closer, ok := c.output.(io.Closer); ok {
@@ -212,4 +239,61 @@ func SetFilter(f ...*provider.Value) cli.Action {
 func (j *filterOpts) UnmarshalText(data []byte) error {
 	j.Query = string(data)
 	return nil
+}
+
+// NewTemplateFilter creates a filter which resolves a qualified name in
+// a response value.
+func NewTemplateFilter(tpl string) (Filter, error) {
+	return newTemplateFilterString(tpl), nil
+}
+
+func (t templateFilter) Search(data any) (any, error) {
+	text, err := t.loader()
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO This should be expander capable of vars, form, etc.
+	expander := expr.ExpandGlobals
+
+	var results bytes.Buffer
+
+	funcMap := template.FuncMap{}
+	funcs.AddToFuncs(funcMap)
+	funcs.AddVarResolver(funcMap, expander)
+
+	tpl, err := template.New("<filter>").Funcs(funcMap).Parse(text)
+
+	templateData := map[string]any{
+		"Result": data,
+	}
+	funcs.AddTo(templateData)
+
+	err = tpl.Execute(&results, templateData)
+	return results.Bytes(), err
+}
+
+func newTemplateFilterString(tpl string) templateFilter {
+	return templateFilter{
+		loader: func() (string, error) {
+			return tpl, nil
+		},
+	}
+}
+
+func newTemplateFilterFile(filename string) templateFilter {
+	return templateFilter{
+		loader: func() (string, error) {
+			// TODO This should use context fs.FS
+			data, err := os.ReadFile(filename)
+			return string(data), err
+		},
+	}
+}
+
+func newTemplate(opts templateOpts) (Filter, error) {
+	if opts.File != "" {
+		return newTemplateFilterFile(opts.File), nil
+	}
+	return newTemplateFilterString(opts.Text), nil
 }

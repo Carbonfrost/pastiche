@@ -1,4 +1,4 @@
-// Copyright 2025 The Pastiche Authors. All rights reserved.
+// Copyright 2025, 2026 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 package model
@@ -6,11 +6,9 @@ package model
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"text/template"
 
@@ -48,25 +46,6 @@ func newContentSupport(vars map[string]any) *contentSupport {
 	}
 }
 
-func resolveVar(exp Expander) func(...string) (any, error) {
-	return func(vars ...string) (any, error) {
-		if len(vars) == 0 {
-			return "", fmt.Errorf("var/n requires at least one var name")
-		}
-		for i, v := range vars {
-			result := exp(v)
-			if result != nil {
-				return result, nil
-			}
-			if i > 0 && i == len(vars)-1 {
-				// Last value is a literal
-				return v, nil
-			}
-		}
-		return "", fmt.Errorf("var not found: %q", vars[0])
-	}
-}
-
 func newFormContent(form map[string][]string, vars map[string]any) joehttpclient.Content {
 	return &formContent{
 		contentSupport: &contentSupport{
@@ -98,12 +77,12 @@ func bodyToBytes(data any) []byte {
 }
 
 func (t *templateContent) Read() io.Reader {
+	funcMap := template.FuncMap{}
+	funcs.AddToFuncs(funcMap)
+	funcs.AddVarResolver(funcMap, t.Expander())
+
 	tpl, err := template.New("<body content>").
-		Funcs(template.FuncMap{
-			"env": os.Getenv,
-			"var": resolveVar(t.Expander()),
-		}).
-		Parse(t.tpl)
+		Funcs(funcMap).Parse(t.tpl)
 
 	if err != nil {
 		log.Warn("error parsing template", err)
