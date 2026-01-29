@@ -108,10 +108,11 @@ type Endpoint struct {
 }
 
 type Link struct {
-	HRef     string `json:"href,omitempty"`
-	HRefLang string `json:"hrefLang,omitempty"`
-	Audience string `json:"audience,omitempty"`
-	Rel      string `json:"rel,omitempty"`
-	Title    string `json:"title,omitempty"`
-	Type     string `json:"type,omitempty"`
+	HRef       string `json:"href,omitempty"`
+	HRefLang   string `json:"hrefLang,omitempty"`
+	Audience   string `json:"audience,omitempty"`
+	Rel        string `json:"rel,omitempty"`
+	Title      string `json:"title,omitempty"`
+	Type       string `json:"type,omitempty"`
+	IsTemplate bool   `json:"isTemplate,omitempty"`
 }

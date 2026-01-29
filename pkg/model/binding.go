@@ -140,12 +140,13 @@ func links(links []config.Link) []Link {
 	res := make([]Link, len(links))
 	for i, l := range links {
 		res[i] = Link{
-			HRef:     l.HRef,
-			HRefLang: l.HRefLang,
-			Audience: l.Audience,
-			Rel:      l.Rel,
-			Title:    l.Title,
-			Type:     l.Type,
+			HRef:       l.HRef,
+			HRefLang:   l.HRefLang,
+			Audience:   l.Audience,
+			Rel:        l.Rel,
+			Title:      l.Title,
+			Type:       l.Type,
+			IsTemplate: l.IsTemplate,
 		}
 	}
 	return res

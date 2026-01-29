@@ -229,3 +229,13 @@ func expandAuth(a Auth, e Expander) Auth {
 	}
 	return a
 }
+
+func expandLinks(links []Link, e Expander) []Link {
+	for i := range links {
+		if links[i].IsTemplate {
+			links[i].HRefLang = expandString(links[i].HRefLang, e)
+			links[i].Title = expandString(links[i].Title, e)
+		}
+	}
+	return links
+}

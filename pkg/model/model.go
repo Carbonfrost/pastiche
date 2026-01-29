@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"regexp"
 	"strings"
 
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
@@ -90,12 +91,13 @@ type Endpoint struct {
 }
 
 type Link struct {
-	HRef     string
-	HRefLang string
-	Audience string
-	Rel      string
-	Title    string
-	Type     string
+	HRef       string
+	HRefLang   string
+	Audience   string
+	Rel        string
+	Title      string
+	Type       string
+	IsTemplate bool
 }
 
 type Client interface {
@@ -158,6 +160,8 @@ type request struct {
 	links           []Link
 	auth            Auth
 }
+
+var looksLikeURLPattern = regexp.MustCompile(`^(unix|https?)://`)
 
 func New(c *config.Config) *Model {
 	res := &Model{
@@ -309,7 +313,11 @@ func (r *resolvedResource) EvalRequest(baseURL *url.URL, vars map[string]any) (R
 	)
 
 	headers := expandHeader(r.combinedHeaders(), expander)
-	links := r.combinedLinks()
+	links := resolveLinks(
+		expandLinks(r.combinedLinks(), expander),
+		baseURITemplate.String(),
+		combinedVars,
+	)
 
 	body := func() io.ReadCloser {
 		content := r.bodyContent(combinedVars)
@@ -331,19 +339,37 @@ func (r *resolvedResource) EvalRequest(baseURL *url.URL, vars map[string]any) (R
 	}, nil
 }
 
-func (r request) URL() (*url.URL, error) {
-	base := r.baseURITemplate.String()
+func resolveLinks(links []Link, base string, vars map[string]any) []Link {
+	for i := range links {
+		if links[i].IsTemplate {
+			url, err := resolveURL(base, []string{links[i].HRef}, vars)
+			if err == nil {
+				links[i].HRef = url.String()
+			}
+		}
+	}
+	return links
+}
+
+func resolveURL(base string, prefix []string, vars map[string]any) (*url.URL, error) {
+	// Treat as absolute URI when it is qualified
+	if len(prefix) > 0 && looksLikeURLPattern.MatchString(prefix[0]) {
+		base = prefix[0]
+		prefix = prefix[1:]
+	}
+
 	if base != "" {
 		base = base + "/"
 	}
-	template := base + path.Join(r.prefix...)
+
+	template := base + path.Join(prefix...)
 
 	tt, err := uritemplates.Parse(template)
 	if err != nil {
 		return nil, err
 	}
 
-	expanded, err := tt.Expand(r.vars)
+	expanded, err := tt.Expand(vars)
 	if err != nil {
 		return nil, err
 	}
@@ -353,6 +379,11 @@ func (r request) URL() (*url.URL, error) {
 	}
 
 	return u.JoinPath(), nil
+}
+
+func (r request) URL() (*url.URL, error) {
+	base := r.baseURITemplate.String()
+	return resolveURL(base, r.prefix, r.vars)
 }
 
 func (r request) Body() io.ReadCloser {
@@ -418,6 +449,9 @@ func (r *resolvedResource) combinedLinks() []Link {
 	var result []Link
 	if r.Server() != nil {
 		result = append(result, r.Server().Links...)
+	}
+	if r.Service() != nil {
+		result = append(result, r.Service().Links...)
 	}
 	for _, l := range r.Lineage() {
 		result = append(result, l.Links...)

@@ -4,6 +4,7 @@
 package model_test
 
 import (
+	"net/url"
 	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -49,6 +50,37 @@ var _ = Describe("Resolve", func() {
 			},
 		),
 	)
+
+	Describe("Links", func() {
+
+		Describe("Href", func() {
+
+			It("resolves href variables", func() {
+				m := model.New(&config.Config{
+					Services: []config.Service{
+						{
+							Name: "a",
+							Links: []config.Link{
+								{
+									IsTemplate: true,
+									HRef:       "/{var}",
+								},
+							},
+							Servers: []config.Server{
+								{Name: "default"},
+							},
+						},
+					},
+				})
+				rr, _ := m.Resolve(strings.Fields("a"), "default", "")
+				baseURL, _ := url.Parse("https://example.com")
+				merged, _ := rr.EvalRequest(baseURL, map[string]any{"var": "hello"})
+
+				Expect(merged.Links()[0].HRef).To(Equal("https://example.com/hello"))
+			})
+
+		})
+	})
 
 	Describe("Auth", func() {
 
