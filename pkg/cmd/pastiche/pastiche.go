@@ -7,6 +7,7 @@ package pastiche
 import (
 	"fmt"
 	"os"
+	"slices"
 
 	cli "github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
@@ -82,7 +83,8 @@ func NewApp() *cli.App {
 			{
 				Name: "open",
 				Uses: cli.Pipeline(
-					disallowPersistentHTTPFlags(),
+					// Allow params to be used to fill template variables
+					disallowPersistentHTTPFlags("param", "params"),
 					phttpclient.Open(),
 				),
 			},
@@ -128,11 +130,9 @@ func suppressHTTPClientHelpByDefault() cli.ActionFunc {
 // disallowPersistentHTTPFlags is an action which returns an error if one
 // of the httpclient flags is present.  This is to allow them to be persistently
 // defined but not actually usable within certain contexts
-func disallowPersistentHTTPFlags() cli.Action {
-	return cli.Before(cli.ActionFunc(disallowPersistentHTTPFlagsFunc))
-}
-
-func disallowPersistentHTTPFlagsFunc(c *cli.Context) error {
+func disallowPersistentHTTPFlags(exceptions ...string) cli.Action {
+	return cli.Before(
+		cli.ActionFunc(func (c *cli.Context) error {
 	src, tag := httpclient.SourceAnnotation()
 	for _, k := range c.BindingLookup().BindingNames() {
 		f, ok := c.LookupFlag(k)
@@ -141,11 +141,14 @@ func disallowPersistentHTTPFlagsFunc(c *cli.Context) error {
 		}
 
 		if v, ok := f.LookupData(src); ok {
-			if tag == v {
+			if tag == v && !slices.Contains(exceptions, k) {
 				return fmt.Errorf("unknown option %v", k)
 			}
 		}
 	}
 
 	return nil
+}),
+	)
 }
+
