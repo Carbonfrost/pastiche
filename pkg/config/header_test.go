@@ -14,6 +14,26 @@ import (
 )
 
 var _ = Describe("Header", func() {
+	Describe("MarshalJSON", func() {
+		DescribeTable("examples",
+			func(input config.Header, expected types.GomegaMatcher) {
+				data, _ := json.Marshal(input)
+				Expect(string(data)).To(expected)
+			},
+
+			Entry(
+				"nominal",
+				config.Header{"Referer": {"A", "B"}},
+				Equal(`{"Referer":["A","B"]}`),
+			),
+
+			Entry(
+				"singleton",
+				config.Header{"Referer": {"X"}},
+				Equal(`{"Referer":"X"}`)),
+		)
+	})
+
 	Describe("UnmarshalJSON", func() {
 		DescribeTable("examples",
 			func(jsonString string, expected types.GomegaMatcher) {

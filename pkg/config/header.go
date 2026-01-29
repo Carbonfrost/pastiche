@@ -14,6 +14,10 @@ type Header map[string][]string
 // Form represents the key-value pairs in an encoded form.
 type Form map[string][]string
 
+func (h Header) MarshalJSON() ([]byte, error) {
+	return json.Marshal(simplifyHeader(h))
+}
+
 func (h *Header) UnmarshalJSON(d []byte) error {
 	head, err := makeHeader(*h, d)
 	if err != nil {
@@ -23,6 +27,10 @@ func (h *Header) UnmarshalJSON(d []byte) error {
 	return nil
 }
 
+func (f Form) MarshalJSON() ([]byte, error) {
+	return json.Marshal(simplifyHeader(f))
+}
+
 func (f *Form) UnmarshalJSON(d []byte) error {
 	head, err := makeHeader(*f, d)
 	if err != nil {
@@ -30,6 +38,18 @@ func (f *Form) UnmarshalJSON(d []byte) error {
 	}
 	*f = head
 	return nil
+}
+
+func simplifyHeader(h map[string][]string) map[string]any {
+	result := make(map[string]any, len(h))
+	for k, v := range h {
+		if len(v) == 1 {
+			result[k] = v[0]
+		} else {
+			result[k] = v
+		}
+	}
+	return result
 }
 
 func makeHeader[H ~map[string][]string](head H, data []byte) (map[string][]string, error) {
@@ -61,4 +81,7 @@ func makeHeader[H ~map[string][]string](head H, data []byte) (map[string][]strin
 var (
 	_ json.Unmarshaler = (*Header)(nil)
 	_ json.Unmarshaler = (*Form)(nil)
+
+	_ json.Marshaler = (Header)(nil)
+	_ json.Marshaler = (Form)(nil)
 )
