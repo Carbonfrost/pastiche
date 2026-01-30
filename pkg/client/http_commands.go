@@ -173,6 +173,9 @@ func importSpec(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	if call.Options.Method == "" {
+		call.Options.Method = "GET"
+	}
 
 	endpoint := call.ToEndpoint()
 	endpoint.Name = c.String("name")
