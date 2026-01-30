@@ -26,6 +26,10 @@ var _ = Describe("resolveURL", func() {
 			"qualified prefix",
 			"https://example.com", []string{"https://foo.example", "b"}, "https://foo.example/b",
 		),
+		Entry(
+			"qualified prefix vars",
+			"https://example.com", []string{"https://foo.example/{b}"}, "https://foo.example/ar",
+		),
 	)
 
 })

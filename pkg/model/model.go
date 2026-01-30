@@ -358,7 +358,7 @@ func resolveURL(base string, prefix []string, vars map[string]any) (*url.URL, er
 		prefix = prefix[1:]
 	}
 
-	if base != "" {
+	if base != "" && len(prefix) > 0 {
 		base = base + "/"
 	}
 
