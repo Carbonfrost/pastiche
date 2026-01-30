@@ -32,10 +32,10 @@ type Server struct {
 	Name        string         `json:"name"`
 	Comment     string         `json:"comment,omitempty"`
 	Source      string         `json:"source,omitempty"`
-	Description string         `json:"description"`
-	Title       string         `json:"title"`
+	Description string         `json:"description,omitempty"`
+	Title       string         `json:"title,omitempty"`
 	BaseURL     string         `json:"baseUrl"`
-	Headers     Header         `json:"headers"`
+	Headers     Header         `json:"headers,omitempty"`
 	Links       []Link         `json:"links,omitempty"`
 	Vars        map[string]any `json:"vars,omitempty"`
 	Auth        *Auth          `json:"auth,omitempty"`
