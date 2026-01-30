@@ -32,6 +32,7 @@ type Location interface {
 type LocationResolver interface {
 	httpclient.LocationResolver
 
+	BaseURL() *url.URL
 	Vars() map[string]any
 }
 
@@ -82,6 +83,10 @@ func (s *serviceResolver) AddVar(v *uritemplates.Var) error {
 
 func (s *serviceResolver) Vars() map[string]any {
 	return s.vars
+}
+
+func (s *serviceResolver) BaseURL() *url.URL {
+	return s.base
 }
 
 func (s *serviceResolver) SetBase(base *url.URL) error {
@@ -218,7 +223,7 @@ func looksLikeURL(s string) bool {
 }
 
 var (
-	_ httpclient.LocationResolver = (*serviceResolver)(nil)
-	_ httpclient.Middleware       = (*pasticheLocation)(nil)
-	_ Location                    = (*pasticheLocation)(nil)
+	_ LocationResolver      = (*serviceResolver)(nil)
+	_ httpclient.Middleware = (*pasticheLocation)(nil)
+	_ Location              = (*pasticheLocation)(nil)
 )
