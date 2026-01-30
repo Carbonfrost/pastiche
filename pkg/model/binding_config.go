@@ -5,6 +5,8 @@
 package model
 
 import (
+	"strings"
+
 	"github.com/Carbonfrost/pastiche/pkg/config"
 )
 
@@ -68,32 +70,32 @@ func configResource(r *Resource) *config.Resource {
 	for _, e := range r.Endpoints {
 		ep := configEndpoint(e)
 
-		switch e.Method {
-		case "GET":
+		switch strings.ToLower(e.Method) {
+		case "get":
 			res.Get = ep
 
-		case "PUT":
+		case "put":
 			res.Put = ep
 
-		case "POST":
+		case "post":
 			res.Post = ep
 
-		case "DELETE":
+		case "delete":
 			res.Delete = ep
 
-		case "OPTIONS":
+		case "options":
 			res.Options = ep
 
-		case "HEAD":
+		case "head":
 			res.Head = ep
 
-		case "TRACE":
+		case "trace":
 			res.Trace = ep
 
-		case "PATCH":
+		case "patch":
 			res.Patch = ep
 
-		case "QUERY":
+		case "query":
 			res.Query = ep
 
 		default:
