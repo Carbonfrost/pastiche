@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"regexp"
 	"strconv"
 	"strings"
 )
@@ -64,32 +63,20 @@ func parseFetchExpression(input string) (*FetchCall, error) {
 
 	// Extract arguments inside fetch(...)
 	args := strings.TrimSuffix(strings.TrimPrefix(input, "fetch("), ")")
+	urlPart, optionsPart, _ := strings.Cut(args, ",")
 
-	// Split on first comma only (url, options)
-	parts := splitOnFirstComma(args)
-	if len(parts) != 2 {
-		return nil, errors.New("fetch call must have exactly two arguments")
-	}
-
-	// Parse URL
-	urlPart := strings.TrimSpace(parts[0])
-	if !isQuotedString(urlPart) {
+	urlPart = strings.TrimSpace(urlPart)
+	url, err := strconv.Unquote(urlPart)
+	if err != nil || url == urlPart {
 		return nil, errors.New("fetch URL must be a quoted string")
 	}
-	url, _ := strconv.Unquote(urlPart)
 
 	// Parse options object
-	optionsPart := strings.TrimSpace(parts[1])
+	optionsPart = strings.TrimSpace(optionsPart)
 	if !strings.HasPrefix(optionsPart, "{") || !strings.HasSuffix(optionsPart, "}") {
 		return nil, errors.New("fetch options must be an object literal")
 	}
 
-	// Detect unquoted keys (error if any found)
-	if hasUnquotedKeys(optionsPart) {
-		return nil, errors.New("options object contains unquoted keys")
-	}
-
-	// Decode JSON
 	var opts FetchOptions
 	if err := json.Unmarshal([]byte(optionsPart), &opts); err != nil {
 		return nil, fmt.Errorf("invalid options JSON: %w", err)
@@ -99,33 +86,4 @@ func parseFetchExpression(input string) (*FetchCall, error) {
 		URL:     url,
 		Options: opts,
 	}, nil
-}
-
-// splitOnFirstComma splits a string into two parts on the first comma not inside braces
-func splitOnFirstComma(s string) []string {
-	depth := 0
-	for i, r := range s {
-		switch r {
-		case '{':
-			depth++
-		case '}':
-			depth--
-		case ',':
-			if depth == 0 {
-				return []string{s[:i], s[i+1:]}
-			}
-		}
-	}
-	return []string{s}
-}
-
-func isQuotedString(s string) bool {
-	return len(s) >= 2 && s[0] == '"' && s[len(s)-1] == '"'
-}
-
-// hasUnquotedKeys detects JS-style keys like { method: "POST" }
-func hasUnquotedKeys(obj string) bool {
-	// Matches: { key: ... } or , key:
-	unquotedKeyRegex := regexp.MustCompile(`[{,]\s*[a-zA-Z_][a-zA-Z0-9_]*\s*:`)
-	return unquotedKeyRegex.MatchString(obj)
 }
