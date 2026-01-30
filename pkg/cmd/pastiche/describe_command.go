@@ -9,6 +9,7 @@ import (
 	"github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/pastiche/pkg/config"
 	"github.com/Carbonfrost/pastiche/pkg/model"
+	"sigs.k8s.io/yaml"
 )
 
 func DescribeServiceCommand() cli.Action {
@@ -48,5 +49,12 @@ func DescribeServiceCommand() cli.Action {
 }
 
 func displayService(s *model.Service) {
-	fmt.Printf("%#v\n", s)
+	m := &model.Model{
+		Services: []*model.Service{
+			s,
+		},
+	}
+
+	data, _ := yaml.Marshal(model.ToConfig(m))
+	fmt.Println(string(data))
 }
