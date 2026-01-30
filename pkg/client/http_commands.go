@@ -22,6 +22,24 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+type Request struct {
+	Spec   *model.ServiceSpec
+	Method string
+	Server string
+}
+
+type params[T any] struct {
+	cli.Action
+	bind.Binder[T]
+}
+
+func newParams[T any](action cli.Action, binder bind.Func[T]) *params[T] {
+	return &params[T]{
+		action,
+		binder,
+	}
+}
+
 // SetClientType provides an action which sets the client type
 func SetClientType(v ...ClientType) cli.Action {
 	return cli.Pipeline(
@@ -47,14 +65,6 @@ func Open() cli.Action {
 		cli.Prototype{
 			Description: "View a given service configuration or link",
 		},
-		cli.AddArgs([]*cli.Arg{
-			{
-				Name:       "service",
-				Value:      new(model.ServiceSpec),
-				Completion: completeServices(),
-				// TODO Dubious - but perhaps Description should be displayed
-			},
-		}...),
 		cli.AddFlags([]*cli.Flag{
 			{
 				Name:     "rel",
@@ -63,7 +73,7 @@ func Open() cli.Action {
 				Value:    new(string),
 			},
 		}...),
-		bind.Action2(openSpec, bind.Value[*model.ServiceSpec]("service"), bind.String("rel")),
+		bind.Action2(openSpec, useRequest(), bind.String("rel")),
 	)
 }
 
@@ -73,14 +83,6 @@ func Import() cli.Action {
 		cli.Prototype{
 			Description: "Import a service configuration from another format",
 		},
-		cli.AddArgs([]*cli.Arg{
-			{
-				Name:       "service",
-				Value:      new(model.ServiceSpec),
-				Completion: completeServices(),
-				// TODO Dubious - but perhaps Description should be displayed
-			},
-		}...),
 		cli.AddFlags([]*cli.Flag{
 			{
 				Name:     "name",
@@ -95,7 +97,7 @@ func Import() cli.Action {
 				HelpText: "Set the description of the resource",
 			},
 		}...),
-		cli.At(cli.ActionTiming, cli.ActionFunc(importSpec)),
+		bind.Call2(importSpec, bind.Context(), useRequest()),
 	)
 }
 
@@ -137,17 +139,9 @@ func fromClientType(c model.Client) ClientType {
 	return ClientTypeUnspecified
 }
 
-func openSpec(ss *model.ServiceSpec, rel string) cli.Action {
+func openSpec(r *Request, rel string) cli.Action {
 	return cli.ActionFunc(func(c *cli.Context) error {
-		cfg, _ := config.Load()
-
-		mo := model.New(cfg)
-
-		merged, err := mo.Resolve(*ss, "", "")
-		if err != nil {
-			return err
-		}
-		request, err := merged.EvalRequest(nil, nil)
+		request, err := resolveRequest(c, r)
 		if err != nil {
 			return err
 		}
@@ -159,11 +153,24 @@ func openSpec(ss *model.ServiceSpec, rel string) cli.Action {
 				return exec.Open(l.HRef)
 			}
 		}
-		return fmt.Errorf("unknown rel %s in %q", rel, ss.Path())
+		return fmt.Errorf("unknown rel %s in %q", rel, r.Spec.Path())
 	})
 }
 
-func importSpec(c *cli.Context) error {
+func resolveRequest(c context.Context, req *Request) (model.Request, error) {
+	cfg, _ := config.Load()
+	sr := httpclient.FromContext(c).LocationResolver.(LocationResolver)
+	mo := model.New(cfg)
+
+	merged, err := mo.Resolve(*req.Spec, req.Server, req.Method)
+	if err != nil {
+		return nil, err
+	}
+
+	return merged.EvalRequest(sr.BaseURL(), sr.Vars())
+}
+
+func importSpec(c *cli.Context, r *Request) error {
 	in, err := io.ReadAll(c.Stdin)
 	if err != nil {
 		return err
@@ -217,6 +224,16 @@ func invokeUsingMethod() cli.Action {
 		cli.Prototype{
 			Description: "Make a request using the given service",
 		},
+		useRequest(),
+		cli.Setup{
+			Action: cli.Pipeline(
+				FetchAndPrint(),
+			),
+		})
+}
+
+func useRequest() *params[*Request] {
+	return newParams(cli.Pipeline(
 		cli.Setup{
 			Uses: cli.Pipeline(
 				cli.AddArgs([]*cli.Arg{
@@ -250,10 +267,16 @@ func invokeUsingMethod() cli.Action {
 					},
 				}...),
 			),
-			Action: cli.Pipeline(
-				FetchAndPrint(),
-			),
-		})
+		},
+	),
+		func(c *cli.Context) (*Request, error) {
+			return &Request{
+				Spec:   c.Value("service").(*model.ServiceSpec),
+				Method: c.String("method"),
+				Server: c.String("server"),
+			}, nil
+		},
+	)
 }
 
 func completeServices() cli.CompletionFunc {
@@ -372,3 +395,13 @@ func httpClientInterop(c *cli.Context) error {
 
 	return nil
 }
+
+func (p *params[_]) Initializer() cli.Action {
+	return p.Action
+}
+
+var (
+	_ cli.Action                            = (*params[any])(nil)
+	_ bind.Binder[any]                      = (*params[any])(nil)
+	_ interface{ Initializer() cli.Action } = (*params[any])(nil)
+)
