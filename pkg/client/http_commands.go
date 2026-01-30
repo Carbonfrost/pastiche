@@ -189,12 +189,23 @@ func importSpec(c *cli.Context, r *Request) error {
 	endpoint.Description = c.String("description")
 	endpoint.Title = c.String("title")
 
-	ss := *c.Value("service").(*model.ServiceSpec)
+	ss := *r.Spec
+	var servers []*model.Server
+	if r.Server != "" {
+		servers = append(servers, &model.Server{
+			Name: r.Server,
+		})
+	}
+	if r.Method != "" {
+		endpoint.Method = r.Method
+	}
+
 	mo := &model.Model{
 		Services: []*model.Service{
 			{
 				Name:     ss[0],
 				Resource: &model.Resource{},
+				Servers:  servers,
 			},
 		},
 	}
