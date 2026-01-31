@@ -21,6 +21,7 @@ import (
 	"github.com/Carbonfrost/joe-cli/extensions/provider"
 	"github.com/Carbonfrost/pastiche/pkg/template/funcs"
 	"github.com/jmespath/go-jmespath"
+	"sigs.k8s.io/yaml"
 )
 
 // Filter applies a search to the response data.
@@ -50,6 +51,8 @@ type digFilter string
 type filterOpts struct {
 	Query string `mapstructure:"query"`
 }
+
+type yamlFilter struct{}
 
 type filteredDownload struct {
 	Downloader joehttpclient.Downloader
@@ -97,6 +100,11 @@ var (
 				},
 				HelpText: "Generate JSON output (default)",
 			},
+			"yaml": {
+				Factory:  provider.Factory(newYAMLFilter),
+				Defaults: map[string]string{},
+				HelpText: "Generate yaml output (default)",
+			},
 		},
 	}
 )
@@ -130,6 +138,10 @@ func newJSONFilter(opts jsonFilterOpts) (Filter, error) {
 		return e
 	}
 	return jsonFilter{newEncoder}, nil
+}
+
+func newYAMLFilter(opts struct{}) (Filter, error) {
+	return yamlFilter{}, nil
 }
 
 // NewFilterDownloader applies the filter to an underlying downloader.
@@ -243,6 +255,10 @@ func (j jsonFilter) Search(data any) (any, error) {
 
 	// Returns bytes to prevent additional encoding by the filter downloader
 	return results.Bytes(), err
+}
+
+func (y yamlFilter) Search(data any) (any, error) {
+	return yaml.Marshal(data)
 }
 
 // ListFilters provides an action which lists all filters available to the filter registry.
