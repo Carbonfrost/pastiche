@@ -17,6 +17,7 @@ type Expander = expr.Expander
 
 func AddTo(data map[string]any) {
 	data["base64"] = &Base64Funcs{}
+	data["term"] = NewTermFuncs()
 }
 
 func AddToFuncs(funcMap template.FuncMap) {

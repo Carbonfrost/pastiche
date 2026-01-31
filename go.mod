@@ -13,6 +13,7 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/onsi/ginkgo/v2 v2.27.3
 	github.com/onsi/gomega v1.38.3
+	golang.org/x/term v0.38.0
 	google.golang.org/grpc v1.77.0
 	sigs.k8s.io/yaml v1.6.0
 )
@@ -71,7 +72,6 @@ require (
 	golang.org/x/net v0.48.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.39.0 // indirect
-	golang.org/x/term v0.38.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
 	golang.org/x/tools v0.40.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251022142026-3a174f9686a8 // indirect
