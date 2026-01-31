@@ -28,6 +28,14 @@ type Filter interface {
 	Search(data any) (any, error)
 }
 
+type jsonFilter struct {
+	e func(io.Writer) *json.Encoder
+}
+
+type jsonFilterOpts struct {
+	Pretty bool `mapstructure:"pretty"`
+}
+
 type templateFilter struct {
 	loader func() (string, error)
 }
@@ -82,6 +90,13 @@ var (
 				},
 				HelpText: "Use Go template to manipulate matching data",
 			},
+			"json": {
+				Factory: provider.Factory(newJSONFilter),
+				Defaults: map[string]string{
+					"pretty": "false",
+				},
+				HelpText: "Generate JSON output (default)",
+			},
 		},
 	}
 )
@@ -104,6 +119,17 @@ func NewDigFilter(query string) (Filter, error) {
 
 func newDig(opts filterOpts) (Filter, error) {
 	return NewDigFilter(opts.Query)
+}
+
+func newJSONFilter(opts jsonFilterOpts) (Filter, error) {
+	newEncoder := func(w io.Writer) *json.Encoder {
+		e := json.NewEncoder(w)
+		if opts.Pretty {
+			e.SetIndent("", "  ")
+		}
+		return e
+	}
+	return jsonFilter{newEncoder}, nil
 }
 
 // NewFilterDownloader applies the filter to an underlying downloader.
@@ -209,6 +235,14 @@ func index[T any](values []T, index string) (any, error) {
 		return values[in], nil
 	}
 	return nil, fmt.Errorf("cannot index array with `%s'", index)
+}
+
+func (j jsonFilter) Search(data any) (any, error) {
+	var results bytes.Buffer
+	err := j.e(&results).Encode(data)
+
+	// Returns bytes to prevent additional encoding by the filter downloader
+	return results.Bytes(), err
 }
 
 // ListFilters provides an action which lists all filters available to the filter registry.
