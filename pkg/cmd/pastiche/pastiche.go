@@ -64,19 +64,11 @@ func NewApp() *cli.App {
 				),
 			},
 			{
-				Name:     "describe",
-				HelpText: "Describe resources within Pastiche workspace",
-				Subcommands: []*cli.Command{
-					{
-						Name:    "service",
-						Aliases: []string{"services", "svc"},
-						Uses: cli.Pipeline(
-							disallowPersistentHTTPFlags(),
-							DescribeServiceCommand(),
-						),
-					},
-				},
-				Uses: cli.HandleCommandNotFound(nil),
+				Name: "describe",
+				Uses: cli.Pipeline(
+					phttpclient.Describe(),
+					disallowPersistentHTTPFlags(),
+				),
 			},
 			{Name: "fetch", Uses: phttpclient.Do()},
 			{Name: "import", Uses: phttpclient.Import()},
@@ -132,23 +124,22 @@ func suppressHTTPClientHelpByDefault() cli.ActionFunc {
 // defined but not actually usable within certain contexts
 func disallowPersistentHTTPFlags(exceptions ...string) cli.Action {
 	return cli.Before(
-		cli.ActionFunc(func (c *cli.Context) error {
-	src, tag := httpclient.SourceAnnotation()
-	for _, k := range c.BindingLookup().BindingNames() {
-		f, ok := c.LookupFlag(k)
-		if !ok {
-			continue
-		}
+		cli.ActionFunc(func(c *cli.Context) error {
+			src, tag := httpclient.SourceAnnotation()
+			for _, k := range c.BindingLookup().BindingNames() {
+				f, ok := c.LookupFlag(k)
+				if !ok {
+					continue
+				}
 
-		if v, ok := f.LookupData(src); ok {
-			if tag == v && !slices.Contains(exceptions, k) {
-				return fmt.Errorf("unknown option %v", k)
+				if v, ok := f.LookupData(src); ok {
+					if tag == v && !slices.Contains(exceptions, k) {
+						return fmt.Errorf("unknown option %v", k)
+					}
+				}
 			}
-		}
-	}
 
-	return nil
-}),
+			return nil
+		}),
 	)
 }
-

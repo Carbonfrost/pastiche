@@ -33,6 +33,10 @@ type params[T any] struct {
 	bind.Binder[T]
 }
 
+type DescribeParams struct {
+	*Request
+}
+
 func newParams[T any](action cli.Action, binder bind.Func[T]) *params[T] {
 	return &params[T]{
 		action,
@@ -57,6 +61,58 @@ func SetClientType(v ...ClientType) cli.Action {
 // is [FetchAndPrint]
 func Do() cli.Action {
 	return invokeUsingMethod()
+}
+
+// Describe provides the action for describing a resource
+func Describe(paramsopt ...*DescribeParams) cli.Action {
+	if len(paramsopt) == 1 {
+		panic("not implemented")
+	}
+
+	return cli.Pipeline(
+		cli.Prototype{
+			Name:     "describe",
+			HelpText: "Describe resources within Pastiche workspace",
+		},
+		cli.HandleCommandNotFound(nil),
+		bind.Call2(describeSpec, bind.Context(), useDescribeParams()),
+	)
+}
+
+func describeSpec(c *cli.Context, params *DescribeParams) error {
+	cfg, _ := config.Load()
+	mo := model.New(cfg)
+	req := params.Request
+	merged, err := mo.Resolve(*req.Spec, req.Server, req.Method)
+	if err != nil {
+		return err
+	}
+
+	return displayService(&model.Model{
+		Services: []*model.Service{
+			merged.Service(),
+		},
+	})
+}
+
+func displayService(m *model.Model) error {
+	data, _ := yaml.Marshal(model.ToConfig(m))
+	fmt.Println(string(data))
+	return nil
+}
+
+func useDescribeParams() *params[*DescribeParams] {
+	requestBinder := useRequest()
+	return newParams(cli.Pipeline(
+		requestBinder,
+	),
+		func(c *cli.Context) (*DescribeParams, error) {
+			r, err := requestBinder.Bind(c)
+			return &DescribeParams{
+				Request: r,
+			}, err
+		},
+	)
 }
 
 // Open reveals a particular file or link in the editor or web browser
