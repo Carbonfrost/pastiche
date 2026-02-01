@@ -57,13 +57,21 @@ type yamlFilter struct{}
 type filteredDownload struct {
 	Downloader joehttpclient.Downloader
 	filter     Filter
+	history    historyGenerator
 }
 
 type filteredWriter struct {
 	*bytes.Buffer
 
-	output io.Writer
-	filter Filter
+	output  io.Writer
+	filter  Filter
+	history *history
+}
+
+type metaResponse struct {
+	Schema string   `json:"$schema"`
+	Meta   *history `json:"$meta"`
+	Result any      `json:"result"`
 }
 
 var (
@@ -145,18 +153,24 @@ func newYAMLFilter(opts struct{}) (Filter, error) {
 }
 
 // NewFilterDownloader applies the filter to an underlying downloader.
-func NewFilterDownloader(f Filter, d joehttpclient.Downloader) joehttpclient.Downloader {
+func NewFilterDownloader(f Filter, d joehttpclient.Downloader, h historyGenerator) joehttpclient.Downloader {
+	if f == nil {
+		f, _ = newJSONFilter(jsonFilterOpts{})
+	}
+
 	return &filteredDownload{
 		filter:     f,
 		Downloader: d,
+		history:    h,
 	}
 }
 
-func newFilteredWriter(output io.Writer, f Filter) *filteredWriter {
+func newFilteredWriter(output io.Writer, f Filter, h *history) *filteredWriter {
 	return &filteredWriter{
-		Buffer: new(bytes.Buffer),
-		output: output,
-		filter: f,
+		Buffer:  new(bytes.Buffer),
+		output:  output,
+		filter:  f,
+		history: h,
 	}
 }
 
@@ -165,16 +179,31 @@ func (f *filteredDownload) OpenDownload(ctx context.Context, r *joehttpclient.Re
 	if err != nil {
 		return nil, err
 	}
+	var h *history
+	if f.history != nil {
+		h, _ = f.history(ctx, r)
+	}
 
-	return newFilteredWriter(output, f.filter), nil
+	return newFilteredWriter(output, f.filter, h), nil
 }
 
 func (c *filteredWriter) Close() error {
 	var data any
+	if closer, ok := c.output.(io.Closer); ok {
+		defer closer.Close()
+	}
 
 	err := json.Unmarshal(c.Buffer.Bytes(), &data)
 	if err != nil {
 		return err
+	}
+
+	// If the history log was present, then wrap it in a metadata response
+	if c.history != nil {
+		data = &metaResponse{
+			Meta:   c.history,
+			Result: data,
+		}
 	}
 
 	res, err := c.filter.Search(data)
@@ -184,20 +213,11 @@ func (c *filteredWriter) Close() error {
 
 	// Write directly if the filter is to []byte, else codec output
 	if out, ok := res.([]byte); ok {
-		c.output.Write(out)
-
-	} else {
-		e := json.NewEncoder(c.output)
-		err = e.Encode(res)
-		if err != nil {
-			return err
-		}
+		_, err = c.output.Write(out)
+		return err
 	}
-
-	if closer, ok := c.output.(io.Closer); ok {
-		return closer.Close()
-	}
-	return nil
+	e := json.NewEncoder(c.output)
+	return e.Encode(res)
 }
 
 func (d digFilter) Search(data any) (any, error) {
@@ -272,6 +292,17 @@ func ListFilters() cli.Action {
 	)
 }
 
+func SetIncludeMetadata(f ...bool) cli.Action {
+	return cli.Pipeline(
+		&cli.Prototype{
+			Name:     "include-meta",
+			Value:    new(bool),
+			HelpText: "Include metadata in the output",
+		},
+		withBinding((*Client).SetIncludeMetadata, f),
+	)
+}
+
 // SetFilter provides an action which sets the filter which will be used in the response.
 // This also provides an accessory flag.
 func SetFilter(f ...*provider.Value) cli.Action {
@@ -314,9 +345,19 @@ func (t templateFilter) Search(data any) (any, error) {
 
 	tpl, err := template.New("<filter>").Funcs(funcMap).Parse(text)
 
-	templateData := map[string]any{
-		"Result": data,
+	var templateData map[string]any
+	if md, ok := data.(*metaResponse); ok {
+		templateData = map[string]any{
+			"Schema": md.Schema,
+			"Meta":   md.Meta,
+			"Result": md.Result,
+		}
+	} else {
+		templateData = map[string]any{
+			"Result": data,
+		}
 	}
+
 	funcs.AddTo(templateData)
 
 	err = tpl.Execute(&results, templateData)

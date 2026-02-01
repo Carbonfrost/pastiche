@@ -34,6 +34,7 @@ var _ = Describe("FilterDownloader", func() {
 			d := client.NewFilterDownloader(
 				must(client.NewJMESPathFilter("a")),
 				joehttpclient.NewDownloaderTo(&buf),
+				nil,
 			)
 
 			writer, _ := d.OpenDownload(context.Background(), testResponse)
@@ -56,6 +57,7 @@ var _ = Describe("FilterDownloader", func() {
 			d := client.NewFilterDownloader(
 				must(client.NewDigFilter("a.b")),
 				joehttpclient.NewDownloaderTo(&buf),
+				nil,
 			)
 
 			writer, _ := d.OpenDownload(context.Background(), testResponse)

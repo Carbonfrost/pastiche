@@ -5,8 +5,12 @@
 package client
 
 import (
+	"bytes"
 	"context"
+	"fmt"
+	"io"
 	"os"
+	"time"
 
 	cli "github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
@@ -22,10 +26,11 @@ import (
 type Client struct {
 	cli.Action
 
-	http       *httpclient.Client
-	grpc       *grpcclient.Client
-	clientType ClientType
-	filter     Filter
+	http            *httpclient.Client
+	grpc            *grpcclient.Client
+	clientType      ClientType
+	filter          Filter
+	includeMetadata bool
 
 	locationResolver httpclient.LocationResolver
 }
@@ -51,8 +56,11 @@ func New(opts ...Option) *Client {
 			sr,
 		),
 		func(c *httpclient.Client) {
+			c.UseDownloadMiddleware(res.filterResponse)
+		},
+		func(c *httpclient.Client) {
 			c.UseDownloadMiddleware(func(downloader httpclient.Downloader) httpclient.Downloader {
-				return newHistoryDownloader(downloader, sr.(*serviceResolver))
+				return newHistoryDownloader(downloader, res.historyLog)
 			})
 		},
 	)
@@ -64,15 +72,15 @@ func New(opts ...Option) *Client {
 		),
 	)
 	res.Action = defaultAction(res)
-	client.UseDownloadMiddleware(res.filterResponse)
 	return res
 }
 
 func (c *Client) filterResponse(d httpclient.Downloader) httpclient.Downloader {
-	if c.filter == nil {
-		return d
+	var history historyGenerator
+	if c.includeMetadata {
+		history = c.historyLog
 	}
-	return NewFilterDownloader(c.filter, d)
+	return NewFilterDownloader(c.filter, d, history)
 }
 
 // Type gets the client type that was requested
@@ -119,6 +127,7 @@ func FlagsAndArgs() cli.Action {
 			{Uses: ListFilters()},
 			{Uses: SetFilter()},
 			{Uses: SetClientType()},
+			{Uses: SetIncludeMetadata()},
 		}...),
 	)
 }
@@ -140,6 +149,39 @@ func (c *Client) SetFilter(f Filter) error {
 func (c *Client) SetClientType(t ClientType) error {
 	c.clientType = t
 	return nil
+}
+
+func (c *Client) SetIncludeMetadata(t bool) error {
+	c.includeMetadata = t
+	return nil
+}
+
+func (c *Client) historyLog(ctx context.Context, r *httpclient.Response) (*history, io.Writer) {
+	resolver := c.locationResolver.(*serviceResolver)
+	req, _ := resolver.resolveRequest(ctx)
+	var vars map[string]any
+	if req != nil {
+		vars = req.Vars() // TODO Would be better to separate input vars from compiled
+	}
+	var responseBody bytes.Buffer
+	return &history{
+		Timestamp: time.Now(), // TODO To be persnickety, should be the exact request timing
+		URL:       fmt.Sprint(r.Request.URL),
+		Spec:      *resolver.root(ctx),
+		Server:    resolver.server(ctx),
+		Response: historyResponse{
+			Headers:    r.Header,
+			Status:     r.Status,
+			StatusCode: r.StatusCode,
+			Body:       &historyResponseBody{&responseBody},
+		},
+		Request: historyRequest{
+			Headers: r.Request.Header,
+			Method:  r.Request.Method,
+		},
+		Vars:    vars,
+		BaseURL: sprintURL(resolver.base),
+	}, &responseBody
 }
 
 func (o Option) Execute(c context.Context) error {

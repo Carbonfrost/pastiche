@@ -1,3 +1,7 @@
+// Copyright 2026 The Pastiche Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package client
 
 import (
@@ -12,6 +16,7 @@ import (
 	"time"
 
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
+	"github.com/Carbonfrost/pastiche/pkg/internal/log"
 )
 
 type (
@@ -46,7 +51,7 @@ type (
 type historyDownloader struct {
 	httpclient.Downloader
 
-	resolver *serviceResolver
+	factory historyGenerator
 }
 
 type historyWriter struct {
@@ -55,10 +60,12 @@ type historyWriter struct {
 	history *history
 }
 
-func newHistoryDownloader(d httpclient.Downloader, s *serviceResolver) httpclient.Downloader {
+type historyGenerator func(context.Context, *httpclient.Response) (history *history, responseBody io.Writer)
+
+func newHistoryDownloader(d httpclient.Downloader, factory historyGenerator) httpclient.Downloader {
 	return historyDownloader{
 		Downloader: d,
-		resolver:   s,
+		factory:    factory,
 	}
 }
 
@@ -68,39 +75,14 @@ func (h historyDownloader) OpenDownload(ctx context.Context, r *httpclient.Respo
 		return nil, err
 	}
 
-	req, _ := h.resolver.resolveRequest(ctx)
-	var vars map[string]any
-	if req != nil {
-
-		vars = req.Vars() // TODO Would be better to separate input vars from compiled
-	}
-	var responseBody bytes.Buffer
-	history := &history{
-		Timestamp: time.Now(), // TODO To be persnickety, should be the exact request timing
-		URL:       fmt.Sprint(r.Request.URL),
-		Spec:      *h.resolver.root(ctx),
-		Server:    h.resolver.server(ctx),
-		Response: historyResponse{
-			Headers:    r.Header,
-			Status:     r.Status,
-			StatusCode: r.StatusCode,
-			Body:       &historyResponseBody{&responseBody},
-		},
-		Request: historyRequest{
-			Headers: r.Request.Header,
-			Method:  r.Request.Method,
-		},
-		Vars:    vars,
-		BaseURL: sprintURL(h.resolver.base),
-	}
-
+	history, responseBody := h.factory(ctx, r)
 	c, ok := output.(io.Closer)
 	if !ok {
 		c = io.NopCloser(nil)
 	}
 
 	return &historyWriter{
-		Writer:  io.MultiWriter(output, &responseBody),
+		Writer:  io.MultiWriter(output, responseBody),
 		output:  c,
 		history: history,
 	}, nil
@@ -118,22 +100,33 @@ func (w *historyWriter) Close() error {
 		return nil
 	}
 
-	logLines, _ := json.Marshal(w.history)
-	_, _ = f.Write(logLines)
+	defer f.Close()
+
+	logLines, err := json.Marshal(w.history)
+	if err != nil {
+		log.Warn(err)
+		return nil
+	}
+	_, err = f.Write(logLines)
+	if err != nil {
+		log.Warn(err)
+		return nil
+	}
+
 	_, _ = f.Write([]byte("\n"))
-	_ = f.Close()
 
 	return w.output.Close()
 }
 
 func (h historyResponseBody) MarshalJSON() ([]byte, error) {
-	kind := "text"
 	if json.Valid(h.buffer.Bytes()) {
-		kind = "json"
+		return json.Marshal(map[string]any{
+			"json": json.RawMessage(h.buffer.Bytes()),
+		})
 	}
 
 	return json.Marshal(map[string]any{
-		kind: json.RawMessage(h.buffer.Bytes()),
+		"text": string(h.buffer.Bytes()),
 	})
 }
 
