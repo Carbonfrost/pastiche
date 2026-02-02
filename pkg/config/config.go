@@ -85,7 +85,7 @@ func (c *Config) appendServices(s ...Service) {
 }
 
 func (c *Config) loadExamples() error {
-	c.appendServices(ExampleHTTPBinorg)
+	c.appendServices(Builtins()...)
 	return nil
 }
 

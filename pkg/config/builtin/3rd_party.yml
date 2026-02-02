@@ -1,0 +1,30 @@
+services:
+- name: httpbin
+  title: httpbin.org
+  description: A simple HTTP Request & Response Service.
+  servers:
+  - baseUrl: https://httpbin.org/
+    name: production
+  resources:
+  - delete: {}
+    name: delete
+    uri: /delete
+  - get: {}
+    name: get
+    uri: /get
+  - name: patch
+    patch: {}
+    uri: /patch
+  - name: post
+    post: {}
+    uri: /post
+  - name: put
+    put: {}
+    uri: /put
+  - get: {}
+    name: status
+    resources:
+    - get: {}
+      name: codes
+      uri: /{codes}
+    uri: /status

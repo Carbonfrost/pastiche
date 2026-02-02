@@ -26,7 +26,7 @@ var _ = Describe("Resolve", func() {
 	DescribeTable("examples", func(spec []string, match resolveResultMatches) {
 		subject := model.New(&config.Config{
 			Services: []config.Service{
-				config.ExampleHTTPBinorg,
+				config.ExampleHTTPBinorg(),
 			},
 		})
 
@@ -257,7 +257,7 @@ var _ = Describe("ResolvedReference", func() {
 		DescribeTable("examples", func(spec []string, vars map[string]any, expected string) {
 			subject := model.New(&config.Config{
 				Services: []config.Service{
-					config.ExampleHTTPBinorg,
+					config.ExampleHTTPBinorg(),
 					{
 						Name: "a",
 						Servers: []config.Server{

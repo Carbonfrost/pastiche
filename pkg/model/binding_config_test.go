@@ -17,7 +17,7 @@ var _ = Describe("ToConfig", func() {
 	It("converts to a config value", func() {
 		subject := model.New(&config.Config{
 			Services: []config.Service{
-				config.ExampleHTTPBinorg,
+				config.ExampleHTTPBinorg(),
 			},
 		})
 
