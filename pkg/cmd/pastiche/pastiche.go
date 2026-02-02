@@ -15,6 +15,7 @@ import (
 	"github.com/Carbonfrost/joe-cli/extensions/table"
 	phttpclient "github.com/Carbonfrost/pastiche/pkg/client"
 	"github.com/Carbonfrost/pastiche/pkg/internal/build"
+	"github.com/Carbonfrost/pastiche/pkg/server"
 )
 
 const (
@@ -70,6 +71,7 @@ func NewApp() *cli.App {
 					disallowPersistentHTTPFlags(),
 				),
 			},
+			{Name: "serve", Uses: server.Serve()},
 			{Name: "fetch", Uses: phttpclient.Do()},
 			{Name: "import", Uses: phttpclient.Import()},
 			{
