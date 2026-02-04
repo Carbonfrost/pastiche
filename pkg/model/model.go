@@ -433,17 +433,15 @@ func (r *resolvedResource) combinedHeaders() http.Header {
 }
 
 func (r *resolvedResource) combinedVars() map[string]any {
-	result := map[string]any{}
-	if r.Server() != nil {
-		maps.Copy(result, r.Server().Vars)
-	}
-	for _, l := range r.Lineage() {
-		maps.Copy(result, l.Vars)
-	}
-	if r.Endpoint() != nil {
-		maps.Copy(result, r.Endpoint().Vars)
-	}
-	return result
+	return locate(
+		r,
+		reduceVars,
+		map[string]any{},
+		func(d *Endpoint) map[string]any { return d.Vars },
+		func(r *Resource) map[string]any { return r.Vars },
+		func(s *Server) map[string]any { return s.Vars },
+		func(s *Service) map[string]any { return s.Vars },
+	)
 }
 
 func (r *resolvedResource) combinedLinks() []Link {
@@ -590,6 +588,11 @@ func reduceHeader(x, y http.Header) http.Header {
 			x[k] = v
 		}
 	}
+	return x
+}
+
+func reduceVars(x, y map[string]any) map[string]any {
+	maps.Copy(x, y)
 	return x
 }
 
