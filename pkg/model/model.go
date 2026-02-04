@@ -5,6 +5,7 @@
 package model
 
 import (
+	"cmp"
 	"fmt"
 	"io"
 	"maps"
@@ -12,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"reflect"
 	"regexp"
 	"strings"
 
@@ -465,7 +467,7 @@ func (r *resolvedResource) combinedLinks() []Link {
 func (r *resolvedResource) combinedAuth() Auth {
 	return locate(
 		r,
-		mergeAuth,
+		reduceAuth,
 		(*Endpoint).auth,
 		(*Resource).auth,
 		(*Server).auth,
@@ -551,12 +553,28 @@ func (r *Resource) auth() Auth { return r.Auth }
 func (s *Server) auth() Auth   { return s.Auth }
 func (s *Service) auth() Auth  { return s.Auth }
 
-func mergeAuth(x, y Auth) Auth {
-	// TODO This should merge compatible auths rather than replace
+func reduceAuth(x, y Auth) Auth {
 	if y == nil {
 		return x
 	}
+
+	// If the operand specifies a different value from the union, it
+	// automatically wins
+	if sameType(x, y) {
+		switch bx := x.(type) {
+		case *BasicAuth:
+			by := y.(*BasicAuth)
+			return &BasicAuth{
+				User:     cmp.Or(by.User, bx.User),
+				Password: cmp.Or(by.Password, bx.Password),
+			}
+		}
+	}
 	return y
+}
+
+func sameType(x, y any) bool {
+	return reflect.TypeOf(x) == reflect.TypeOf(y)
 }
 
 func (*GRPCClient) clientSigil() {}

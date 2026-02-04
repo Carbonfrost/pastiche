@@ -33,3 +33,22 @@ var _ = Describe("resolveURL", func() {
 	)
 
 })
+
+var _ = Describe("reduceAuth", func() {
+	DescribeTable("examples", func(x, y, expected Auth) {
+		Expect(reduceAuth(x, y)).To(Equal(expected))
+	},
+		Entry(
+			"basic: override",
+			&BasicAuth{User: "U", Password: "P"},
+			&BasicAuth{User: "V", Password: "Q"},
+			&BasicAuth{User: "V", Password: "Q"},
+		),
+		Entry(
+			"basic: merge",
+			&BasicAuth{User: "U", Password: "P"},
+			&BasicAuth{},
+			&BasicAuth{User: "U", Password: "P"},
+		),
+	)
+})
