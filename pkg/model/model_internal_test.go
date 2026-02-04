@@ -5,6 +5,8 @@
 package model
 
 import (
+	"net/http"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -49,6 +51,44 @@ var _ = Describe("reduceAuth", func() {
 			&BasicAuth{User: "U", Password: "P"},
 			&BasicAuth{},
 			&BasicAuth{User: "U", Password: "P"},
+		),
+	)
+})
+
+var _ = Describe("reduceHeader", func() {
+
+	DescribeTable("examples", func(x, y, expected http.Header) {
+		Expect(reduceHeader(x, y)).To(Equal(expected))
+	},
+		Entry(
+			"empty",
+			http.Header{},
+			http.Header{"A": {"A"}},
+			http.Header{"A": {"A"}},
+		),
+		Entry(
+			"nominal",
+			http.Header{"A": {"A"}},
+			http.Header{"B": {"B"}},
+			http.Header{"A": {"A"}, "B": {"B"}},
+		),
+		Entry(
+			"overwrite",
+			http.Header{"A": {"1"}},
+			http.Header{"A": {"2"}},
+			http.Header{"A": {"2"}},
+		),
+		Entry(
+			"merge",
+			http.Header{"A": {"1"}},
+			http.Header{"+A": {"2"}},
+			http.Header{"A": {"1", "2"}},
+		),
+		Entry(
+			"delete",
+			http.Header{"A": {"1", "2", "3"}},
+			http.Header{"-A": {"2"}},
+			http.Header{"A": {"1", "3"}},
 		),
 	)
 })

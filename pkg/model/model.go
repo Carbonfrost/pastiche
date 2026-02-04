@@ -15,6 +15,7 @@ import (
 	"path"
 	"reflect"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
@@ -420,17 +421,15 @@ func (r *resolvedResource) Client() Client {
 }
 
 func (r *resolvedResource) combinedHeaders() http.Header {
-	result := http.Header{}
-	if r.Server() != nil {
-		maps.Copy(result, r.Server().Headers)
-	}
-	for _, l := range r.Lineage() {
-		maps.Copy(result, l.Headers)
-	}
-	if r.Endpoint() != nil {
-		maps.Copy(result, r.Endpoint().Headers)
-	}
-	return result
+	return locate(
+		r,
+		reduceHeader,
+		http.Header{},
+		func(d *Endpoint) http.Header { return d.Headers },
+		func(r *Resource) http.Header { return r.Headers },
+		func(s *Server) http.Header { return s.Headers },
+		nil,
+	)
 }
 
 func (r *resolvedResource) combinedVars() map[string]any {
@@ -468,6 +467,7 @@ func (r *resolvedResource) combinedAuth() Auth {
 	return locate(
 		r,
 		reduceAuth,
+		nil,
 		(*Endpoint).auth,
 		(*Resource).auth,
 		(*Server).auth,
@@ -475,15 +475,16 @@ func (r *resolvedResource) combinedAuth() Auth {
 	)
 }
 
-func locate[T comparable](
+func locate[T any](
 	r *resolvedResource,
 	reducer func(T, T) T,
+	initial T,
 	onEndpoint func(*Endpoint) T,
 	onResource func(*Resource) T,
 	onServer func(*Server) T,
 	onService func(*Service) T) T {
 
-	var res T
+	res := initial
 
 	if onEndpoint != nil && r.Endpoint() != nil {
 		res = reducer(res, onEndpoint(r.Endpoint()))
@@ -571,6 +572,25 @@ func reduceAuth(x, y Auth) Auth {
 		}
 	}
 	return y
+}
+
+func reduceHeader(x, y http.Header) http.Header {
+	for k, v := range y {
+		if name, ok := strings.CutPrefix(k, "+"); ok {
+			x[name] = append(x[name], v...)
+
+		} else if name, ok := strings.CutPrefix(k, "-"); ok {
+			x[name] = slices.DeleteFunc(
+				x[name],
+				func(m string) bool {
+					return slices.Contains(v, m)
+				},
+			)
+		} else {
+			x[k] = v
+		}
+	}
+	return x
 }
 
 func sameType(x, y any) bool {
