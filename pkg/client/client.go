@@ -14,6 +14,7 @@ import (
 
 	cli "github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
+	"github.com/Carbonfrost/joe-cli/extensions/bind"
 	"github.com/Carbonfrost/joe-cli/extensions/provider"
 	"github.com/Carbonfrost/pastiche/pkg/config"
 	"github.com/Carbonfrost/pastiche/pkg/grpcclient"
@@ -47,9 +48,7 @@ const (
 // New initializes a new client with the given set of options.
 func New(opts ...Option) *Client {
 	res := &Client{}
-	for _, o := range opts {
-		o(res)
-	}
+	res.Apply(opts...)
 
 	sr := res.locationResolver
 	client := httpclient.New(
@@ -75,6 +74,12 @@ func New(opts ...Option) *Client {
 	)
 	res.Action = defaultAction(res)
 	return res
+}
+
+func (c *Client) Apply(opts ...Option) {
+	for _, o := range opts {
+		o(c)
+	}
 }
 
 func (c *Client) filterResponse(d httpclient.Downloader) httpclient.Downloader {
@@ -213,14 +218,7 @@ func WithDefaultLocationResolver() Option {
 }
 
 func withBinding[V any](binder func(*Client, V) error, args []V) cli.Action {
-	switch len(args) {
-	case 0:
-		return cli.BindContext(FromContext, binder)
-	case 1:
-		return cli.BindContext(FromContext, binder, args[0])
-	default:
-		panic("expected 0 or 1 arg")
-	}
+	return bind.Call2(binder, bind.FromContext(FromContext), bind.Exact(args...))
 }
 
 func lateBinding[V any](name string) func(context.Context) V {

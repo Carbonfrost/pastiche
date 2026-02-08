@@ -65,9 +65,7 @@ const servicesKey contextKey = "grpcclient_services"
 
 func New(opts ...Option) *Client {
 	c := &Client{}
-	for _, o := range opts {
-		o(c)
-	}
+	c.Apply(opts...)
 	c.Action = defaultAction(c)
 	return c
 }
@@ -77,6 +75,12 @@ func defaultAction(c *Client) cli.Action {
 		FlagsAndArgs(),
 		ContextValue(c),
 	)
+}
+
+func (c *Client) Apply(opts ...Option) {
+	for _, o := range opts {
+		o(c)
+	}
 }
 
 func (c *Client) Do(ctx context.Context) ([]*Response, error) {
