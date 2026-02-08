@@ -14,6 +14,7 @@ import (
 
 	joehttpclient "github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/pastiche/pkg/client"
+	"github.com/Carbonfrost/pastiche/pkg/client/clientfakes"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -40,7 +41,7 @@ var _ = Describe("FilterDownloader", func() {
 			writer, _ := d.OpenDownload(context.Background(), testResponse)
 			_ = testResponse.CopyTo(writer)
 			_ = writer.Close()
-			Expect(buf.String()).To(Equal(fmt.Sprintf("%q\n", "120")))
+			Expect(buf.String()).To(Equal(fmt.Sprintf("%q", "120")))
 		})
 	})
 
@@ -63,22 +64,26 @@ var _ = Describe("FilterDownloader", func() {
 			writer, _ := d.OpenDownload(context.Background(), testResponse)
 			_ = testResponse.CopyTo(writer)
 			_ = writer.Close()
-			Expect(buf.String()).To(Equal(fmt.Sprintf("%q\n", "240")))
+			Expect(buf.String()).To(Equal(fmt.Sprintf("%q", "240")))
 		})
 
 		DescribeTable("examples", func(dataJSON, query string, expected any) {
 			f := must(client.NewDigFilter(query))
 
-			var data any
-			_ = json.Unmarshal([]byte(dataJSON), &data)
+			response := new(clientfakes.FakeResponse)
+			response.DataStub = func() (any, error) {
+				var data any
+				_ = json.Unmarshal([]byte(dataJSON), &data)
+				return data, nil
+			}
 
-			actual, err := f.Search(data)
+			actual, err := f.Search(response)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(actual).To(Equal(expected))
 		},
-			Entry("nominal", `{"a": { "b": 3} }`, "a.b", float64(3)),
-			Entry("into array", `[ 1, 2, 3 ]`, "0", float64(1)),
-			Entry("ignore leading dot", `[ 1, 2, 3 ]`, ".0", float64(1)),
+			Entry("nominal", `{"a": { "b": 3} }`, "a.b", []byte("3")),
+			Entry("into array", `[ 1, 2, 3 ]`, "0", []byte("1")),
+			Entry("ignore leading dot", `[ 1, 2, 3 ]`, ".0", []byte("1")),
 		)
 	})
 

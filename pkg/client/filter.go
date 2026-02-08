@@ -24,9 +24,10 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-// Filter applies a search to the response data.
+// Filter applies a search to the response data and returns
+// the response data.
 type Filter interface {
-	Search(data any) (any, error)
+	Search(response Response) ([]byte, error)
 }
 
 type jsonFilter struct {
@@ -54,6 +55,10 @@ type filterOpts struct {
 
 type yamlFilter struct{}
 
+type jmesPathFilter struct {
+	q *jmespath.JMESPath
+}
+
 type filteredDownload struct {
 	Downloader joehttpclient.Downloader
 	filter     Filter
@@ -66,6 +71,8 @@ type filteredWriter struct {
 	output  io.Writer
 	filter  Filter
 	history *history
+
+	contentType string
 }
 
 type metaResponse struct {
@@ -120,7 +127,11 @@ var (
 // NewJMESPathFilter provides a filter which uses the given query to search
 // a data structure with JSON semantics using JMESPath.
 func NewJMESPathFilter(query string) (Filter, error) {
-	return jmespath.Compile(query)
+	q, err := jmespath.Compile(query)
+	if err != nil {
+		return nil, err
+	}
+	return jmesPathFilter{q}, nil
 }
 
 func newJMESPath(opts filterOpts) (Filter, error) {
@@ -165,12 +176,13 @@ func NewFilterDownloader(f Filter, d joehttpclient.Downloader, h historyGenerato
 	}
 }
 
-func newFilteredWriter(output io.Writer, f Filter, h *history) *filteredWriter {
+func newFilteredWriter(output io.Writer, f Filter, h *history, ct string) *filteredWriter {
 	return &filteredWriter{
-		Buffer:  new(bytes.Buffer),
-		output:  output,
-		filter:  f,
-		history: h,
+		Buffer:      new(bytes.Buffer),
+		output:      output,
+		filter:      f,
+		history:     h,
+		contentType: ct,
 	}
 }
 
@@ -184,52 +196,73 @@ func (f *filteredDownload) OpenDownload(ctx context.Context, r *joehttpclient.Re
 		h, _ = f.history(ctx, r)
 	}
 
-	return newFilteredWriter(output, f.filter, h), nil
+	ct := r.Header.Get("Content-Type")
+	return newFilteredWriter(output, f.filter, h, ct), nil
+}
+
+func (c *filteredWriter) parseResponse(data []byte) (Response, error) {
+	ct := c.contentType
+
+	switch {
+	case strings.HasPrefix(ct, "application/x-www-form-urlencoded"),
+		strings.HasPrefix(ct, "multipart/form-data"):
+		panic("not implement: multipart forms")
+
+	case strings.HasPrefix(ct, "application/xml"),
+		strings.HasPrefix(ct, "text/xml"):
+		return &xmlResponse{data}, nil
+
+	default:
+		return &jsonResponse{data, c.history}, nil
+	}
 }
 
 func (c *filteredWriter) Close() error {
-	var data any
 	if closer, ok := c.output.(io.Closer); ok {
 		defer closer.Close()
 	}
 
-	err := json.Unmarshal(c.Buffer.Bytes(), &data)
+	resp, err := c.parseResponse(c.Buffer.Bytes())
 	if err != nil {
 		return err
 	}
 
-	// If the history log was present, then wrap it in a metadata response
-	if c.history != nil {
-		data = &metaResponse{
-			Meta:   c.history,
-			Result: data,
-		}
-	}
-
-	res, err := c.filter.Search(data)
+	out, err := c.filter.Search(resp)
 	if err != nil {
 		return err
 	}
 
-	// Write directly if the filter is to []byte, else codec output
-	if out, ok := res.([]byte); ok {
-		_, err = c.output.Write(out)
-		return err
-	}
-	e := json.NewEncoder(c.output)
-	return e.Encode(res)
+	_, err = c.output.Write(out)
+	return err
 }
 
-func (d digFilter) Search(data any) (any, error) {
-	var err error
+func (j jmesPathFilter) Search(resp Response) ([]byte, error) {
+	data, err := resp.Data()
+	if err != nil {
+		return nil, err
+	}
+
+	data, err = j.q.Search(data)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(data)
+}
+
+func (d digFilter) Search(resp Response) ([]byte, error) {
+	data, err := resp.Data()
+	if err != nil {
+		return nil, err
+	}
+
 	for name := range strings.SplitSeq(strings.TrimLeft(string(d), "."), ".") {
 		data, err = dig(data, name)
 		if err != nil {
-			break
+			return nil, err
 		}
 	}
 
-	return data, err
+	return json.Marshal(data)
 }
 
 func dig(data any, name string) (any, error) {
@@ -269,15 +302,22 @@ func index[T any](values []T, index string) (any, error) {
 	return nil, fmt.Errorf("cannot index array with `%s'", index)
 }
 
-func (j jsonFilter) Search(data any) (any, error) {
-	var results bytes.Buffer
-	err := j.e(&results).Encode(data)
+func (j jsonFilter) Search(resp Response) ([]byte, error) {
+	data, err := resp.Data()
+	if err != nil {
+		return nil, err
+	}
 
-	// Returns bytes to prevent additional encoding by the filter downloader
+	var results bytes.Buffer
+	err = j.e(&results).Encode(data)
 	return results.Bytes(), err
 }
 
-func (y yamlFilter) Search(data any) (any, error) {
+func (y yamlFilter) Search(resp Response) ([]byte, error) {
+	data, err := resp.Data()
+	if err != nil {
+		return nil, err
+	}
 	return yaml.Marshal(data)
 }
 
@@ -328,8 +368,12 @@ func NewTemplateFilter(tpl string) (Filter, error) {
 	return newTemplateFilterString(tpl), nil
 }
 
-func (t templateFilter) Search(data any) (any, error) {
+func (t templateFilter) Search(resp Response) ([]byte, error) {
 	text, err := t.loader()
+	if err != nil {
+		return nil, err
+	}
+	data, err := resp.Data()
 	if err != nil {
 		return nil, err
 	}
