@@ -10,6 +10,7 @@ type File struct {
 	*Service
 
 	Services []Service `json:"services,omitempty"`
+	name     string
 }
 
 type Service struct {
@@ -115,4 +116,12 @@ type Link struct {
 	Title      string `json:"title,omitempty"`
 	Type       string `json:"type,omitempty"`
 	IsTemplate bool   `json:"isTemplate,omitempty"`
+}
+
+func (f *File) Name() string {
+	return f.name
+}
+
+func (f *File) SetName(name string) {
+	f.name = name
 }

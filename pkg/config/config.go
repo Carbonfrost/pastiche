@@ -60,6 +60,7 @@ func LoadFile(f fs.FS, filename string) (*File, error) {
 		}
 
 		result := new(File)
+		result.SetName(filename)
 		if err := unmarshal(data, result); err != nil {
 			return nil, err
 		}
