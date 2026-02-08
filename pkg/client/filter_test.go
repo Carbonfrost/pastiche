@@ -87,6 +87,51 @@ var _ = Describe("FilterDownloader", func() {
 		)
 	})
 
+	Context("when XMLFilter", func() {
+
+		It("writes to the output of inner downloader", func() {
+			testResponse := &joehttpclient.Response{
+				Response: &http.Response{
+					Header: http.Header{
+						"Content-Type": []string{"application/xml"},
+					},
+					Body: io.NopCloser(
+						bytes.NewBufferString(`<?xml version="1.0" encoding="utf-8"?>
+							<rss version="2.0">
+								<channel>
+									<link> https://example.com/t </link>
+								</channel>
+								<item>
+									<link> https://example.com/post/1 </link>
+								</item>
+							</rss>
+						`),
+					),
+				},
+			}
+
+			var buf bytes.Buffer
+			d := client.NewFilterDownloader(
+				must(client.NewXPathFilter("//link")),
+				joehttpclient.NewDownloaderTo(&buf),
+				nil,
+			)
+
+			writer, err := d.OpenDownload(context.Background(), testResponse)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = testResponse.CopyTo(writer)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = writer.Close()
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(buf.String()).To(Equal(
+				"<link> https://example.com/t </link>\n<link> https://example.com/post/1 </link>\n",
+			))
+		})
+	})
+
 })
 
 func must[T any](t T, err any) T {

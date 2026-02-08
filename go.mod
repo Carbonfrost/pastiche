@@ -9,6 +9,7 @@ require (
 	github.com/Carbonfrost/joe-cli v0.9.4
 	github.com/Carbonfrost/joe-cli-http v0.5.5
 	github.com/antchfx/xmlquery v1.5.0
+	github.com/antchfx/xpath v1.3.5
 	github.com/fullstorydev/grpcurl v1.9.3
 	github.com/jhump/protoreflect v1.17.0
 	github.com/jmespath/go-jmespath v0.4.0
@@ -23,7 +24,6 @@ require (
 	codeberg.org/chavacava/garif v0.2.0 // indirect
 	github.com/BurntSushi/toml v1.5.0 // indirect
 	github.com/Masterminds/semver/v3 v3.4.0 // indirect
-	github.com/antchfx/xpath v1.3.5 // indirect
 	github.com/bufbuild/protocompile v0.14.1 // indirect
 	github.com/cncf/xds/go v0.0.0-20251022180443-0feb69152e9f // indirect
 	github.com/cristalhq/acmd v0.12.0 // indirect

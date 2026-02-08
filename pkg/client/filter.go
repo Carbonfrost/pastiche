@@ -20,6 +20,8 @@ import (
 	"github.com/Carbonfrost/joe-cli-http/httpclient/expr"
 	"github.com/Carbonfrost/joe-cli/extensions/provider"
 	"github.com/Carbonfrost/pastiche/pkg/template/funcs"
+	"github.com/antchfx/xmlquery"
+	"github.com/antchfx/xpath"
 	"github.com/jmespath/go-jmespath"
 	"sigs.k8s.io/yaml"
 )
@@ -57,6 +59,10 @@ type yamlFilter struct{}
 
 type jmesPathFilter struct {
 	q *jmespath.JMESPath
+}
+
+type xpathFilter struct {
+	q *xpath.Expr
 }
 
 type filteredDownload struct {
@@ -115,6 +121,13 @@ var (
 				},
 				HelpText: "Generate JSON output (default)",
 			},
+			"xpath": {
+				Factory:  provider.Factory(newXPathFilter),
+				Defaults: map[string]string{
+					"query": "",
+				},
+				HelpText: "Apply an XPath expressio",
+			},
 			"yaml": {
 				Factory:  provider.Factory(newYAMLFilter),
 				Defaults: map[string]string{},
@@ -161,6 +174,19 @@ func newJSONFilter(opts jsonFilterOpts) (Filter, error) {
 
 func newYAMLFilter(opts struct{}) (Filter, error) {
 	return yamlFilter{}, nil
+}
+
+func newXPathFilter(opts filterOpts) (Filter, error) {
+	return NewXPathFilter(opts.Query)
+}
+
+// NewXPathFilter generates a new XPath filter
+func NewXPathFilter(query string) (Filter, error) {
+	q, err := xpath.Compile(query)
+	if err != nil {
+		return nil, err
+	}
+	return xpathFilter{q}, nil
 }
 
 // NewFilterDownloader applies the filter to an underlying downloader.
@@ -234,6 +260,22 @@ func (c *filteredWriter) Close() error {
 
 	_, err = c.output.Write(out)
 	return err
+}
+
+func (x xpathFilter) Search(resp Response) ([]byte, error) {
+	doc, err := resp.Document()
+	if err != nil {
+		return nil, err
+	}
+	var out bytes.Buffer
+	for _, node := range xmlquery.QuerySelectorAll(doc.(*xmlquery.Node), x.q) {
+		err = node.Write(&out, true)
+		if err != nil {
+			return nil, err
+		}
+		out.Write([]byte("\n"))
+	}
+	return out.Bytes(), nil
 }
 
 func (j jmesPathFilter) Search(resp Response) ([]byte, error) {
