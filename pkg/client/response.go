@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 
 	"github.com/antchfx/xmlquery"
 )
@@ -17,6 +18,7 @@ import (
 type Response interface {
 	Data() (any, error)
 	Document() (any, error)
+	Reader() io.Reader
 }
 
 type jsonResponse struct {
@@ -28,12 +30,20 @@ type xmlResponse struct {
 	data []byte
 }
 
+func (x *xmlResponse) Reader() io.Reader {
+	return bytes.NewReader(x.data)
+}
+
 func (x *xmlResponse) Document() (any, error) {
 	return xmlquery.Parse(bytes.NewReader(x.data))
 }
 
 func (x *xmlResponse) Data() (any, error) {
 	return nil, fmt.Errorf("XML response cannot be filtered as data")
+}
+
+func (j *jsonResponse) Reader() io.Reader {
+	return bytes.NewReader(j.data)
 }
 
 func (*jsonResponse) Document() (any, error) {

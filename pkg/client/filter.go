@@ -32,11 +32,21 @@ type Filter interface {
 	Search(response Response) ([]byte, error)
 }
 
+type defaultFilter int
+
 type jsonFilter struct {
 	e func(io.Writer) *json.Encoder
 }
 
 type jsonFilterOpts struct {
+	Pretty bool `mapstructure:"pretty"`
+}
+
+type xmlFilter struct {
+	options []xmlquery.OutputOption
+}
+
+type xmlFilterOpts struct {
 	Pretty bool `mapstructure:"pretty"`
 }
 
@@ -119,19 +129,24 @@ var (
 				Defaults: map[string]string{
 					"pretty": "false",
 				},
-				HelpText: "Generate JSON output (default)",
+				HelpText: "Generate JSON output",
 			},
 			"xpath": {
-				Factory:  provider.Factory(newXPathFilter),
+				Factory: provider.Factory(newXPathFilter),
 				Defaults: map[string]string{
 					"query": "",
 				},
-				HelpText: "Apply an XPath expressio",
+				HelpText: "Apply an XPath expression",
+			},
+			"xml": {
+				Factory:  provider.Factory(newXMLFilter),
+				Defaults: map[string]string{},
+				HelpText: "Generate XML output",
 			},
 			"yaml": {
 				Factory:  provider.Factory(newYAMLFilter),
 				Defaults: map[string]string{},
-				HelpText: "Generate yaml output (default)",
+				HelpText: "Generate YAML output",
 			},
 		},
 	}
@@ -172,6 +187,17 @@ func newJSONFilter(opts jsonFilterOpts) (Filter, error) {
 	return jsonFilter{newEncoder}, nil
 }
 
+func newXMLFilter(opts xmlFilterOpts) (Filter, error) {
+	var options []xmlquery.OutputOption
+	if opts.Pretty {
+		options = []xmlquery.OutputOption{
+			xmlquery.WithoutPreserveSpace(),
+			xmlquery.WithIndentation("  "),
+		}
+	}
+	return xmlFilter{options: options}, nil
+}
+
 func newYAMLFilter(opts struct{}) (Filter, error) {
 	return yamlFilter{}, nil
 }
@@ -192,7 +218,7 @@ func NewXPathFilter(query string) (Filter, error) {
 // NewFilterDownloader applies the filter to an underlying downloader.
 func NewFilterDownloader(f Filter, d joehttpclient.Downloader, h historyGenerator) joehttpclient.Downloader {
 	if f == nil {
-		f, _ = newJSONFilter(jsonFilterOpts{})
+		f = defaultFilter(0)
 	}
 
 	return &filteredDownload{
@@ -260,6 +286,17 @@ func (c *filteredWriter) Close() error {
 
 	_, err = c.output.Write(out)
 	return err
+}
+
+func (defaultFilter) Search(resp Response) ([]byte, error) {
+	switch resp.(type) {
+	case *xmlResponse:
+		return unwrap(newXMLFilter(xmlFilterOpts{Pretty: true})).Search(resp)
+
+	case *jsonResponse:
+		return unwrap(newJSONFilter(jsonFilterOpts{Pretty: true})).Search(resp)
+	}
+	return io.ReadAll(resp.Reader())
 }
 
 func (x xpathFilter) Search(resp Response) ([]byte, error) {
@@ -342,6 +379,21 @@ func index[T any](values []T, index string) (any, error) {
 		return values[in], nil
 	}
 	return nil, fmt.Errorf("cannot index array with `%s'", index)
+}
+
+func (x xmlFilter) Search(resp Response) ([]byte, error) {
+	doc, err := resp.Document()
+	if err != nil {
+		return nil, err
+	}
+
+	// Pretty print the resposne
+	var buf bytes.Buffer
+	doc.(*xmlquery.Node).WriteWithOptions(
+		&buf,
+		x.options...,
+	)
+	return buf.Bytes(), nil
 }
 
 func (j jsonFilter) Search(resp Response) ([]byte, error) {
@@ -473,4 +525,8 @@ func newTemplate(opts templateOpts) (Filter, error) {
 		return newTemplateFilterFile(opts.File), nil
 	}
 	return newTemplateFilterString(opts.Text), nil
+}
+
+func unwrap[T any](v T, _ any) T {
+	return v
 }

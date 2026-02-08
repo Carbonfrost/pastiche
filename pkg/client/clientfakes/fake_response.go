@@ -2,6 +2,7 @@
 package clientfakes
 
 import (
+	"io"
 	"sync"
 
 	"github.com/Carbonfrost/pastiche/pkg/client"
@@ -31,6 +32,16 @@ type FakeResponse struct {
 	documentReturnsOnCall map[int]struct {
 		result1 any
 		result2 error
+	}
+	ReaderStub        func() io.Reader
+	readerMutex       sync.RWMutex
+	readerArgsForCall []struct {
+	}
+	readerReturns struct {
+		result1 io.Reader
+	}
+	readerReturnsOnCall map[int]struct {
+		result1 io.Reader
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
@@ -146,6 +157,59 @@ func (fake *FakeResponse) DocumentReturnsOnCall(i int, result1 any, result2 erro
 		result1 any
 		result2 error
 	}{result1, result2}
+}
+
+func (fake *FakeResponse) Reader() io.Reader {
+	fake.readerMutex.Lock()
+	ret, specificReturn := fake.readerReturnsOnCall[len(fake.readerArgsForCall)]
+	fake.readerArgsForCall = append(fake.readerArgsForCall, struct {
+	}{})
+	stub := fake.ReaderStub
+	fakeReturns := fake.readerReturns
+	fake.recordInvocation("Reader", []interface{}{})
+	fake.readerMutex.Unlock()
+	if stub != nil {
+		return stub()
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeResponse) ReaderCallCount() int {
+	fake.readerMutex.RLock()
+	defer fake.readerMutex.RUnlock()
+	return len(fake.readerArgsForCall)
+}
+
+func (fake *FakeResponse) ReaderCalls(stub func() io.Reader) {
+	fake.readerMutex.Lock()
+	defer fake.readerMutex.Unlock()
+	fake.ReaderStub = stub
+}
+
+func (fake *FakeResponse) ReaderReturns(result1 io.Reader) {
+	fake.readerMutex.Lock()
+	defer fake.readerMutex.Unlock()
+	fake.ReaderStub = nil
+	fake.readerReturns = struct {
+		result1 io.Reader
+	}{result1}
+}
+
+func (fake *FakeResponse) ReaderReturnsOnCall(i int, result1 io.Reader) {
+	fake.readerMutex.Lock()
+	defer fake.readerMutex.Unlock()
+	fake.ReaderStub = nil
+	if fake.readerReturnsOnCall == nil {
+		fake.readerReturnsOnCall = make(map[int]struct {
+			result1 io.Reader
+		})
+	}
+	fake.readerReturnsOnCall[i] = struct {
+		result1 io.Reader
+	}{result1}
 }
 
 func (fake *FakeResponse) Invocations() map[string][][]interface{} {
