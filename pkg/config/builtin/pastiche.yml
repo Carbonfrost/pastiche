@@ -1,5 +1,10 @@
 services:
 - name: "@pastiche/meta"
+  title: "Pastiche Metadata"
+  comment: Provides the metadata for Pastiche
+  description: |
+    The metadata service for Pastiche provides information about
+    Pastiche itself.
   servers:
     - name: local
       baseURL: http://localhost:9161
