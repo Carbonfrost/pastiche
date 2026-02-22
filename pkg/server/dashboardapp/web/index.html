@@ -5,10 +5,49 @@
   <title>Pastiche</title>
 </head>
 <body>
-  <ul>
-  {{ range .Services }}
-    <li> <a href="{{ URL . }}"> {{ or .Title .Name }} </a> </li>
-  {{ end }}
-  </ul>
+  <div data-sidebar-layout>
+    <nav data-topnav>
+      <div class="row">
+        <div class="col-4">
+          <button data-sidebar-toggle aria-label="Toggle sidebar menu" class="small">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="4" y1="7" x2="20" y2="7"></line>
+              <line x1="4" y1="12" x2="20" y2="12"></line>
+              <line x1="4" y1="17" x2="16" y2="17"></line>
+            </svg>
+          </button>
+          <a href="/" class="favicon">PASTICHE</a>
+          <a href="/" class="logo">PASTICHE</a>
+        </div>
+      </div>
+    </nav>
+
+    <aside data-sidebar>
+      <nav>
+        <ul>
+          <li><a href="#" aria-current="page">Home</a></li>
+          <li>
+            <details open>
+              <summary>Services</summary>
+              <ul>
+            {{ range .Services }}
+              <li> <a href="{{ URL . }}"> {{ or .Title .Name }} </a> </li>
+            {{ end }}
+              </ul>
+            </details>
+          </li>
+        </ul>
+      </nav>
+      <footer>
+        Pastiche
+        <button class="outline" class="sm" style="width: 100%;" onclick="toggleTheme()">Toggle Theme</button>
+      </footer>
+    </aside>
+    <main>
+      <div style="padding: var(--space-3)">
+
+      </div>
+    </main>
+  </div>
 </body>
 </html>
