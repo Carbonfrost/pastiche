@@ -5,7 +5,13 @@
   <title>{{ or .Title .Name }}</title>
 </head>
 <body>
-  <small>Service</small>
-  <h1>{{ or .Title .Name }}</h1>
+  <div>
+    <small>Service</small>
+    <h1>{{ or .Title .Name }}</h1>
+
+    <div class="hstack h-stack">
+      {{ Include "_components/service/servers.html" . }}
+    </div>
+  </div>
 </body>
 </html>
