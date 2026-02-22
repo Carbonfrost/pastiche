@@ -1,0 +1,18 @@
+<article class="card" >
+  <header>
+    <h3>
+      {{ .Title }}
+      <code>{{ .Name }}</code>
+    </h3>
+    <p>
+      <span class="badge outline">HTTP</span>
+    </p>
+    <p>{{ .Comment }}</p>
+  </header>
+  <p>{{ .Description }}</p>
+  <footer>
+    <a class="button small" href="{{ URL . }}">
+      View
+    </a>
+  </footer>
+</article>

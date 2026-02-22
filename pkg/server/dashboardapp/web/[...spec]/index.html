@@ -9,8 +9,16 @@
     <small>Service</small>
     <h1>{{ or .Title .Name }}</h1>
 
-    <div class="hstack h-stack">
+    <div class="hstack">
       {{ Include "_components/service/servers.html" . }}
+    </div>
+
+    <div>
+      <h2>Headers</h2>
+      {{ Include "_components/resource/headers.html" .Resource }}
+
+      <h2>Vars</h2>
+      {{ Include "_components/resource/vars.html" . }}
     </div>
   </div>
 </body>

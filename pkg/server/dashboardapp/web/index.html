@@ -45,7 +45,11 @@
     </aside>
     <main>
       <div style="padding: var(--space-3)">
-
+        <div style="display: grid; grid-template-columns: repeat(2,1fr); gap: var(--space-8)">
+        {{ range .Services }}
+            {{ Include "_components/service/feature.html" . }}
+        {{ end }}
+        </div>
       </div>
     </main>
   </div>

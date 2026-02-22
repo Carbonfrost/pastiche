@@ -1,0 +1,20 @@
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+  	{{ range $name, $value := .Headers }}
+    <tr>
+      <td>{{ $name }}</td>
+      <td>{{ or $value "—" }}</td>
+    </tr>
+    {{ else }}
+    <tr>
+      <td colspan="2"> <em class="text-light"> No headers defined </em> </td>
+    </tr>    
+    {{ end}}
+  </tbody>
+</table>
