@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  {{ Include "_head.html" }}
+  <title>Pastiche</title>
+</head>
+<body>
+  <ul>
+  {{ range .Services }}
+    <li> <a href="{{ URL . }}"> {{ or .Title .Name }} </a> </li>
+  {{ end }}
+  </ul>
+</body>
+</html>

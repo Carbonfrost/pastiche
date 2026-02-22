@@ -6,12 +6,14 @@ package server
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli-http/httpserver"
 	"github.com/Carbonfrost/pastiche/pkg/config"
 	"github.com/Carbonfrost/pastiche/pkg/model"
+	"github.com/Carbonfrost/pastiche/pkg/server/dashboardapp"
 )
 
 // Serve provides the action to run the server
@@ -27,6 +29,7 @@ func Serve() cli.Action {
 			httpserver.WithReadyFunc(httpserver.ReportListening),
 		),
 		httpserver.Handle("GET /api/v0/model", handleGetModel()),
+		httpserver.Handle("/", handleDashboard()),
 		httpserver.RunServer(),
 	)
 }
@@ -39,4 +42,15 @@ func handleGetModel() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(mo)
 	}
+}
+
+func handleDashboard() http.Handler {
+	cfg, _ := config.Load()
+	mo := model.New(cfg)
+	handler, err := dashboardapp.New(mo)
+	if err != nil {
+		log.Println(err)
+		return http.NotFoundHandler()
+	}
+	return handler
 }
