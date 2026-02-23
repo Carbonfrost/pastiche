@@ -62,7 +62,16 @@ func buildMux(fsys fs.FS, fn TemplateRendererFunc) (*http.ServeMux, error) {
 		if err != nil {
 			return err
 		}
+
+		isSkipped := strings.HasPrefix(d.Name(), "_")
 		if d.IsDir() {
+			if isSkipped {
+				return fs.SkipDir
+			}
+			return nil
+		}
+
+		if isSkipped {
 			return nil
 		}
 
