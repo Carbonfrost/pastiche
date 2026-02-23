@@ -462,6 +462,8 @@ func NewTemplateFilter(tpl string) (Filter, error) {
 	return newTemplateFilterString(tpl), nil
 }
 
+func (templateFilter) IncludeMetadata() {}
+
 func (t templateFilter) Search(resp Response) ([]byte, error) {
 	text, err := t.loader()
 	if err != nil {
