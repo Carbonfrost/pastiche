@@ -14,12 +14,12 @@
     </div>
 
     <div>
-      <h2>Headers</h2>
-      {{ Include "_components/resource/headers.html" .Resource }}
-
       <h2>Vars</h2>
       {{ Include "_components/resource/vars.html" . }}
+
+      {{ Include "_components/resource/view.html" .Resource }}
     </div>
+
   </div>
 </body>
 </html>

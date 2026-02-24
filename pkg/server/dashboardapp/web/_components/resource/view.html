@@ -1,0 +1,72 @@
+<div>
+  <h2>Headers</h2>
+  {{ Include "_components/resource/headers.html" . }}
+
+  {{ range .Resources }}
+    <details>
+      <summary>
+        {{ .Title }} <code>{{ .Name }}</code>
+      </summary>
+      <div>
+        {{ if .Comment }}
+          <p>{{ .Comment }}</p>
+        {{ end }}
+        {{ if .Description }}
+          <p>{{ .Description }}</p>
+        {{ end }}
+      </div>
+      <p>
+        <strong>URL:</strong> <code> {{ .URITemplate }}</code>
+      </p>
+
+      <div class="grid">
+        <div class="row">
+          <div class="col-6">
+            <h4>Headers</h4>
+            {{ Include "_components/resource/headers.html" . }}
+          </div>
+          <div class="col-6">
+            <h4>Vars</h4>
+            {{ Include "_components/resource/vars.html" . }}
+          </div>
+        </div>
+      </div>
+
+      <h4>Endpoints</h4>
+
+      {{ range .Endpoints }}
+        <details>
+          <summary>
+            <span class="badge secondary">{{ .Method }}</span>
+            {{ .Title }} <code>{{ .Name }}</code>
+          </summary>
+          <div>
+            {{ if .Comment }}
+              <p>{{ .Comment }}</p>
+            {{ end }}
+            {{ if .Description }}
+              <p>{{ .Description }}</p>
+            {{ end }}
+          </div>
+
+          <div class="grid">
+            <div class="row">
+              <div class="col-6">
+                <h4>Headers</h4>
+                {{ Include "_components/resource/headers.html" . }}
+              </div>
+              <div class="col-6">
+                <h4>Vars</h4>
+                {{ Include "_components/resource/vars.html" . }}
+              </div>
+            </div>
+          </div>
+
+          <button>Execute</button>
+
+        </details>
+      {{ end }}
+    </details>
+  {{ end }}
+
+</div>
