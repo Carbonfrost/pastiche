@@ -16,6 +16,7 @@ import (
 	phttpclient "github.com/Carbonfrost/pastiche/pkg/client"
 	"github.com/Carbonfrost/pastiche/pkg/internal/build"
 	"github.com/Carbonfrost/pastiche/pkg/server"
+	"github.com/Carbonfrost/pastiche/pkg/workspace"
 )
 
 const (
@@ -72,6 +73,13 @@ func NewApp() *cli.App {
 				),
 			},
 			{Name: "serve", Uses: server.Serve()},
+			{
+				Name: "log",
+				Uses: cli.Pipeline(
+					disallowPersistentHTTPFlags(),
+					workspace.Log(),
+				),
+			},
 			{Name: "fetch", Uses: phttpclient.Do()},
 			{Name: "import", Uses: phttpclient.Import()},
 			{
