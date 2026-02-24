@@ -17,6 +17,7 @@ import (
 
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/pastiche/pkg/internal/log"
+	"github.com/Carbonfrost/pastiche/pkg/workspace"
 )
 
 type (
@@ -56,6 +57,7 @@ type historyDownloader struct {
 
 type historyWriter struct {
 	io.Writer
+	logDir  string
 	output  io.Closer
 	history *history
 }
@@ -82,6 +84,7 @@ func (h historyDownloader) OpenDownload(ctx context.Context, r *httpclient.Respo
 	}
 
 	return &historyWriter{
+		logDir:  workspace.LogDir(ctx),
 		Writer:  io.MultiWriter(output, responseBody),
 		output:  c,
 		history: history,
@@ -89,10 +92,7 @@ func (h historyDownloader) OpenDownload(ctx context.Context, r *httpclient.Respo
 }
 
 func (w *historyWriter) Close() error {
-	// TODO This directory should be the workspace
-	logDir := filepath.Join(".pastiche", "logs")
-	os.MkdirAll(logDir, 0755)
-	fileName := filepath.Join(logDir, fmt.Sprintf("requests.%s.json", time.Now().Format("2006-01-02")))
+	fileName := filepath.Join(w.logDir, fmt.Sprintf("requests.%s.json", time.Now().Format("2006-01-02")))
 
 	// TODO Improve handling of errors
 	f, err := os.OpenFile(fileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
