@@ -28,7 +28,15 @@
           <li><a href="#" aria-current="page">Home</a></li>
           <li>
             <details open>
-              <summary>Services</summary>
+              <summary>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                  <rect x="3" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="14" width="7" height="7"></rect>
+                  <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                Services
+              </summary>
               <ul>
             {{ range .Services }}
               <li> <a href="{{ URL . }}"> {{ or .Title .Name }} </a> </li>
