@@ -28,8 +28,10 @@ func Serve() cli.Action {
 			httpserver.WithPort(9161),
 			httpserver.WithReadyFunc(httpserver.ReportListening),
 		),
-		httpserver.Handle("GET /api/v0/model", handleGetModel()),
-		httpserver.Handle("/", handleDashboard()),
+		cli.Before(cli.Pipeline(
+			httpserver.Handle("GET /api/v0/model", handleGetModel()),
+			httpserver.Handle("/", handleDashboard()),
+		)),
 		httpserver.RunServer(),
 	)
 }
