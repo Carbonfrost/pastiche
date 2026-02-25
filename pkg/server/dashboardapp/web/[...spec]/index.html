@@ -1,10 +1,20 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  {{ Include "_head.html" }}
-  <title>{{ or .Title .Name }}</title>
-</head>
-<body>
+  {{ define "title" }}
+    Service
+  {{ end }}
+
+  {{ define "sidebar" }}
+      <nav>
+        <ul>
+          <li><a href="/" >Home</a></li>
+        </ul>
+      </nav>
+      <footer>
+        Pastiche
+        <button class="outline" class="sm" style="width: 100%;" onclick="toggleTheme()">Toggle Theme</button>
+      </footer>
+  {{ end }}
+
+  {{ define "main" }}
   <div>
     <small>Service</small>
     <h1>{{ or .Title .Name }}</h1>
@@ -21,5 +31,6 @@
     </div>
 
   </div>
-</body>
-</html>
+  {{ end }}
+
+{{ template "_layout/main.html" .}}

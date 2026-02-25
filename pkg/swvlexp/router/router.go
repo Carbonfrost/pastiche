@@ -5,6 +5,8 @@
 package router
 
 import (
+	"fmt"
+	"html/template"
 	"io/fs"
 	"log"
 	"net/http"
@@ -16,7 +18,8 @@ import (
 // Router wraps an http.ServeMux.
 type Router struct {
 	mux          *http.ServeMux
-	rendererFunc TemplateRendererFunc
+	urlProvider  URLProvider
+	dataProvider DataProvider
 }
 
 type Option interface {
@@ -39,8 +42,6 @@ type TemplateRenderContext struct {
 	FS         fs.FS
 }
 
-type TemplateRendererFunc func(*TemplateRenderContext) (Response, error)
-
 // NewFSRouter constructs a Router from an fs.FS.
 // It walks the filesystem and registers handlers
 // according to NextJS-style routing conventions.
@@ -51,13 +52,25 @@ func NewFSRouter(fsys fs.FS, opts ...Option) (*Router, error) {
 	}
 
 	var err error
-	router.mux, err = buildMux(fsys, router.rendererFunc)
+	router.mux, err = buildMux2(fsys, &templateFSHandler{
+		DataProvider: router.dataProvider,
+		URLProvider:  router.urlProvider,
+		FS:           fsys,
+	})
 	return router, err
 }
 
-func buildMux(fsys fs.FS, fn TemplateRendererFunc) (*http.ServeMux, error) {
+func buildMux2(fsys fs.FS, global *templateFSHandler) (*http.ServeMux, error) {
 	mux := http.NewServeMux()
+	global.paths = map[string]string{}
+	paths := global.paths
 
+	global.Template = template.New("<site>").Funcs(map[string]any{
+		"URL":     global.URLProvider,
+		"Include": global.funcInclude(fsys),
+	})
+
+	tpls := global.Template
 	err := fs.WalkDir(fsys, ".", func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -79,12 +92,7 @@ func buildMux(fsys fs.FS, fn TemplateRendererFunc) (*http.ServeMux, error) {
 
 		if base == "index.html" {
 			pattern := filePathToPattern(p)
-			mux.Handle(pattern, &pageHandler{
-				SourcePath:           p,
-				TemplateRendererFunc: fn,
-				FS:                   fsys,
-			})
-			log.Printf("%s -> %s\n", pattern, p)
+			paths[pattern] = p
 			return nil
 		}
 
@@ -99,6 +107,40 @@ func buildMux(fsys fs.FS, fn TemplateRendererFunc) (*http.ServeMux, error) {
 		return nil
 	})
 
+	// Find all HTML files
+	_ = fs.WalkDir(fsys, ".", func(p string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() {
+			return nil
+		}
+
+		ext := path.Ext(p)
+		if ext == ".html" {
+			tmpl := tpls.New(p)
+
+			// TODO Better error handling of template load and parse errors
+			fileContents, _ := fs.ReadFile(fsys, p)
+			_, err = tmpl.Parse(string(fileContents))
+
+			if err != nil {
+				fmt.Printf("error parsing the template: %v\n", err)
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	for pattern, path := range paths {
+		mux.Handle(pattern, global)
+		log.Printf("%s -> %s\n", pattern, path)
+	}
+
 	return mux, err
 }
 
@@ -107,9 +149,15 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	r.mux.ServeHTTP(w, req)
 }
 
-func WithTemplateRenderer(fn TemplateRendererFunc) Option {
+func WithURLProvider(fn URLProvider) Option {
 	return optionFunc(func(r *Router) {
-		r.rendererFunc = fn
+		r.urlProvider = fn
+	})
+}
+
+func WithDataProvider(fn DataProvider) Option {
+	return optionFunc(func(r *Router) {
+		r.dataProvider = fn
 	})
 }
 
