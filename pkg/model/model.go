@@ -170,10 +170,15 @@ func New(c *config.Config) *Model {
 	res := &Model{
 		Services: make([]*Service, len(c.Services)),
 	}
-	for i, v := range c.Services {
+
+	for i, v := range slices.SortedFunc(slices.Values(c.Services), serviceByName) {
 		res.Services[i] = service(v)
 	}
 	return res
+}
+
+func serviceByName(x, y config.Service) int {
+	return cmp.Compare(x.Name, y.Name)
 }
 
 func (s *Service) Server(name string) (*Server, bool) {
