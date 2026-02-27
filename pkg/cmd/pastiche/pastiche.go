@@ -5,9 +5,7 @@
 package pastiche
 
 import (
-	"fmt"
 	"os"
-	"slices"
 
 	cli "github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
@@ -48,9 +46,7 @@ func NewApp() *cli.App {
 				Features: table.AllFeatures &^ table.UseTablesInHelpTemplate,
 			},
 			cli.RegisterTemplate("PasticheServices", serviceTemplate),
-			phttpclient.New(
-				phttpclient.WithDefaultLocationResolver(),
-			),
+
 			cli.ImplicitCommand("fetch"),
 		),
 		Before: cli.Pipeline(
@@ -61,7 +57,6 @@ func NewApp() *cli.App {
 				Name:     "init",
 				HelpText: "Initialize the current directory with a new service definition",
 				Uses: cli.Pipeline(
-					disallowPersistentHTTPFlags(),
 					InitCommand(),
 				),
 			},
@@ -69,24 +64,33 @@ func NewApp() *cli.App {
 				Name: "describe",
 				Uses: cli.Pipeline(
 					phttpclient.Describe(),
-					disallowPersistentHTTPFlags(),
 				),
 			},
 			{Name: "serve", Uses: server.Serve()},
 			{
 				Name: "log",
 				Uses: cli.Pipeline(
-					disallowPersistentHTTPFlags(),
 					workspace.Log(),
 				),
 			},
-			{Name: "fetch", Uses: phttpclient.Do()},
+			{
+				Name: "fetch",
+				Uses: cli.Pipeline(
+					phttpclient.New(
+						phttpclient.WithDefaultLocationResolver(),
+					),
+					phttpclient.Do(),
+				),
+			},
 			{Name: "import", Uses: phttpclient.Import()},
 			{
 				Name: "open",
 				Uses: cli.Pipeline(
 					// Allow params to be used to fill template variables
-					disallowPersistentHTTPFlags("param", "params"),
+					cli.AddFlags([]*cli.Flag{
+						{Uses: httpclient.SetURITemplateVar()},
+						{Uses: httpclient.SetURITemplateVars()},
+					}...),
 					phttpclient.Open(),
 				),
 			},
@@ -127,29 +131,4 @@ func suppressHTTPClientHelpByDefault() cli.ActionFunc {
 			return nil
 		})
 	}
-}
-
-// disallowPersistentHTTPFlags is an action which returns an error if one
-// of the httpclient flags is present.  This is to allow them to be persistently
-// defined but not actually usable within certain contexts
-func disallowPersistentHTTPFlags(exceptions ...string) cli.Action {
-	return cli.Before(
-		cli.ActionFunc(func(c *cli.Context) error {
-			src, tag := httpclient.SourceAnnotation()
-			for _, k := range c.BindingLookup().BindingNames() {
-				f, ok := c.LookupFlag(k)
-				if !ok {
-					continue
-				}
-
-				if v, ok := f.LookupData(src); ok {
-					if tag == v && !slices.Contains(exceptions, k) {
-						return fmt.Errorf("unknown option %v", k)
-					}
-				}
-			}
-
-			return nil
-		}),
-	)
 }

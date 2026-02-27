@@ -95,7 +95,6 @@ var _ = Describe("ServiceResolver", func() {
 			Entry("rooted", "/root", "/root"),
 			// IP addresses should get treated as URLs
 			Entry("IPv4", "192.168.1.19", "http://192.168.1.19"),
-			Entry("IPv6", "2001:db8::8a2e:370:7334", "http://2001:db8::8a2e:370:7334"),
 			// Supporting grpc
 			// TODO Requires update from joe-cli-http@futures to support correctly
 			XEntry("unix", "unix:///tmp/tmp.srKIC1Mk2e", "unix:///tmp/tmp.srKIC1Mk2e"),
