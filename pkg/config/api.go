@@ -20,6 +20,7 @@ type Service struct {
 	Source      string         `json:"source,omitempty"`
 	Title       string         `json:"title,omitempty"`
 	Description string         `json:"description,omitempty"`
+	Tags        []string       `json:"tags,omitempty"`
 	Servers     []Server       `json:"servers,omitempty"`
 	Resources   []Resource     `json:"resources,omitempty"`
 	Links       []Link         `json:"links,omitempty"`
@@ -34,6 +35,7 @@ type Server struct {
 	Comment     string         `json:"comment,omitempty"`
 	Source      string         `json:"source,omitempty"`
 	Description string         `json:"description,omitempty"`
+	Tags        []string       `json:"tags,omitempty"`
 	Title       string         `json:"title,omitempty"`
 	BaseURL     string         `json:"baseUrl"`
 	Headers     Header         `json:"headers,omitempty"`
@@ -49,6 +51,7 @@ type Resource struct {
 	Source      string         `json:"source,omitempty"`
 	Title       string         `json:"title,omitempty"`
 	Description string         `json:"description,omitempty"`
+	Tags        []string       `json:"tags,omitempty"`
 	Resources   []Resource     `json:"resources,omitempty"`
 	URI         string         `json:"uri,omitempty"`
 	Headers     Header         `json:"headers,omitempty"`
@@ -99,6 +102,7 @@ type Endpoint struct {
 	Title       string         `json:"title,omitempty"`
 	Source      string         `json:"source,omitempty"`
 	Description string         `json:"description,omitempty"`
+	Tags        []string       `json:"tags,omitempty"`
 	Headers     Header         `json:"headers,omitempty"`
 	Form        Form           `json:"form,omitempty"`
 	Links       []Link         `json:"links,omitempty"`

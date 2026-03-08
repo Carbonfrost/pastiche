@@ -39,6 +39,7 @@ type Service struct {
 	Comment     string
 	Title       string
 	Description string
+	Tags        []string
 	Servers     []*Server
 	Links       []Link
 	Resource    *Resource
@@ -51,6 +52,7 @@ type Server struct {
 	Name        string
 	Comment     string
 	Description string
+	Tags        []string
 	Title       string
 	BaseURL     string
 	Headers     map[string][]string
@@ -65,6 +67,7 @@ type Resource struct {
 	Comment     string
 	Title       string
 	Description string
+	Tags        []string
 	Resources   []*Resource
 	Endpoints   []*Endpoint
 	URITemplate *uritemplates.URITemplate
@@ -83,6 +86,7 @@ type Endpoint struct {
 	Comment     string
 	Title       string
 	Description string
+	Tags        []string
 	Method      string
 	Headers     map[string][]string
 	Form        map[string][]string
