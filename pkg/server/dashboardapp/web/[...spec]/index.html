@@ -17,7 +17,9 @@
   {{ define "main" }}
   <div>
     <small>Service</small>
-    <h1>{{ or .Title .Name }}</h1>
+    <h1>
+      {{ .Title }}
+      <code>{{ .Name }}</code></h1>
 
     <div class="hstack">
       {{ Include "_components/service/servers.html" . }}
