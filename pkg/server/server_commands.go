@@ -26,8 +26,6 @@ func Serve() cli.Action {
 		},
 		httpserver.New(
 			httpserver.WithPort(9161),
-			// httpserver.AddReadyFunc(httpserver.ReportListening()),
-			// FIXME Possibly redundant
 		),
 		cli.Before(cli.Pipeline(
 			httpserver.Handle("GET /api/v0/model", httpserver.NewReloadableHandler(handleGetModel)),

@@ -18,6 +18,7 @@ import (
 	cli "github.com/Carbonfrost/joe-cli"
 	joehttpclient "github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli-http/httpclient/expr"
+	"github.com/Carbonfrost/joe-cli/extensions/bind"
 	e "github.com/Carbonfrost/joe-cli/extensions/expr/expander"
 	"github.com/Carbonfrost/joe-cli/extensions/provider"
 	"github.com/Carbonfrost/pastiche/pkg/model"
@@ -481,7 +482,7 @@ func SetIncludeMetadata(f ...bool) cli.Action {
 			Value:    new(bool),
 			HelpText: "Include metadata in the output",
 		},
-		withBinding((*Client).SetIncludeMetadata, f),
+		bind.Call2((*Client).SetIncludeMetadata, bind.FromContext(FromContext), bind.Exact(f...)),
 	)
 }
 

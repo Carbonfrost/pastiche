@@ -6,8 +6,8 @@ module github.com/Carbonfrost/pastiche
 go 1.26.1
 
 require (
-	github.com/Carbonfrost/joe-cli v0.12.0
-	github.com/Carbonfrost/joe-cli-http v0.7.1
+	github.com/Carbonfrost/joe-cli v0.13.0
+	github.com/Carbonfrost/joe-cli-http v0.7.2
 	github.com/antchfx/xmlquery v1.5.0
 	github.com/antchfx/xpath v1.3.5
 	github.com/fullstorydev/grpcurl v1.9.3

@@ -4,8 +4,12 @@ github.com/BurntSushi/toml v1.6.0 h1:dRaEfpa2VI55EwlIW72hMRHdWouJeRF7TPYhI+AUQjk
 github.com/BurntSushi/toml v1.6.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/Carbonfrost/joe-cli v0.12.0 h1:Q7H8hPn6i+QTZJPPZ4z9Avad4T/mNwFqxbGsgUpiU3I=
 github.com/Carbonfrost/joe-cli v0.12.0/go.mod h1:EVKQ1akszuZXBqjkthvUMbWaZ76rQvhjzl+aF2dw4Jc=
+github.com/Carbonfrost/joe-cli v0.13.0 h1:u2uOvOG3CKjmVNKznVQvFTKBvXCvXxB2CKHZLqZ3OSc=
+github.com/Carbonfrost/joe-cli v0.13.0/go.mod h1:nS0owGfF3IYXtVH6JmDtGzbgLuVya04jStzXmxA8SRk=
 github.com/Carbonfrost/joe-cli-http v0.7.1 h1:7RZGg5/LjyVreBzpdVdIzm53EZtmPB7UYv6ugaBuAXA=
 github.com/Carbonfrost/joe-cli-http v0.7.1/go.mod h1:544Dsk6jwcVtYBZK8l+GCpYlq7wKr+Net7yZo+wtMgo=
+github.com/Carbonfrost/joe-cli-http v0.7.2 h1:X7XKileOc5sAyJKifNzkkicHqikzcJzpqFxHVJ2su70=
+github.com/Carbonfrost/joe-cli-http v0.7.2/go.mod h1:ZGjr8SzMgGVx85GKuFXV1oL2AElzxadBCnLknmyaP8o=
 github.com/Masterminds/semver/v3 v3.4.0 h1:Zog+i5UMtVoCU8oKka5P7i9q9HgrJeGzI9SA1Xbatp0=
 github.com/Masterminds/semver/v3 v3.4.0/go.mod h1:4V+yj/TJE1HU9XfppCwVMZq3I84lprf4nC11bSS5beM=
 github.com/antchfx/xmlquery v1.5.0 h1:uAi+mO40ZWfyU6mlUBxRVvL6uBNZ6LMU4M3+mQIBV4c=

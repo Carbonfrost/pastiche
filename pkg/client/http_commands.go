@@ -43,7 +43,7 @@ func SetType(v ...Type) cli.Action {
 			Aliases:  []string{"g"},
 			HelpText: "Specify the client that will be used",
 		},
-		withBinding((*Client).SetType, v),
+		bind.Call2((*Client).SetType, bind.FromContext(FromContext), bind.Exact(v...)),
 	)
 }
 
@@ -71,16 +71,13 @@ func Describe(paramsopt ...*DescribeParams) cli.Action {
 	if len(paramsopt) == 1 {
 		panic("not implemented")
 	}
-	// TODO Requires joe-cli@futures to inline describe as initializer
-	describe := useDescribeParams()
 	return cli.Pipeline(
 		cli.Prototype{
 			Name:     "describe",
 			HelpText: "Describe resources within Pastiche workspace",
 		},
 		cli.HandleCommandNotFound(nil),
-		describe,
-		bind.Call2(describeSpec, bind.Context(), describe),
+		bind.Call2(describeSpec, bind.Context(), useDescribeParams()),
 	)
 }
 
@@ -122,8 +119,6 @@ func useDescribeParams() bind.ActionBinder[*DescribeParams] {
 
 // Open reveals a particular file or link in the editor or web browser
 func Open() cli.Action {
-	// TODO Requires joe-cli@futures to inline request as initializer
-	request := useRequest()
 	return cli.Pipeline(
 		cli.Prototype{
 			Description: "View a given service configuration or link",
@@ -136,8 +131,7 @@ func Open() cli.Action {
 				Value:    new(string),
 			},
 		}...),
-		request,
-		bind.Action2(openSpec, request, bind.String("rel")),
+		bind.Action2(openSpec, useRequest(), bind.String("rel")),
 	)
 }
 

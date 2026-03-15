@@ -15,11 +15,9 @@ func Log() cli.Action {
 			Name:     "log",
 			Aliases:  []string{"logs"},
 			HelpText: "Access request logs for the workspace",
-			Setup: cli.Setup{
-				Uses: cli.AddFlags([]*cli.Flag{
-					{Uses: ClearLogs()},
-				}...),
-			},
+			Uses: cli.AddFlags([]*cli.Flag{
+				{Uses: ClearLogs()},
+			}...),
 		},
 	)
 }
