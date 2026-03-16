@@ -18,8 +18,15 @@
                 Services
               </summary>
               <ul>
-            {{ range .Services }}
-              <li> <a href="{{ URL . }}"> {{ or .Title .Name }} </a> </li>
+            {{ range .ServiceNodes }}
+              <li>
+                <a href="{{ .URL }}"> {{ .Title }} </a>
+                  <ul style="padding-left: var(--space-4)">
+                  {{ range .Children }}
+                        <li> <a href="{{ .URL }}"> {{ .Title }} </a> </li>
+                  {{ end }}
+                  </ul>
+              </li>
             {{ end }}
               </ul>
             </details>

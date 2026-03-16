@@ -5,11 +5,13 @@
 package dashboardapp
 
 import (
+	"cmp"
 	"embed"
 	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/Carbonfrost/pastiche/pkg/model"
 	"github.com/Carbonfrost/pastiche/pkg/swvlexp/router"
@@ -50,7 +52,7 @@ func loadData(r *router.TemplateRenderContext) (any, error) {
 		return svc, nil
 	case "index.html":
 		mo := FromContext[*model.Model](req.Context())
-		return mo, nil
+		return newPasticheIndexView(mo), nil
 	}
 	log.Printf("no template metadata %s\n", r.SourcePath)
 	return nil, nil
@@ -62,5 +64,60 @@ func URL(v any) string {
 		return fmt.Sprintf("/%s", val.Name)
 	default:
 		return fmt.Sprintf("/?%T", val)
+	}
+}
+
+type ServiceNode struct {
+	Service  *model.Service
+	Parent   *ServiceNode
+	Children []*ServiceNode
+	Title    string
+	URL      string
+}
+
+func (n *ServiceNode) appendChild(c *ServiceNode) {
+	n.Children = append(n.Children, c)
+	c.Parent = n
+}
+
+func serviceNodes(svcs []*model.Service) []*ServiceNode {
+	nodes := make([]*ServiceNode, 0, len(svcs))
+	var current *ServiceNode
+	for i, s := range svcs {
+		ad := &ServiceNode{
+			Service: svcs[i],
+			Title:   cmp.Or(svcs[i].Title, svcs[i].Name),
+			URL:     URL(s),
+		}
+
+		if group, _, ok := strings.Cut(s.Name, "/"); ok {
+			if current != nil && current.Title == group {
+
+			} else {
+				current = &ServiceNode{
+					Service: nil,
+					Title:   group,
+					URL:     fmt.Sprintf("/%s", group),
+				}
+				nodes = append(nodes, current)
+			}
+
+			current.appendChild(ad)
+		} else {
+			nodes = append(nodes, ad)
+		}
+	}
+	return nodes
+}
+
+type PasticheIndexView struct {
+	Services     []*model.Service
+	ServiceNodes []*ServiceNode
+}
+
+func newPasticheIndexView(mo *model.Model) PasticheIndexView {
+	return PasticheIndexView{
+		Services:     mo.Services,
+		ServiceNodes: serviceNodes(mo.Services),
 	}
 }
