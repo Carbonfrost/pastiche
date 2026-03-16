@@ -31,10 +31,8 @@ type Response = httpclient.Response
 type Client struct {
 	cli.Action
 
-	network string
 	address string
 	symbol  string
-	creds   credentials.TransportCredentials
 
 	protoset          []string
 	disableReflection bool

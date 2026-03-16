@@ -484,6 +484,9 @@ func (t templateFilter) Search(resp Response) ([]byte, error) {
 	funcs.AddVarResolver(funcMap, expander)
 
 	tpl, err := template.New("<filter>").Funcs(funcMap).Parse(text)
+	if err != nil {
+		return nil, err
+	}
 
 	var templateData map[string]any
 	if md, ok := data.(*metaResponse); ok {

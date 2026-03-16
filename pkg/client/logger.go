@@ -126,7 +126,7 @@ func (h historyResponseBody) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(map[string]any{
-		"text": string(h.buffer.Bytes()),
+		"text": h.buffer.String(),
 	})
 }
 

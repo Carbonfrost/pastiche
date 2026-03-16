@@ -211,11 +211,11 @@ func (m *Model) byName() map[string]*Service {
 	return m.cacheByName
 }
 
-func (c *Model) Resolve(spec ServiceSpec, server string, method string) (ResolvedResource, error) {
+func (m *Model) Resolve(spec ServiceSpec, server string, method string) (ResolvedResource, error) {
 	if len(spec) == 0 {
 		return nil, fmt.Errorf("no service specified")
 	}
-	svc, ok := c.Service(spec[0])
+	svc, ok := m.Service(spec[0])
 	if !ok {
 		return nil, fmt.Errorf("service not found: %q", spec[0])
 	}
@@ -371,7 +371,7 @@ func resolveURL(base string, prefix []string, vars map[string]any) (*url.URL, er
 	}
 
 	if base != "" && len(prefix) > 0 {
-		base = base + "/"
+		base += "/"
 	}
 
 	template := base + path.Join(prefix...)

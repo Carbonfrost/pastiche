@@ -31,7 +31,7 @@ type Client struct {
 
 	http            *httpclient.Client
 	grpc            *grpcclient.Client
-	clientType      ClientType
+	clientType      Type
 	filter          Filter
 	includeMetadata bool
 
@@ -92,7 +92,7 @@ func (c *Client) filterResponse(d httpclient.Downloader) httpclient.Downloader {
 }
 
 // Type gets the client type that was requested
-func (c *Client) Type() ClientType {
+func (c *Client) Type() Type {
 	return c.clientType
 }
 
@@ -134,7 +134,7 @@ func FlagsAndArgs() cli.Action {
 		cli.AddFlags([]*cli.Flag{
 			{Uses: ListFilters()},
 			{Uses: SetFilter()},
-			{Uses: SetClientType()},
+			{Uses: SetType()},
 			{Uses: SetIncludeMetadata()},
 		}...),
 	)
@@ -154,7 +154,7 @@ func (c *Client) SetFilter(f Filter) error {
 	return nil
 }
 
-func (c *Client) SetClientType(t ClientType) error {
+func (c *Client) SetType(t Type) error {
 	c.clientType = t
 	return nil
 }

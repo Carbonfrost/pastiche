@@ -71,6 +71,9 @@ func (h *templateFSHandler) newTemplate(r *TemplateRenderContext) (Response, err
 
 func (h *templateFSHandler) newHTMLTemplate(fsys fs.FS, path string) (*template.Template, error) {
 	tpls, err := h.Template.Clone()
+	if err != nil {
+		return nil, err
+	}
 
 	// TODO Better error handling of template load and parse errors
 	fileContents, _ := fs.ReadFile(fsys, path)

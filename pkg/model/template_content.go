@@ -1,6 +1,7 @@
 // Copyright 2025, 2026 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+
 package model
 
 import (
@@ -195,15 +196,15 @@ func expandObject(v any, e Expander) any {
 }
 
 func expandHeader(value map[string][]string, e Expander) map[string][]string {
-	copy := map[string][]string{}
+	out := map[string][]string{}
 	for k, v := range value {
 		result := make([]string, len(v))
 		for i, str := range v {
 			result[i] = expandString(str, e)
 		}
-		copy[k] = result
+		out[k] = result
 	}
-	return copy
+	return out
 }
 
 func expandString(s string, e Expander) string {

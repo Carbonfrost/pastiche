@@ -24,6 +24,7 @@ func Log() cli.Action {
 	)
 }
 
+// ClearLogs removes logs from the workspace
 func ClearLogs() cli.Action {
 	return cli.Pipeline(
 		&cli.Prototype{

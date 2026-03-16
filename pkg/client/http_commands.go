@@ -44,15 +44,15 @@ func newParams[T any](action cli.Action, binder bind.Func[T]) *params[T] {
 	}
 }
 
-// SetClientType provides an action which sets the client type
-func SetClientType(v ...ClientType) cli.Action {
+// SetType provides an action which sets the client type
+func SetType(v ...Type) cli.Action {
 	return cli.Pipeline(
 		&cli.Prototype{
 			Name:     "client",
 			Aliases:  []string{"g"},
 			HelpText: "Specify the client that will be used",
 		},
-		withBinding((*Client).SetClientType, v),
+		withBinding((*Client).SetType, v),
 	)
 }
 
@@ -167,7 +167,7 @@ func FetchAndPrint() cli.Action {
 		// have them resolve this again within. This also assumes only one location
 		// is ever returned
 
-		if clientType == ClientTypeUnspecified {
+		if clientType == TypeUnspecified {
 			locations, err := c.locationResolver.Resolve(ctx)
 			if err != nil {
 				return err
@@ -177,7 +177,7 @@ func FetchAndPrint() cli.Action {
 			}
 		}
 
-		if clientType == ClientTypeGRPC {
+		if clientType == TypeGRPC {
 			return cli.Do(ctx, cli.Pipeline(httpClientInterop, grpcclient.FetchAndPrint()))
 		}
 
@@ -185,14 +185,14 @@ func FetchAndPrint() cli.Action {
 	})
 }
 
-func fromClientType(c model.Client) ClientType {
+func fromClientType(c model.Client) Type {
 	if _, ok := c.(*model.GRPCClient); ok {
-		return ClientTypeGRPC
+		return TypeGRPC
 	}
 	if _, ok := c.(*model.HTTPClient); ok {
-		return ClientTypeHTTP
+		return TypeHTTP
 	}
-	return ClientTypeUnspecified
+	return TypeUnspecified
 }
 
 func openSpec(r *Request, rel string) cli.Action {
