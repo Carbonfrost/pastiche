@@ -34,6 +34,7 @@ type Request struct {
 
 type DescribeParams struct {
 	*Request
+	Tags []string
 }
 
 type ImportParams struct {
@@ -96,16 +97,43 @@ func Describe(paramsopt ...*DescribeParams) cli.Action {
 func describeSpec(c *cli.Context, params *DescribeParams) error {
 	mo := contextual.Workspace(c).Model()
 	req := params.Request
+
+	matchesAllTags := func(serviceTags []string) bool {
+		for _, required := range params.Tags {
+			if !slices.Contains(serviceTags, required) {
+				return false
+			}
+		}
+		return true
+	}
+
+	// When no spec, consider all services, optionally filtering on tags
+	if req.Spec == nil || len(*req.Spec) == 0 {
+		var matchingServices []*model.Service
+		for _, service := range mo.Services {
+			if matchesAllTags(service.Tags) {
+				matchingServices = append(matchingServices, service)
+			}
+		}
+		return displayService(&model.Model{
+			Services: matchingServices,
+		})
+	}
+
 	merged, err := mo.Resolve(*req.Spec, req.Server, req.Method)
 	if err != nil {
 		return err
 	}
 
-	return displayService(&model.Model{
-		Services: []*model.Service{
-			merged.Service(),
-		},
-	})
+	if matchesAllTags(merged.Service().Tags) {
+		return displayService(&model.Model{
+			Services: []*model.Service{
+				merged.Service(),
+			},
+		})
+	} else {
+		return fmt.Errorf("service not found with tags %v: %q", params.Tags, req.Spec.Path())
+	}
 }
 
 func displayService(m *model.Model) error {
@@ -118,11 +146,20 @@ func useDescribeParams() bind.ActionBinder[*DescribeParams] {
 	requestBinder := useRequest()
 	return newParams(cli.Pipeline(
 		requestBinder,
+		cli.AddFlags([]*cli.Flag{
+			{
+				Name:     "tags",
+				HelpText: "Filter services by tags",
+				Aliases:  []string{"t"},
+				Value:    new([]string),
+			},
+		}...),
 	),
 		func(c *cli.Context) (*DescribeParams, error) {
 			r, err := requestBinder.Bind(c)
 			return &DescribeParams{
 				Request: r,
+				Tags:    c.List("tags"),
 			}, err
 		},
 	)
