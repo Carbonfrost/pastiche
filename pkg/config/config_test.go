@@ -114,6 +114,30 @@ var _ = Describe("Config", func() {
 					})})),
 				),
 			),
+			Entry(
+				"output",
+				"output.yml",
+				haveResource(
+					MatchFields(IgnoreExtras, Fields{"Output": ConsistOf(config.Output{
+						Name:        "template",
+						Title:       "Go Template",
+						Description: "Description",
+						Comment:     "Comment",
+						Links: []config.Link{
+							{Rel: "example", HRef: "https://example.com/go"},
+						},
+						Template: &config.TemplateOutput{
+							Text: "template body text",
+						},
+					},
+						config.Output{
+							Name: "relative template",
+							Template: &config.TemplateOutput{
+								File: "valid-examples/f.tpl",
+							},
+						})}),
+				),
+			),
 		)
 
 		DescribeTable("errors",
@@ -174,5 +198,11 @@ func haveServers(m OmegaMatcher) OmegaMatcher {
 func haveResources(m OmegaMatcher) OmegaMatcher {
 	return WithTransform(func(cfg any) any {
 		return cfg.(*config.File).Service.Resources
+	}, m)
+}
+
+func haveResource(m OmegaMatcher) OmegaMatcher {
+	return WithTransform(func(cfg any) any {
+		return cfg.(*config.File).Service.Resources[0]
 	}, m)
 }

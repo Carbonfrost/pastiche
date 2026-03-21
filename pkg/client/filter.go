@@ -19,6 +19,7 @@ import (
 	joehttpclient "github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli-http/httpclient/expr"
 	"github.com/Carbonfrost/joe-cli/extensions/provider"
+	"github.com/Carbonfrost/pastiche/pkg/model"
 	"github.com/Carbonfrost/pastiche/pkg/template/funcs"
 	"github.com/antchfx/xmlquery"
 	"github.com/antchfx/xpath"
@@ -29,7 +30,7 @@ import (
 // Filter applies a search to the response data and returns
 // the response data.
 type Filter interface {
-	Search(response Response) ([]byte, error)
+	Search(context.Context, Response) ([]byte, error)
 }
 
 type defaultFilter int
@@ -89,6 +90,11 @@ type filteredWriter struct {
 	history *history
 
 	contentType string
+	ctx         context.Context
+}
+
+type namedOutputFilter struct {
+	name string
 }
 
 type metaResponse struct {
@@ -100,7 +106,8 @@ type metaResponse struct {
 var (
 	// FilterRegistry contains all filters available to the client.
 	FilterRegistry = &provider.Registry{
-		Name: "filter",
+		Name:         "filter",
+		AllowUnknown: true,
 		Providers: provider.Details{
 			"jmespath": {
 				Factory: provider.Factory(newJMESPath),
@@ -228,13 +235,22 @@ func NewFilterDownloader(f Filter, d joehttpclient.Downloader, h historyGenerato
 	}
 }
 
-func newFilteredWriter(output io.Writer, f Filter, h *history, ct string) *filteredWriter {
+// NewNamedOutputFilter creates a filter that resolves a named output configuration
+// from the service resolver at runtime.
+func NewNamedOutputFilter(name string) Filter {
+	return namedOutputFilter{
+		name: name,
+	}
+}
+
+func newFilteredWriter(output io.Writer, f Filter, h *history, ct string, ctx context.Context) *filteredWriter {
 	return &filteredWriter{
 		Buffer:      new(bytes.Buffer),
 		output:      output,
 		filter:      f,
 		history:     h,
 		contentType: ct,
+		ctx:         ctx,
 	}
 }
 
@@ -249,7 +265,7 @@ func (f *filteredDownload) OpenDownload(ctx context.Context, r *joehttpclient.Re
 	}
 
 	ct := r.Header.Get("Content-Type")
-	return newFilteredWriter(output, f.filter, h, ct), nil
+	return newFilteredWriter(output, f.filter, h, ct, ctx), nil
 }
 
 func (c *filteredWriter) parseResponse(data []byte) (Response, error) {
@@ -279,7 +295,7 @@ func (c *filteredWriter) Close() error {
 		return err
 	}
 
-	out, err := c.filter.Search(resp)
+	out, err := c.filter.Search(c.ctx, resp)
 	if err != nil {
 		return err
 	}
@@ -288,18 +304,18 @@ func (c *filteredWriter) Close() error {
 	return err
 }
 
-func (defaultFilter) Search(resp Response) ([]byte, error) {
+func (defaultFilter) Search(ctx context.Context, resp Response) ([]byte, error) {
 	switch resp.(type) {
 	case *xmlResponse:
-		return unwrap(newXMLFilter(xmlFilterOpts{Pretty: true})).Search(resp)
+		return unwrap(newXMLFilter(xmlFilterOpts{Pretty: true})).Search(ctx, resp)
 
 	case *jsonResponse:
-		return unwrap(newJSONFilter(jsonFilterOpts{Pretty: true})).Search(resp)
+		return unwrap(newJSONFilter(jsonFilterOpts{Pretty: true})).Search(ctx, resp)
 	}
 	return io.ReadAll(resp.Reader())
 }
 
-func (x xpathFilter) Search(resp Response) ([]byte, error) {
+func (x xpathFilter) Search(_ context.Context, resp Response) ([]byte, error) {
 	doc, err := resp.Document()
 	if err != nil {
 		return nil, err
@@ -315,7 +331,7 @@ func (x xpathFilter) Search(resp Response) ([]byte, error) {
 	return out.Bytes(), nil
 }
 
-func (j jmesPathFilter) Search(resp Response) ([]byte, error) {
+func (j jmesPathFilter) Search(_ context.Context, resp Response) ([]byte, error) {
 	data, err := resp.Data()
 	if err != nil {
 		return nil, err
@@ -328,7 +344,7 @@ func (j jmesPathFilter) Search(resp Response) ([]byte, error) {
 	return json.Marshal(data)
 }
 
-func (d digFilter) Search(resp Response) ([]byte, error) {
+func (d digFilter) Search(_ context.Context, resp Response) ([]byte, error) {
 	data, err := resp.Data()
 	if err != nil {
 		return nil, err
@@ -381,7 +397,7 @@ func index[T any](values []T, index string) (any, error) {
 	return nil, fmt.Errorf("cannot index array with `%s'", index)
 }
 
-func (x xmlFilter) Search(resp Response) ([]byte, error) {
+func (x xmlFilter) Search(_ context.Context, resp Response) ([]byte, error) {
 	doc, err := resp.Document()
 	if err != nil {
 		return nil, err
@@ -396,7 +412,7 @@ func (x xmlFilter) Search(resp Response) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (j jsonFilter) Search(resp Response) ([]byte, error) {
+func (j jsonFilter) Search(_ context.Context, resp Response) ([]byte, error) {
 	data, err := resp.Data()
 	if err != nil {
 		return nil, err
@@ -407,7 +423,7 @@ func (j jsonFilter) Search(resp Response) ([]byte, error) {
 	return results.Bytes(), err
 }
 
-func (y yamlFilter) Search(resp Response) ([]byte, error) {
+func (y yamlFilter) Search(_ context.Context, resp Response) ([]byte, error) {
 	data, err := resp.Data()
 	if err != nil {
 		return nil, err
@@ -464,7 +480,7 @@ func NewTemplateFilter(tpl string) (Filter, error) {
 
 func (templateFilter) IncludeMetadata() {}
 
-func (t templateFilter) Search(resp Response) ([]byte, error) {
+func (t templateFilter) Search(_ context.Context, resp Response) ([]byte, error) {
 	text, err := t.loader()
 	if err != nil {
 		return nil, err
@@ -534,4 +550,61 @@ func newTemplate(opts templateOpts) (Filter, error) {
 
 func unwrap[T any](v T, _ any) T {
 	return v
+}
+
+func (n namedOutputFilter) Search(ctx context.Context, resp Response) ([]byte, error) {
+	sr, ok := FromContext(ctx).locationResolver.(*serviceResolver)
+	if !ok {
+		return nil, fmt.Errorf("cannot resolve %q output", n.name)
+	}
+	resolved, err := sr.resolveResource(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	outputs := resolved.Output()
+
+	// Find the named output
+	for _, o := range outputs {
+		if o.Name == n.name {
+			f, err := outputFilterToFilter(o.Filter)
+			if err != nil {
+				return nil, err
+			}
+			return f.Search(ctx, resp)
+		}
+	}
+
+	return nil, fmt.Errorf("output configuration %q not found", n.name)
+}
+
+func outputFilterToFilter(of model.OutputFilter) (Filter, error) {
+	switch f := of.(type) {
+	case *model.TemplateOutput:
+		if f.File != "" {
+			return newTemplateFilterFile(f.File), nil
+		}
+		return newTemplateFilterString(f.Text), nil
+
+	case *model.JMESPathOutput:
+		return NewJMESPathFilter(f.Query)
+
+	case *model.XPathOutput:
+		return NewXPathFilter(f.Query)
+
+	case *model.DigOutput:
+		return NewDigFilter(f.Query)
+
+	case *model.JSONOutput:
+		return newJSONFilter(jsonFilterOpts{Pretty: f.Pretty})
+
+	case *model.XMLOutput:
+		return newXMLFilter(xmlFilterOpts{Pretty: f.Pretty})
+
+	case *model.YAMLOutput:
+		return newYAMLFilter(struct{}{})
+
+	default:
+		return nil, fmt.Errorf("unsupported output filter type: %T", of)
+	}
 }

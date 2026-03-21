@@ -27,6 +27,7 @@ type Service struct {
 	Vars        map[string]any `json:"vars,omitempty"`
 	Client      *Client        `json:"client,omitempty"`
 	Auth        *Auth          `json:"auth,omitempty"`
+	Output      []Output       `json:"output,omitempty"`
 }
 
 type Server struct {
@@ -42,6 +43,7 @@ type Server struct {
 	Links       []Link         `json:"links,omitempty"`
 	Vars        map[string]any `json:"vars,omitempty"`
 	Auth        *Auth          `json:"auth,omitempty"`
+	Output      []Output       `json:"output,omitempty"`
 }
 
 type Resource struct {
@@ -70,6 +72,7 @@ type Resource struct {
 	RawBody     any            `json:"rawBody,omitempty"`
 	Vars        map[string]any `json:"vars,omitempty"`
 	Auth        *Auth          `json:"auth,omitempty"`
+	Output      []Output       `json:"output,omitempty"`
 }
 
 type Client struct {
@@ -95,6 +98,49 @@ type BasicAuth struct {
 	Password string `json:"password,omitempty"`
 }
 
+type Output struct {
+	Name        string          `json:"name,omitempty"`
+	Comment     string          `json:"comment,omitempty"`
+	Title       string          `json:"title,omitempty"`
+	Description string          `json:"description,omitempty"`
+	Links       []Link          `json:"links,omitempty"`
+	Template    *TemplateOutput `json:"template,omitempty"`
+	JMESPath    *JMESPathOutput `json:"jmespath,omitempty"`
+	XPath       *XPathOutput    `json:"xpath,omitempty"`
+	Dig         *DigOutput      `json:"dig,omitempty"`
+	JSON        *JSONOutput     `json:"json,omitempty"`
+	XML         *XMLOutput      `json:"xml,omitempty"`
+	YAML        *YAMLOutput     `json:"yaml,omitempty"`
+}
+
+type TemplateOutput struct {
+	Text string `json:"text,omitempty"`
+	File string `json:"file,omitempty"`
+}
+
+type JMESPathOutput struct {
+	Query string `json:"query,omitempty"`
+}
+
+type XPathOutput struct {
+	Query string `json:"query,omitempty"`
+}
+
+type DigOutput struct {
+	Query string `json:"query,omitempty"`
+}
+
+type JSONOutput struct {
+	Pretty bool `json:"pretty,omitempty"`
+}
+
+type XMLOutput struct {
+	Pretty bool `json:"pretty,omitempty"`
+}
+
+type YAMLOutput struct {
+}
+
 type Endpoint struct {
 	Schema      string         `json:"$schema,omitempty"`
 	Name        string         `json:"name,omitempty"`
@@ -110,6 +156,7 @@ type Endpoint struct {
 	RawBody     any            `json:"rawBody,omitempty"`
 	Vars        map[string]any `json:"vars,omitempty"`
 	Auth        *Auth          `json:"auth,omitempty"`
+	Output      []Output       `json:"output,omitempty"`
 }
 
 type Link struct {

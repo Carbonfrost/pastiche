@@ -35,6 +35,7 @@ func service(v config.Service) *Service {
 		Vars:   v.Vars,
 		Client: client(v.Client),
 		Auth:   auth(v.Auth),
+		Output: outputs(v.Output),
 	}
 }
 
@@ -58,6 +59,7 @@ func server(s config.Server) *Server {
 		Links:       links(s.Links),
 		Vars:        s.Vars,
 		Auth:        auth(s.Auth),
+		Output:      outputs(s.Output),
 	}
 }
 
@@ -77,6 +79,7 @@ func resource(r config.Resource) *Resource {
 		Vars:        r.Vars,
 		Form:        r.Form,
 		Auth:        auth(r.Auth),
+		Output:      outputs(r.Output),
 	}
 	if r.Get != nil {
 		res.Endpoints = append(res.Endpoints, endpoint("GET", r.Get))
@@ -137,6 +140,7 @@ func endpoint(method string, r *config.Endpoint) *Endpoint {
 		Vars:        r.Vars,
 		Form:        r.Form,
 		Auth:        auth(r.Auth),
+		Output:      outputs(r.Output),
 	}
 }
 
@@ -183,6 +187,64 @@ func auth(a *config.Auth) Auth {
 			User:     a.Basic.User,
 			Password: a.Basic.Password,
 		}
+	}
+
+	return nil
+}
+
+func outputs(outs []config.Output) []*OutputConfig {
+	res := make([]*OutputConfig, len(outs))
+	for i, o := range outs {
+		res[i] = output(o)
+	}
+	return res
+}
+
+func output(o config.Output) *OutputConfig {
+	return &OutputConfig{
+		Name:        o.Name,
+		Comment:     o.Comment,
+		Title:       o.Title,
+		Description: o.Description,
+		Links:       links(o.Links),
+		Filter:      outputFilter(o),
+	}
+}
+
+func outputFilter(o config.Output) OutputFilter {
+	if o.Template != nil {
+		return &TemplateOutput{
+			Text: o.Template.Text,
+			File: o.Template.File,
+		}
+	}
+	if o.JMESPath != nil {
+		return &JMESPathOutput{
+			Query: o.JMESPath.Query,
+		}
+	}
+	if o.XPath != nil {
+		return &XPathOutput{
+			Query: o.XPath.Query,
+		}
+	}
+	if o.Dig != nil {
+		return &DigOutput{
+			Query: o.Dig.Query,
+		}
+	}
+	if o.JSON != nil {
+		return &JSONOutput{
+			Pretty: o.JSON.Pretty,
+		}
+	}
+	if o.XML != nil {
+		return &XMLOutput{
+			Pretty: o.XML.Pretty,
+		}
+	}
+	if o.YAML != nil {
+		return &YAMLOutput{}
 	}
 
 	return nil

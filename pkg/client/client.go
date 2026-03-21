@@ -88,6 +88,7 @@ func (c *Client) filterResponse(d httpclient.Downloader) httpclient.Downloader {
 	if _, ok := c.filter.(interface{ IncludeMetadata() }); c.includeMetadata || ok {
 		history = c.historyLog
 	}
+
 	return NewFilterDownloader(c.filter, d, history)
 }
 
@@ -142,9 +143,13 @@ func FlagsAndArgs() cli.Action {
 
 func (c *Client) setFilterHelper(v *provider.Value) error {
 	args := v.Args.(*map[string]string)
+
+	// Try to create a filter from the registry
 	f, err := FilterRegistry.New(v.Name, *args)
 	if err != nil {
-		return err
+		// If the filter name is not in the registry, it might be a named output
+		// We'll create a wrapper that will resolve it at runtime
+		return c.SetFilter(NewNamedOutputFilter(v.Name))
 	}
 	return c.SetFilter(f.(Filter))
 }

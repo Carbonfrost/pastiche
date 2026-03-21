@@ -46,6 +46,7 @@ type Service struct {
 	Vars        map[string]any
 	Client      Client
 	Auth        Auth
+	Output      []*OutputConfig
 }
 
 type Server struct {
@@ -60,6 +61,7 @@ type Server struct {
 	Links       []Link
 	Vars        map[string]any
 	Auth        Auth
+	Output      []*OutputConfig
 }
 
 type Resource struct {
@@ -79,6 +81,7 @@ type Resource struct {
 	RawBody     any
 	Vars        map[string]any
 	Auth        Auth
+	Output      []*OutputConfig
 }
 
 type Endpoint struct {
@@ -95,6 +98,7 @@ type Endpoint struct {
 	RawBody     any
 	Vars        map[string]any
 	Auth        Auth
+	Output      []*OutputConfig
 }
 
 type Link struct {
@@ -105,6 +109,47 @@ type Link struct {
 	Title      string
 	Type       string
 	IsTemplate bool
+}
+
+type OutputConfig struct {
+	Name        string
+	Comment     string
+	Title       string
+	Description string
+	Links       []Link
+	Filter      OutputFilter
+}
+
+type OutputFilter interface {
+	outputFilterSigil()
+}
+
+type TemplateOutput struct {
+	Text string
+	File string
+}
+
+type JMESPathOutput struct {
+	Query string
+}
+
+type XPathOutput struct {
+	Query string
+}
+
+type DigOutput struct {
+	Query string
+}
+
+type JSONOutput struct {
+	Pretty bool
+}
+
+type XMLOutput struct {
+	Pretty bool
+}
+
+type YAMLOutput struct {
 }
 
 type Client interface {
@@ -137,6 +182,7 @@ type ResolvedResource interface {
 	Endpoint() *Endpoint
 	Server() *Server
 	Client() Client
+	Output() []*OutputConfig
 
 	EvalRequest(baseURL *url.URL, vars map[string]any) (Request, error)
 }
@@ -429,6 +475,10 @@ func (r *resolvedResource) Client() Client {
 	return client
 }
 
+func (r *resolvedResource) Output() []*OutputConfig {
+	return r.combinedOutput()
+}
+
 func (r *resolvedResource) combinedHeaders() http.Header {
 	return locate(
 		r,
@@ -479,6 +529,18 @@ func (r *resolvedResource) combinedAuth() Auth {
 		(*Resource).auth,
 		(*Server).auth,
 		(*Service).auth,
+	)
+}
+
+func (r *resolvedResource) combinedOutput() []*OutputConfig {
+	return locate(
+		r,
+		reduceOutput,
+		[]*OutputConfig{},
+		(*Endpoint).output,
+		(*Resource).output,
+		(*Server).output,
+		(*Service).output,
 	)
 }
 
@@ -561,6 +623,11 @@ func (r *Resource) auth() Auth { return r.Auth }
 func (s *Server) auth() Auth   { return s.Auth }
 func (s *Service) auth() Auth  { return s.Auth }
 
+func (e *Endpoint) output() []*OutputConfig { return e.Output }
+func (r *Resource) output() []*OutputConfig { return r.Output }
+func (s *Server) output() []*OutputConfig   { return s.Output }
+func (s *Service) output() []*OutputConfig  { return s.Output }
+
 func reduceAuth(x, y Auth) Auth {
 	if y == nil {
 		return x
@@ -605,10 +672,48 @@ func reduceVars(x, y map[string]any) map[string]any {
 	return x
 }
 
+func reduceOutput(x, y []*OutputConfig) []*OutputConfig {
+	byName := make(map[string]*OutputConfig)
+	for _, o := range x {
+		if o.Name != "" {
+			byName[o.Name] = o
+		}
+	}
+
+	// Merge or append from y
+	for _, o := range y {
+		if o.Name != "" {
+			if existing, ok := byName[o.Name]; ok {
+				// Filter at closer level (y) wins
+				if o.Filter != nil {
+					existing.Filter = o.Filter
+				}
+			} else {
+				byName[o.Name] = o
+				x = append(x, o)
+			}
+		} else {
+			// Unnamed outputs are always appended
+			x = append(x, o)
+		}
+	}
+
+	return x
+}
+
 func sameType(x, y any) bool {
 	return reflect.TypeOf(x) == reflect.TypeOf(y)
 }
 
 func (*GRPCClient) clientSigil() {}
 func (*HTTPClient) clientSigil() {}
-func (*BasicAuth) authSigil()    {}
+
+func (*BasicAuth) authSigil() {}
+
+func (*TemplateOutput) outputFilterSigil() {}
+func (*JMESPathOutput) outputFilterSigil() {}
+func (*XPathOutput) outputFilterSigil()    {}
+func (*DigOutput) outputFilterSigil()      {}
+func (*JSONOutput) outputFilterSigil()     {}
+func (*XMLOutput) outputFilterSigil()      {}
+func (*YAMLOutput) outputFilterSigil()     {}

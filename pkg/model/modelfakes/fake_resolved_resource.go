@@ -53,6 +53,16 @@ type FakeResolvedResource struct {
 	lineageReturnsOnCall map[int]struct {
 		result1 []*model.Resource
 	}
+	OutputStub        func() []*model.OutputConfig
+	outputMutex       sync.RWMutex
+	outputArgsForCall []struct {
+	}
+	outputReturns struct {
+		result1 []*model.OutputConfig
+	}
+	outputReturnsOnCall map[int]struct {
+		result1 []*model.OutputConfig
+	}
 	ResourceStub        func() *model.Resource
 	resourceMutex       sync.RWMutex
 	resourceArgsForCall []struct {
@@ -308,6 +318,59 @@ func (fake *FakeResolvedResource) LineageReturnsOnCall(i int, result1 []*model.R
 	}
 	fake.lineageReturnsOnCall[i] = struct {
 		result1 []*model.Resource
+	}{result1}
+}
+
+func (fake *FakeResolvedResource) Output() []*model.OutputConfig {
+	fake.outputMutex.Lock()
+	ret, specificReturn := fake.outputReturnsOnCall[len(fake.outputArgsForCall)]
+	fake.outputArgsForCall = append(fake.outputArgsForCall, struct {
+	}{})
+	stub := fake.OutputStub
+	fakeReturns := fake.outputReturns
+	fake.recordInvocation("Output", []interface{}{})
+	fake.outputMutex.Unlock()
+	if stub != nil {
+		return stub()
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeResolvedResource) OutputCallCount() int {
+	fake.outputMutex.RLock()
+	defer fake.outputMutex.RUnlock()
+	return len(fake.outputArgsForCall)
+}
+
+func (fake *FakeResolvedResource) OutputCalls(stub func() []*model.OutputConfig) {
+	fake.outputMutex.Lock()
+	defer fake.outputMutex.Unlock()
+	fake.OutputStub = stub
+}
+
+func (fake *FakeResolvedResource) OutputReturns(result1 []*model.OutputConfig) {
+	fake.outputMutex.Lock()
+	defer fake.outputMutex.Unlock()
+	fake.OutputStub = nil
+	fake.outputReturns = struct {
+		result1 []*model.OutputConfig
+	}{result1}
+}
+
+func (fake *FakeResolvedResource) OutputReturnsOnCall(i int, result1 []*model.OutputConfig) {
+	fake.outputMutex.Lock()
+	defer fake.outputMutex.Unlock()
+	fake.OutputStub = nil
+	if fake.outputReturnsOnCall == nil {
+		fake.outputReturnsOnCall = make(map[int]struct {
+			result1 []*model.OutputConfig
+		})
+	}
+	fake.outputReturnsOnCall[i] = struct {
+		result1 []*model.OutputConfig
 	}{result1}
 }
 

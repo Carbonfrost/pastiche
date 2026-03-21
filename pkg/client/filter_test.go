@@ -77,7 +77,7 @@ var _ = Describe("FilterDownloader", func() {
 				return data, nil
 			}
 
-			actual, err := f.Search(response)
+			actual, err := f.Search(context.Background(), response)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(actual).To(Equal(expected))
 		},

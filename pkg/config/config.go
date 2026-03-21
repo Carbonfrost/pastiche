@@ -215,16 +215,18 @@ func (s sourcer) source(basefilename string, v any) error {
 		if a.Client != nil && a.Client.GRPC != nil {
 			fixRelative(basefilename, &a.Client.GRPC.ProtoSet)
 		}
+		a.Output = fixOutputsRelative(basefilename, a.Output)
 		return sources(s, file, a.Resources)
 
 	case *Server:
-		// Nothing to do for servers
+		a.Output = fixOutputsRelative(basefilename, a.Output)
 
 	case *Resource:
 		err := sources(s, file, a.Resources)
 		if err != nil {
 			return err
 		}
+		a.Output = fixOutputsRelative(basefilename, a.Output)
 		return s.sources(file, a.Get, a.Put, a.Post, a.Delete, a.Options, a.Head, a.Trace, a.Patch, a.Query)
 
 	case *Endpoint:
@@ -259,11 +261,20 @@ func sources[V any](s sourcer, basefilename string, values []V) error {
 }
 
 func fixRelative(basefilename string, path *string) {
-	if path == nil {
+	if path == nil || *path == "" {
 		return
 	}
 	resolvedFile := filepath.Join(filepath.Dir(basefilename), *path)
 	*path = resolvedFile
+}
+
+func fixOutputsRelative(basefilename string, out []Output) []Output {
+	for i := range out {
+		if out[i].Template != nil {
+			fixRelative(basefilename, &out[i].Template.File)
+		}
+	}
+	return out
 }
 
 func preprocessYAML(data []byte) []byte {

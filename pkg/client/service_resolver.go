@@ -135,6 +135,11 @@ func (s *serviceResolver) resolveRequest(c context.Context) (model.Request, erro
 	return merged.EvalRequest(s.base, s.vars)
 }
 
+func (s *serviceResolver) resolveResource(c context.Context) (model.ResolvedResource, error) {
+	spec := *s.root(c)
+	return s.config.Resolve(spec, s.server(c), s.method(c))
+}
+
 func newLocation(base *url.URL, vars map[string]any, resolved model.ResolvedResource) (*pasticheLocation, error) {
 	merged, err := resolved.EvalRequest(base, vars)
 	if err != nil {
