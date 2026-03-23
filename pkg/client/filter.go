@@ -18,6 +18,7 @@ import (
 	cli "github.com/Carbonfrost/joe-cli"
 	joehttpclient "github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli-http/httpclient/expr"
+	e "github.com/Carbonfrost/joe-cli/extensions/expr/expander"
 	"github.com/Carbonfrost/joe-cli/extensions/provider"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 	"github.com/Carbonfrost/pastiche/pkg/template/funcs"
@@ -110,21 +111,21 @@ var (
 		AllowUnknown: true,
 		Providers: provider.Details{
 			"jmespath": {
-				Factory: provider.Factory(newJMESPath),
+				Factory: provider.FactoryOf(newJMESPath),
 				Defaults: map[string]string{
 					"query": "@",
 				},
 				HelpText: "Use JMES Path to select matching JSON data",
 			},
 			"dig": {
-				Factory: provider.Factory(newDig),
+				Factory: provider.FactoryOf(newDig),
 				Defaults: map[string]string{
 					"query": "",
 				},
 				HelpText: "Use a simple expression to retrieve a value",
 			},
 			"gotpl": {
-				Factory: provider.Factory(newTemplate),
+				Factory: provider.FactoryOf(newTemplate),
 				Defaults: map[string]string{
 					"text": "Result: {{ .Result }}",
 					"file": "",
@@ -132,26 +133,26 @@ var (
 				HelpText: "Use Go template to manipulate matching data",
 			},
 			"json": {
-				Factory: provider.Factory(newJSONFilter),
+				Factory: provider.FactoryOf(newJSONFilter),
 				Defaults: map[string]string{
 					"pretty": "false",
 				},
 				HelpText: "Generate JSON output",
 			},
 			"xpath": {
-				Factory: provider.Factory(newXPathFilter),
+				Factory: provider.FactoryOf(newXPathFilter),
 				Defaults: map[string]string{
 					"query": "",
 				},
 				HelpText: "Apply an XPath expression",
 			},
 			"xml": {
-				Factory:  provider.Factory(newXMLFilter),
+				Factory:  provider.FactoryOf(newXMLFilter),
 				Defaults: map[string]string{},
 				HelpText: "Generate XML output",
 			},
 			"yaml": {
-				Factory:  provider.Factory(newYAMLFilter),
+				Factory:  provider.FactoryOf(newYAMLFilter),
 				Defaults: map[string]string{},
 				HelpText: "Generate YAML output",
 			},
@@ -491,7 +492,7 @@ func (t templateFilter) Search(_ context.Context, resp Response) ([]byte, error)
 	}
 
 	// TODO This should be expander capable of vars, form, etc.
-	expander := expr.ExpandGlobals
+	expander := e.Func(expr.ExpandGlobals)
 
 	var results bytes.Buffer
 

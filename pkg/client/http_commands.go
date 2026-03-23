@@ -13,7 +13,6 @@ import (
 
 	"github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
-	"github.com/Carbonfrost/joe-cli-http/uritemplates"
 	"github.com/Carbonfrost/joe-cli/extensions/bind"
 	"github.com/Carbonfrost/joe-cli/extensions/exec"
 	"github.com/Carbonfrost/pastiche/pkg/config"
@@ -28,20 +27,12 @@ type Request struct {
 	Server string
 }
 
-type params[T any] struct {
-	cli.Action
-	bind.Binder[T]
-}
-
 type DescribeParams struct {
 	*Request
 }
 
-func newParams[T any](action cli.Action, binder bind.Func[T]) *params[T] {
-	return &params[T]{
-		action,
-		binder,
-	}
+func newParams[T any](action cli.Action, binder bind.Func[T]) bind.ActionBinder[T] {
+	return bind.NewActionBinder(action, binder)
 }
 
 // SetType provides an action which sets the client type
@@ -68,14 +59,16 @@ func Describe(paramsopt ...*DescribeParams) cli.Action {
 	if len(paramsopt) == 1 {
 		panic("not implemented")
 	}
-
+	// TODO Requires joe-cli@futures to inline describe as initializer
+	describe := useDescribeParams()
 	return cli.Pipeline(
 		cli.Prototype{
 			Name:     "describe",
 			HelpText: "Describe resources within Pastiche workspace",
 		},
 		cli.HandleCommandNotFound(nil),
-		bind.Call2(describeSpec, bind.Context(), useDescribeParams()),
+		describe,
+		bind.Call2(describeSpec, bind.Context(), describe),
 	)
 }
 
@@ -101,7 +94,7 @@ func displayService(m *model.Model) error {
 	return nil
 }
 
-func useDescribeParams() *params[*DescribeParams] {
+func useDescribeParams() bind.ActionBinder[*DescribeParams] {
 	requestBinder := useRequest()
 	return newParams(cli.Pipeline(
 		requestBinder,
@@ -117,6 +110,8 @@ func useDescribeParams() *params[*DescribeParams] {
 
 // Open reveals a particular file or link in the editor or web browser
 func Open() cli.Action {
+	// TODO Requires joe-cli@futures to inline request as initializer
+	request := useRequest()
 	return cli.Pipeline(
 		cli.Prototype{
 			Description: "View a given service configuration or link",
@@ -129,7 +124,8 @@ func Open() cli.Action {
 				Value:    new(string),
 			},
 		}...),
-		bind.Action2(openSpec, useRequest(), bind.String("rel")),
+		request,
+		bind.Action2(openSpec, request, bind.String("rel")),
 	)
 }
 
@@ -299,7 +295,7 @@ func invokeUsingMethod() cli.Action {
 		})
 }
 
-func useRequest() *params[*Request] {
+func useRequest() bind.ActionBinder[*Request] {
 	return newParams(cli.Pipeline(
 		cli.Setup{
 			Uses: cli.Pipeline(
@@ -318,7 +314,7 @@ func useRequest() *params[*Request] {
 						NArg:       cli.TakeUntilNextFlag,
 						Action: func(c *cli.Context) error {
 							it := c.NameValue("")
-							httpclient.FromContext(c).LocationResolver.AddVar(uritemplates.StringVar(it.Name, it.Value))
+							httpclient.FromContext(c).LocationResolver.AddVar(it.Name, it.Value)
 							return nil
 						},
 					},
@@ -462,13 +458,3 @@ func httpClientInterop(c *cli.Context) error {
 
 	return nil
 }
-
-func (p *params[_]) Initializer() cli.Action {
-	return p.Action
-}
-
-var (
-	_ cli.Action                            = (*params[any])(nil)
-	_ bind.Binder[any]                      = (*params[any])(nil)
-	_ interface{ Initializer() cli.Action } = (*params[any])(nil)
-)

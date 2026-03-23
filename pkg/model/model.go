@@ -19,8 +19,8 @@ import (
 	"strings"
 
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
-	"github.com/Carbonfrost/joe-cli-http/httpclient/expr"
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
+	e "github.com/Carbonfrost/joe-cli/extensions/expr/expander"
 	"github.com/Carbonfrost/pastiche/pkg/config"
 	"github.com/Carbonfrost/pastiche/pkg/internal/log"
 )
@@ -362,12 +362,12 @@ func (r *resolvedResource) EvalRequest(baseURL *url.URL, vars map[string]any) (R
 	combinedVars := r.combinedVars()
 	maps.Copy(combinedVars, vars)
 
-	expander := expr.ComposeExpanders(
-		expr.Prefix("env", func(k string) any {
+	expander := e.Compose(
+		e.Prefix("env", e.Func(func(k string) any {
 			return os.Getenv(k)
-		}),
-		expr.Prefix("var", expr.ExpandMap(combinedVars)),
-		expr.ExpandMap(combinedVars),
+		})),
+		e.Prefix("var", e.Map(combinedVars)),
+		e.Map(combinedVars),
 	)
 
 	headers := expandHeader(r.combinedHeaders(), expander)

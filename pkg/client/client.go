@@ -56,14 +56,8 @@ func New(opts ...Option) *Client {
 		httpclient.WithLocationResolver(
 			sr,
 		),
-		func(c *httpclient.Client) {
-			c.UseDownloadMiddleware(res.filterResponse)
-		},
-		func(c *httpclient.Client) {
-			c.UseDownloadMiddleware(func(downloader httpclient.Downloader) httpclient.Downloader {
-				return newHistoryDownloader(downloader, res.historyLog)
-			})
-		},
+		httpclient.WithDownloadMiddleware(res.filterResponse),
+		httpclient.WithDownloadMiddleware(res.historyLogMiddleware),
 	)
 
 	res.http = client
@@ -90,6 +84,10 @@ func (c *Client) filterResponse(d httpclient.Downloader) httpclient.Downloader {
 	}
 
 	return NewFilterDownloader(c.filter, d, history)
+}
+
+func (c *Client) historyLogMiddleware(d httpclient.Downloader) httpclient.Downloader {
+	return newHistoryDownloader(d, c.historyLog)
 }
 
 // Type gets the client type that was requested

@@ -15,6 +15,7 @@ import (
 
 	"github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
+	joetls "github.com/Carbonfrost/joe-cli-http/tls"
 	"github.com/Carbonfrost/pastiche/pkg/internal/build"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 	"github.com/fullstorydev/grpcurl"
@@ -320,8 +321,7 @@ func fetchAndPrintCore(ctx context.Context, c *Client, target, methodName string
 }
 
 func clientTLSConfig(c context.Context) *tls.Config {
-	// TODO Requires an update to joe-cli-http@future to use the TLS-specific package
-	return httpclient.FromContext(c).TLSConfig()
+	return joetls.FromContext(c).Config
 }
 
 func handleStatus(err error) error {

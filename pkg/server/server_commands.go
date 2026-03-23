@@ -5,8 +5,8 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"github.com/Carbonfrost/joe-cli"
@@ -26,33 +26,29 @@ func Serve() cli.Action {
 		},
 		httpserver.New(
 			httpserver.WithPort(9161),
-			httpserver.WithReadyFunc(httpserver.ReportListening),
+			// httpserver.AddReadyFunc(httpserver.ReportListening()),
+			// FIXME Possibly redundant
 		),
 		cli.Before(cli.Pipeline(
-			httpserver.Handle("GET /api/v0/model", handleGetModel()),
-			httpserver.Handle("/", handleDashboard()),
+			httpserver.Handle("GET /api/v0/model", httpserver.NewReloadableHandler(handleGetModel)),
+			httpserver.Handle("/", httpserver.NewReloadableHandler(handleDashboard)),
 		)),
 		httpserver.RunServer(),
 	)
 }
 
-func handleGetModel() http.HandlerFunc {
+func handleGetModel(_ context.Context) (http.Handler, error) {
 	// Load configuration, converted to model but canonicalized back into model
 	cfg, _ := config.Load()
 	mo := model.ToConfig(model.New(cfg))
 
-	return func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(mo)
-	}
+	}), nil
 }
 
-func handleDashboard() http.Handler {
+func handleDashboard(_ context.Context) (http.Handler, error) {
 	cfg, _ := config.Load()
 	mo := model.New(cfg)
-	handler, err := dashboardapp.New(mo)
-	if err != nil {
-		log.Println(err)
-		return http.NotFoundHandler()
-	}
-	return handler
+	return dashboardapp.New(mo)
 }

@@ -14,7 +14,7 @@ import (
 	"text/template"
 
 	joehttpclient "github.com/Carbonfrost/joe-cli-http/httpclient"
-	"github.com/Carbonfrost/joe-cli-http/httpclient/expr"
+	"github.com/Carbonfrost/joe-cli/extensions/expr/expander"
 	"github.com/Carbonfrost/pastiche/pkg/internal/log"
 	"github.com/Carbonfrost/pastiche/pkg/template/funcs"
 )
@@ -28,7 +28,7 @@ type formContent struct {
 	*contentSupport
 }
 
-type Expander = expr.Expander
+type Expander = expander.Interface
 
 type objectContent struct {
 	*contentSupport
@@ -133,11 +133,11 @@ func (t *formContent) Read() io.Reader {
 }
 
 func (t *contentSupport) Expander() Expander {
-	return expr.ComposeExpanders(
-		expr.Prefix("var", expr.ExpandMap(t.vars)),
-		expr.Prefix("form", expandURLValues(t.form)),
+	return expander.Compose(
+		expander.Prefix("var", expander.Map(t.vars)),
+		expander.Prefix("form", expandURLValues(t.form)),
 		expandURLValues(t.form),
-		expr.ExpandMap(t.vars),
+		expander.Map(t.vars),
 	)
 }
 
@@ -208,10 +208,10 @@ func expandHeader(value map[string][]string, e Expander) map[string][]string {
 }
 
 func expandString(s string, e Expander) string {
-	return expr.SyntaxRecursive.CompilePattern(s, "${", "}").Expand(e)
+	return expander.SyntaxRecursive.CompilePattern(s, "${", "}").Expand(e)
 }
 
-func expandURLValues(u url.Values) expr.Expander {
+func expandURLValues(u url.Values) expander.Func {
 	return func(s string) any {
 		if u.Has(s) {
 			return strings.Join(u[s], ",")

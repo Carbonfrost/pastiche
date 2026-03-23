@@ -16,7 +16,6 @@ import (
 	"strings"
 
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
-	"github.com/Carbonfrost/joe-cli-http/uritemplates"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 )
 
@@ -40,7 +39,7 @@ type serviceResolver struct {
 	root   func(context.Context) *model.ServiceSpec
 	server func(context.Context) string
 	method func(context.Context) string
-	vars   uritemplates.Vars
+	vars   map[string]any
 	base   *url.URL
 	config *model.Model
 }
@@ -76,8 +75,8 @@ func (s *serviceResolver) Add(location string) error {
 	return fmt.Errorf("multiple locations not supported")
 }
 
-func (s *serviceResolver) AddVar(v *uritemplates.Var) error {
-	s.vars.Add(v)
+func (s *serviceResolver) AddVar(name string, value any) error {
+	s.vars[name] = value
 	return nil
 }
 
@@ -89,7 +88,7 @@ func (s *serviceResolver) BaseURL() *url.URL {
 	return s.base
 }
 
-func (s *serviceResolver) SetBase(base *url.URL) error {
+func (s *serviceResolver) SetBaseURL(base *url.URL) error {
 	if base == nil {
 		s.base = base
 		return nil

@@ -10,10 +10,10 @@ import (
 	"os"
 	"text/template"
 
-	"github.com/Carbonfrost/joe-cli-http/httpclient/expr"
+	"github.com/Carbonfrost/joe-cli/extensions/expr/expander"
 )
 
-type Expander = expr.Expander
+type Expander = expander.Interface
 
 func AddTo(data map[string]any) {
 	data["base64"] = &Base64Funcs{}
@@ -34,7 +34,7 @@ func resolveVar(exp Expander) func(...string) (any, error) {
 			return "", fmt.Errorf("var/n requires at least one var name")
 		}
 		for i, v := range vars {
-			result := exp(v)
+			result := exp.Expand(v)
 			if result != nil {
 				return result, nil
 			}

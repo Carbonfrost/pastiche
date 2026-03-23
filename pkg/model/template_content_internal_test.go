@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/Carbonfrost/joe-cli/extensions/expr/expander"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -93,12 +94,12 @@ var _ = Describe("bodyToBytes", func() {
 var _ = Describe("expandObject", func() {
 
 	DescribeTable("examples", func(body any, expected any) {
-		c := expandObject(body, func(s string) any {
+		c := expandObject(body, expander.Func(func(s string) any {
 			if s == "var.value" {
 				return "value"
 			}
 			return ""
-		})
+		}))
 		Expect(c).To(Equal(expected))
 	},
 		Entry("slice",
