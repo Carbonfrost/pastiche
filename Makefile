@@ -18,6 +18,9 @@ install: -install-pastiche
 --install-%: build -check-env-PREFIX -check-env-_GO_OUTPUT_DIR Makefile
 	$(Q) eng/install "${_GO_OUTPUT_DIR}/$*" $(PREFIX)/bin
 
+json_info:
+	@ go run -tags json_marshal ./cmd/pastiche > docs/pastiche.json_info.json
+
 test:
 	$(Q) ginkgo ./...
 

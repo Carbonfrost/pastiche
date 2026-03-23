@@ -26,5 +26,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	json.NewEncoder(os.Stdout).Encode(marshal.From(app))
+	m := marshal.From(app)
+	e := json.NewEncoder(os.Stdout)
+	e.SetIndent("", "    ")
+	e.Encode(m)
 }
