@@ -11,7 +11,6 @@ import (
 	"maps"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
 	"reflect"
 	"regexp"
@@ -368,9 +367,7 @@ func (r *resolvedResource) EvalRequest(baseURL *url.URL, vars map[string]any) (R
 	maps.Copy(combinedVars, vars)
 
 	expander := e.Compose(
-		e.Prefix("env", e.Func(func(k string) any {
-			return os.Getenv(k)
-		})),
+		e.Prefix("env", e.Env()),
 		e.Prefix("var", e.Map(combinedVars)),
 		e.Map(combinedVars),
 	)
