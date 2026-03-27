@@ -44,6 +44,7 @@ type Service struct {
 	Output    []Output       `json:"output,omitempty"`
 	Secrets   []Secret       `json:"secrets,omitempty"`
 	VarSets   []VarSet       `json:"varSets,omitempty"`
+	Params    []Param        `json:"params,omitempty"`
 }
 
 type Header = Values
@@ -63,6 +64,7 @@ type Server struct {
 	Output  []Output       `json:"output,omitempty"`
 	Secrets []Secret       `json:"secrets,omitempty"`
 	VarSets []VarSet       `json:"varSets,omitempty"`
+	Params  []Param        `json:"params,omitempty"`
 }
 
 type Resource struct {
@@ -89,6 +91,7 @@ type Resource struct {
 	Vars      map[string]any `json:"vars,omitempty"`
 	Auth      *Auth          `json:"auth,omitempty"`
 	Output    []Output       `json:"output,omitempty"`
+	Params    []Param        `json:"params,omitempty"`
 }
 
 type VarSet struct {
@@ -216,6 +219,7 @@ type Endpoint struct {
 	Vars    map[string]any `json:"vars,omitempty"`
 	Auth    *Auth          `json:"auth,omitempty"`
 	Output  []Output       `json:"output,omitempty"`
+	Params  []Param        `json:"params,omitempty"`
 }
 
 type Link struct {
@@ -267,6 +271,11 @@ func (s *ServiceSpec) UnmarshalJSON(data []byte) error {
 	}
 	*s = slice
 	return nil
+}
+
+type Param struct {
+	Name string `json:"name"`
+	Metadata
 }
 
 func (f *File) Name() string {

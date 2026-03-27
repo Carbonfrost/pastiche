@@ -47,6 +47,7 @@ type Service struct {
 	Links       []Link
 	Resource    *Resource
 	Vars        map[string]any
+	Params      []*Param
 	Client      Client
 	Auth        Auth
 	Output      []*OutputConfig
@@ -65,6 +66,7 @@ type Server struct {
 	Form        Values
 	Links       []Link
 	Vars        map[string]any
+	Params      []*Param
 	Auth        Auth
 	Output      []*OutputConfig
 	Secrets     []*Secret
@@ -87,6 +89,7 @@ type Resource struct {
 	Body        any
 	RawBody     any
 	Vars        map[string]any
+	Params      []*Param
 	Auth        Auth
 	Output      []*OutputConfig
 }
@@ -105,6 +108,7 @@ type Endpoint struct {
 	Body        any
 	RawBody     any
 	Vars        map[string]any
+	Params      []*Param
 	Auth        Auth
 	Output      []*OutputConfig
 }
@@ -157,6 +161,15 @@ func (v *VarSet) Resolve(target, path string) (any, bool) {
 		}
 	}
 	return cur, true
+}
+
+type Param struct {
+	Name        string
+	Comment     string
+	Title       string
+	Description string
+	Tags        []string
+	Links       []Link
 }
 
 type Mixin struct {
@@ -344,6 +357,7 @@ type ResolvedResource interface {
 	Output() []*OutputConfig
 	Secrets() []*Secret
 	Client() Client
+	Params() []*Param
 }
 
 type resolvedResource struct {
@@ -741,6 +755,10 @@ func resolveVars(r ResolvedResource) map[string]any {
 	)
 }
 
+func (r *resolvedResource) Params() []*Param {
+	return r.combinedParams()
+}
+
 func resolveLinks2(r ResolvedResource) []Link {
 	var result []Link
 	if r.Server() != nil {
@@ -771,6 +789,19 @@ func resolveAuth(r ResolvedResource) Auth {
 		(*Server).auth,
 		(*Service).auth,
 		(*Mixin).auth,
+	)
+}
+
+func (r *resolvedResource) combinedParams() []*Param {
+	return locate(
+		r,
+		reduceParams,
+		[]*Param{},
+		(*Endpoint).params,
+		(*Resource).params,
+		(*Server).params,
+		(*Service).params,
+		nil,
 	)
 }
 
@@ -848,6 +879,11 @@ func (s *Service) output() []*OutputConfig  { return s.Output }
 func (s *Server) secrets() []*Secret  { return s.Secrets }
 func (s *Service) secrets() []*Secret { return s.Secrets }
 
+func (e *Endpoint) params() []*Param { return e.Params }
+func (r *Resource) params() []*Param { return r.Params }
+func (s *Server) params() []*Param   { return s.Params }
+func (s *Service) params() []*Param  { return s.Params }
+
 func reduceAuth(x, y Auth) Auth {
 	if y == nil {
 		return x
@@ -921,6 +957,29 @@ func reduceSecrets(x, y []*Secret) []*Secret {
 			x = append(x, s)
 		}
 	}
+	return x
+}
+
+func reduceParams(x, y []*Param) []*Param {
+	byName := make(map[string]*Param)
+	for _, p := range x {
+		if p.Name != "" {
+			byName[p.Name] = p
+		}
+	}
+
+	// Aggregate by unique names, but do not merge metadata from inherited contexts
+	for _, p := range y {
+		if p.Name != "" {
+			if _, ok := byName[p.Name]; !ok {
+				byName[p.Name] = p
+				x = append(x, p)
+			}
+			// If the param already exists, keep the first one (from x)
+			// Do not merge metadata from inherited contexts
+		}
+	}
+
 	return x
 }
 

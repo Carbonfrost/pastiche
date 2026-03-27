@@ -82,6 +82,98 @@ var _ = Describe("Resolve", func() {
 		})
 	})
 
+	Describe("Params", func() {
+
+		It("aggregates params by unique names across hierarchy", func() {
+			m := model.New(&config.File{
+				Services: []config.Service{
+					{
+						Name: "a",
+						Params: []config.Param{
+							{Name: "serviceParam", Title: "Service Param"},
+						},
+						Servers: []config.Server{
+							{
+								Name: "default",
+								Params: []config.Param{
+									{Name: "serverParam", Title: "Server Param"},
+								},
+							},
+						},
+						Resources: []config.Resource{
+							{
+								Name: "b",
+								Params: []config.Param{
+									{Name: "resourceParam", Title: "Resource Param"},
+								},
+								Resources: []config.Resource{
+									{
+										Name: "c",
+										Params: []config.Param{
+											{Name: "nestedResourceParam", Title: "Nested Resource Param"},
+										},
+										Get: &config.Endpoint{
+											Params: []config.Param{
+												{Name: "endpointParam", Title: "Endpoint Param"},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			})
+
+			rr, _ := m.Resolve(strings.Fields("a b c"), "default", "")
+			params := rr.Params()
+
+			Expect(params).To(HaveLen(5))
+			Expect(params[0].Name).To(Equal("serviceParam"))
+			Expect(params[1].Name).To(Equal("resourceParam"))
+			Expect(params[2].Name).To(Equal("nestedResourceParam"))
+			Expect(params[3].Name).To(Equal("endpointParam"))
+			Expect(params[4].Name).To(Equal("serverParam"))
+		})
+
+		It("does not merge metadata for duplicate param names", func() {
+			m := model.New(&config.File{
+				Services: []config.Service{
+					{
+						Name: "a",
+						Params: []config.Param{
+							{Name: "duplicateParam", Title: "Service Level", Description: "Service desc"},
+						},
+						Servers: []config.Server{
+							{Name: "default"},
+						},
+						Resources: []config.Resource{
+							{
+								Name: "b",
+								Params: []config.Param{
+									{Name: "duplicateParam", Title: "Resource Level", Description: "Resource desc"},
+								},
+								Get: &config.Endpoint{
+									Params: []config.Param{
+										{Name: "duplicateParam", Title: "Endpoint Level", Description: "Endpoint desc"},
+									},
+								},
+							},
+						},
+					},
+				},
+			})
+
+			rr, _ := m.Resolve(strings.Fields("a b"), "default", "")
+			params := rr.Params()
+
+			Expect(params).To(HaveLen(1))
+			Expect(params[0].Name).To(Equal("duplicateParam"))
+			Expect(params[0].Title).To(Equal("Service Level"))
+			Expect(params[0].Description).To(Equal("Service desc"))
+		})
+	})
+
 	Describe("Auth", func() {
 
 		DescribeTable("examples", func(spec string, m *model.Model) {

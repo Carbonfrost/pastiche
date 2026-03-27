@@ -37,6 +37,7 @@ func service(v config.Service) *Service {
 		Auth:    auth(v.Auth),
 		Output:  outputs(v.Output),
 		Secrets: secrets(v.Secrets),
+		Params:  params(v.Params),
 	}
 }
 
@@ -60,6 +61,7 @@ func server(s config.Server) *Server {
 		Query:       valuesFromHeader(s.Query),
 		Links:       links(s.Links),
 		Vars:        s.Vars,
+		Params:      params(s.Params),
 		Auth:        auth(s.Auth),
 		Output:      outputs(s.Output),
 		Secrets:     secrets(s.Secrets),
@@ -82,6 +84,7 @@ func resource(r config.Resource) *Resource {
 		RawBody:     r.RawBody,
 		Vars:        r.Vars,
 		Form:        valuesFromHeader(r.Form),
+		Params:      params(r.Params),
 		Auth:        auth(r.Auth),
 		Output:      outputs(r.Output),
 	}
@@ -140,6 +143,7 @@ func endpoint(method string, r *config.Endpoint) *Endpoint {
 		Body:        r.Body,
 		RawBody:     r.RawBody,
 		Vars:        r.Vars,
+		Params:      params(r.Params),
 		Form:        valuesFromHeader(r.Form),
 		Auth:        auth(r.Auth),
 		Output:      outputs(r.Output),
@@ -192,6 +196,21 @@ func values(v config.Values) Values {
 			Values:   e.Values,
 			Optional: e.Optional,
 			Merge:    MergeMode(e.Merge),
+		}
+	}
+	return res
+}
+
+func params(params []config.Param) []*Param {
+	res := make([]*Param, len(params))
+	for i, p := range params {
+		res[i] = &Param{
+			Name:        p.Name,
+			Comment:     p.Comment,
+			Title:       p.Title,
+			Description: p.Description,
+			Tags:        p.Tags,
+			Links:       links(p.Links),
 		}
 	}
 	return res

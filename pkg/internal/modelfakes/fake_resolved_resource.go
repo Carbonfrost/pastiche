@@ -58,6 +58,16 @@ type FakeResolvedResource struct {
 	outputReturnsOnCall map[int]struct {
 		result1 []*model.OutputConfig
 	}
+	ParamsStub        func() []*model.Param
+	paramsMutex       sync.RWMutex
+	paramsArgsForCall []struct {
+	}
+	paramsReturns struct {
+		result1 []*model.Param
+	}
+	paramsReturnsOnCall map[int]struct {
+		result1 []*model.Param
+	}
 	ResourceStub        func() *model.Resource
 	resourceMutex       sync.RWMutex
 	resourceArgsForCall []struct {
@@ -364,6 +374,59 @@ func (fake *FakeResolvedResource) OutputReturnsOnCall(i int, result1 []*model.Ou
 	}
 	fake.outputReturnsOnCall[i] = struct {
 		result1 []*model.OutputConfig
+	}{result1}
+}
+
+func (fake *FakeResolvedResource) Params() []*model.Param {
+	fake.paramsMutex.Lock()
+	ret, specificReturn := fake.paramsReturnsOnCall[len(fake.paramsArgsForCall)]
+	fake.paramsArgsForCall = append(fake.paramsArgsForCall, struct {
+	}{})
+	stub := fake.ParamsStub
+	fakeReturns := fake.paramsReturns
+	fake.recordInvocation("Params", []interface{}{})
+	fake.paramsMutex.Unlock()
+	if stub != nil {
+		return stub()
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeResolvedResource) ParamsCallCount() int {
+	fake.paramsMutex.RLock()
+	defer fake.paramsMutex.RUnlock()
+	return len(fake.paramsArgsForCall)
+}
+
+func (fake *FakeResolvedResource) ParamsCalls(stub func() []*model.Param) {
+	fake.paramsMutex.Lock()
+	defer fake.paramsMutex.Unlock()
+	fake.ParamsStub = stub
+}
+
+func (fake *FakeResolvedResource) ParamsReturns(result1 []*model.Param) {
+	fake.paramsMutex.Lock()
+	defer fake.paramsMutex.Unlock()
+	fake.ParamsStub = nil
+	fake.paramsReturns = struct {
+		result1 []*model.Param
+	}{result1}
+}
+
+func (fake *FakeResolvedResource) ParamsReturnsOnCall(i int, result1 []*model.Param) {
+	fake.paramsMutex.Lock()
+	defer fake.paramsMutex.Unlock()
+	fake.ParamsStub = nil
+	if fake.paramsReturnsOnCall == nil {
+		fake.paramsReturnsOnCall = make(map[int]struct {
+			result1 []*model.Param
+		})
+	}
+	fake.paramsReturnsOnCall[i] = struct {
+		result1 []*model.Param
 	}{result1}
 }
 

@@ -84,3 +84,41 @@ var _ = Describe("reduceValues", func() {
 		),
 	)
 })
+
+var _ = Describe("reduceParams", func() {
+
+	DescribeTable("examples", func(x, y, expected []*Param) {
+		Expect(reduceParams(x, y)).To(Equal(expected))
+	},
+		Entry(
+			"empty",
+			[]*Param{},
+			[]*Param{{Name: "a", Title: "A"}},
+			[]*Param{{Name: "a", Title: "A"}},
+		),
+		Entry(
+			"aggregate by unique names",
+			[]*Param{{Name: "a", Title: "A"}},
+			[]*Param{{Name: "b", Title: "B"}},
+			[]*Param{{Name: "a", Title: "A"}, {Name: "b", Title: "B"}},
+		),
+		Entry(
+			"do not merge metadata for duplicate names",
+			[]*Param{{Name: "a", Title: "First", Description: "First desc"}},
+			[]*Param{{Name: "a", Title: "Second", Description: "Second desc"}},
+			[]*Param{{Name: "a", Title: "First", Description: "First desc"}},
+		),
+		Entry(
+			"keep first param and ignore subsequent duplicates",
+			[]*Param{{Name: "a", Title: "A", Tags: []string{"tag1"}}},
+			[]*Param{{Name: "a", Title: "B", Tags: []string{"tag2"}}, {Name: "c", Title: "C"}},
+			[]*Param{{Name: "a", Title: "A", Tags: []string{"tag1"}}, {Name: "c", Title: "C"}},
+		),
+		Entry(
+			"multiple params with some duplicates",
+			[]*Param{{Name: "x", Title: "X"}, {Name: "y", Title: "Y"}},
+			[]*Param{{Name: "y", Title: "Y2"}, {Name: "z", Title: "Z"}},
+			[]*Param{{Name: "x", Title: "X"}, {Name: "y", Title: "Y"}, {Name: "z", Title: "Z"}},
+		),
+	)
+})
