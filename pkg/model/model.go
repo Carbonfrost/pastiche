@@ -182,7 +182,12 @@ type ResolvedResource interface {
 	Endpoint() *Endpoint
 	Server() *Server
 	Client() Client
+
+	Auth() Auth
 	Output() []*OutputConfig
+	Headers() http.Header
+	Vars() map[string]any
+	Links() []Link
 
 	EvalRequest(baseURL *url.URL, vars map[string]any) (Request, error)
 }
@@ -359,7 +364,7 @@ func (r *resolvedResource) EvalRequest(baseURL *url.URL, vars map[string]any) (R
 		baseURITemplate, _ = uritemplates.Parse(baseURL.String())
 	}
 
-	combinedVars := r.combinedVars()
+	combinedVars := r.Vars()
 	maps.Copy(combinedVars, vars)
 
 	expander := e.Compose(
@@ -370,9 +375,9 @@ func (r *resolvedResource) EvalRequest(baseURL *url.URL, vars map[string]any) (R
 		e.Map(combinedVars),
 	)
 
-	headers := expandHeader(r.combinedHeaders(), expander)
+	headers := expandHeader(r.Headers(), expander)
 	links := resolveLinks(
-		expandLinks(r.combinedLinks(), expander),
+		expandLinks(r.Links(), expander),
 		baseURITemplate.String(),
 		combinedVars,
 	)
@@ -393,7 +398,7 @@ func (r *resolvedResource) EvalRequest(baseURL *url.URL, vars map[string]any) (R
 		headers:         headers,
 		body:            body,
 		links:           links,
-		auth:            expandAuth(r.combinedAuth(), expander),
+		auth:            expandAuth(r.Auth(), expander),
 	}, nil
 }
 
@@ -476,10 +481,18 @@ func (r *resolvedResource) Client() Client {
 }
 
 func (r *resolvedResource) Output() []*OutputConfig {
-	return r.combinedOutput()
+	return locate(
+		r,
+		reduceOutput,
+		[]*OutputConfig{},
+		(*Endpoint).output,
+		(*Resource).output,
+		(*Server).output,
+		(*Service).output,
+	)
 }
 
-func (r *resolvedResource) combinedHeaders() http.Header {
+func (r *resolvedResource) Headers() http.Header {
 	return locate(
 		r,
 		reduceHeader,
@@ -491,7 +504,7 @@ func (r *resolvedResource) combinedHeaders() http.Header {
 	)
 }
 
-func (r *resolvedResource) combinedVars() map[string]any {
+func (r *resolvedResource) Vars() map[string]any {
 	return locate(
 		r,
 		reduceVars,
@@ -503,7 +516,7 @@ func (r *resolvedResource) combinedVars() map[string]any {
 	)
 }
 
-func (r *resolvedResource) combinedLinks() []Link {
+func (r *resolvedResource) Links() []Link {
 	var result []Link
 	if r.Server() != nil {
 		result = append(result, r.Server().Links...)
@@ -520,7 +533,7 @@ func (r *resolvedResource) combinedLinks() []Link {
 	return result
 }
 
-func (r *resolvedResource) combinedAuth() Auth {
+func (r *resolvedResource) Auth() Auth {
 	return locate(
 		r,
 		reduceAuth,
@@ -529,18 +542,6 @@ func (r *resolvedResource) combinedAuth() Auth {
 		(*Resource).auth,
 		(*Server).auth,
 		(*Service).auth,
-	)
-}
-
-func (r *resolvedResource) combinedOutput() []*OutputConfig {
-	return locate(
-		r,
-		reduceOutput,
-		[]*OutputConfig{},
-		(*Endpoint).output,
-		(*Resource).output,
-		(*Server).output,
-		(*Service).output,
 	)
 }
 
