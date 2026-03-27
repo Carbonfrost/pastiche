@@ -317,6 +317,9 @@ func fetchAndPrintCore(ctx context.Context, c *Client, target, methodName string
 
 	// TODO Actually provide response and filter support
 	err = grpcurl.InvokeRPC(ctx, descSource, cc, methodName, addlHeaders, eventHandler, rf.Next)
+	if eventHandler.Status.Code() != codes.OK {
+		fmt.Fprintln(os.Stderr, eventHandler.Status)
+	}
 	return nil, handleStatus(err)
 }
 
