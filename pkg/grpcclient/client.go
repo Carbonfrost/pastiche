@@ -132,9 +132,9 @@ func (c *Client) doOne(ctx context.Context, l httpclient.Location) (*Response, e
 		if err != nil {
 			return nil, err
 		}
-		c.headers = formatHeaders(request.Headers())
-		c.body = request.Body()
-		c.auth = request.Auth()
+		c.headers = formatHeaders(request.Headers)
+		c.body = request.Body
+		c.auth = request.Auth
 	}
 
 	address := u.Host

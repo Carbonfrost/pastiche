@@ -16,7 +16,7 @@ func NewLocation(
 	service *model.Service,
 	server *model.Server,
 	ep *model.Endpoint,
-	req model.Request,
+	req *model.Request,
 	u *url.URL) *pasticheLocation {
 
 	loc, _ := newLocation(nil, nil, &modelfakes.FakeResolvedResource{
@@ -32,7 +32,7 @@ func NewLocation(
 		EndpointStub: func() *model.Endpoint {
 			return ep
 		},
-		EvalRequestStub: func(u *url.URL, m map[string]any) (model.Request, error) {
+		EvalRequestStub: func(u *url.URL, m map[string]any) (*model.Request, error) {
 			return req, nil
 		},
 	})

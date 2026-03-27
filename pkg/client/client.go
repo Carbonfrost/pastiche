@@ -172,7 +172,7 @@ func (c *Client) historyLog(ctx context.Context, r *httpclient.Response) (*histo
 	req, _ := resolver.resolveRequest(ctx)
 	var vars map[string]any
 	if req != nil {
-		vars = req.Vars() // TODO Would be better to separate input vars from compiled
+		vars = req.Vars // TODO Would be better to separate input vars from compiled
 	}
 	var responseBody bytes.Buffer
 	return &history{

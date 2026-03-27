@@ -124,7 +124,7 @@ func (s *serviceResolver) Resolve(c context.Context) ([]httpclient.Location, err
 	}, nil
 }
 
-func (s *serviceResolver) resolveRequest(c context.Context) (model.Request, error) {
+func (s *serviceResolver) resolveRequest(c context.Context) (*model.Request, error) {
 	spec := *s.root(c)
 	merged, err := s.config.Resolve(spec, s.server(c), s.method(c))
 	if err != nil {
@@ -145,10 +145,7 @@ func newLocation(base *url.URL, vars map[string]any, resolved model.ResolvedReso
 		return nil, err
 	}
 
-	loc, err := merged.URL()
-	if err != nil {
-		return nil, err
-	}
+	loc := merged.URL
 	var (
 		endpointMethod  httpclient.Middleware
 		requireEndpoint httpclient.MiddlewareFunc = func(req *http.Request) error {
@@ -166,10 +163,10 @@ func newLocation(base *url.URL, vars map[string]any, resolved model.ResolvedReso
 	return &pasticheLocation{
 		Middleware: httpclient.ComposeMiddleware(
 			requireEndpoint,
-			httpclient.WithHeaders(merged.Headers()),
+			httpclient.WithHeaders(merged.Headers),
 			endpointMethod,
-			withBody(merged.Body()),
-			withAuth(merged.Auth()),
+			withBody(merged.Body),
+			withAuth(merged.Auth),
 		),
 		resolved: resolved,
 		u:        loc,

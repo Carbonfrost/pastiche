@@ -7,7 +7,6 @@ package model
 import (
 	"cmp"
 	"fmt"
-	"io"
 	"maps"
 	"net/http"
 	"net/url"
@@ -19,7 +18,6 @@ import (
 
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
-	e "github.com/Carbonfrost/joe-cli/extensions/expr/expander"
 	"github.com/Carbonfrost/pastiche/pkg/config"
 	"github.com/Carbonfrost/pastiche/pkg/internal/log"
 )
@@ -188,17 +186,7 @@ type ResolvedResource interface {
 	Vars() map[string]any
 	Links() []Link
 
-	EvalRequest(baseURL *url.URL, vars map[string]any) (Request, error)
-}
-
-// Request represents a request that can be generated
-type Request interface {
-	URL() (*url.URL, error)
-	Body() io.ReadCloser
-	Headers() http.Header
-	Vars() map[string]any
-	Links() []Link
-	Auth() Auth
+	EvalRequest(baseURL *url.URL, vars map[string]any) (*Request, error)
 }
 
 type resolvedResource struct {
@@ -206,16 +194,6 @@ type resolvedResource struct {
 	lineage  []*Resource
 	server   *Server
 	service  *Service
-}
-
-type request struct {
-	baseURITemplate *uritemplates.URITemplate
-	vars            map[string]any
-	prefix          []string
-	headers         http.Header
-	body            io.ReadCloser
-	links           []Link
-	auth            Auth
 }
 
 var looksLikeURLPattern = regexp.MustCompile(`^(unix|https?)://`)
@@ -345,58 +323,14 @@ func (r *resolvedResource) Server() *Server {
 	return r.server
 }
 
-func (r *resolvedResource) EvalRequest(baseURL *url.URL, vars map[string]any) (Request, error) {
-	prefix := make([]string, len(r.lineage))
-	for i, c := range r.lineage {
-		prefix[i] = c.URITemplate.String()
+func (r *resolvedResource) EvalRequest(baseURL *url.URL, vars map[string]any) (*Request, error) {
+	opts := []RequestOption{
+		WithVars(vars),
 	}
-
-	var err error
-	var baseURITemplate *uritemplates.URITemplate
-	if baseURL == nil {
-		// Treat server baseURL as a potential URI template
-		baseURITemplate, err = uritemplates.Parse(r.Server().BaseURL)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		baseURITemplate, _ = uritemplates.Parse(baseURL.String())
+	if baseURL != nil {
+		opts = append(opts, WithBaseURL(baseURL))
 	}
-
-	combinedVars := r.Vars()
-	maps.Copy(combinedVars, vars)
-
-	expander := e.Compose(
-		e.Prefix("env", e.Env()),
-		e.Prefix("var", e.Map(combinedVars)),
-		e.Map(combinedVars),
-	)
-
-	headers := expandHeader(r.Headers(), expander)
-	links := resolveLinks(
-		expandLinks(r.Links(), expander),
-		baseURITemplate.String(),
-		combinedVars,
-	)
-
-	body := func() io.ReadCloser {
-		content := r.bodyContent(combinedVars)
-		if content == nil {
-			return nil
-		}
-
-		return io.NopCloser(content.Read())
-	}()
-
-	return request{
-		baseURITemplate: baseURITemplate,
-		vars:            combinedVars,
-		prefix:          prefix,
-		headers:         headers,
-		body:            body,
-		links:           links,
-		auth:            expandAuth(r.Auth(), expander),
-	}, nil
+	return NewRequest(r, opts...)
 }
 
 func resolveLinks(links []Link, base string, vars map[string]any) []Link {
@@ -439,31 +373,6 @@ func resolveURL(base string, prefix []string, vars map[string]any) (*url.URL, er
 	}
 
 	return u.JoinPath(), nil
-}
-
-func (r request) URL() (*url.URL, error) {
-	base := r.baseURITemplate.String()
-	return resolveURL(base, r.prefix, r.vars)
-}
-
-func (r request) Body() io.ReadCloser {
-	return r.body
-}
-
-func (r request) Headers() http.Header {
-	return r.headers
-}
-
-func (r request) Vars() map[string]any {
-	return r.vars
-}
-
-func (r request) Links() []Link {
-	return r.links
-}
-
-func (r request) Auth() Auth {
-	return r.auth
 }
 
 func (r *resolvedResource) Client() Client {

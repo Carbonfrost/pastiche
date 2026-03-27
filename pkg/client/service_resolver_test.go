@@ -6,7 +6,6 @@ package client_test
 
 import (
 	"context"
-	"io"
 	"net/http"
 	"net/url"
 
@@ -113,7 +112,7 @@ var _ = Describe("pasticheLocation", func() {
 			nil,
 			nil,
 			nil, // no endpoint
-			testRequest{},
+			&model.Request{},
 			nil)
 
 		req, _ := http.NewRequest("GET", "https://example.com", nil)
@@ -132,9 +131,9 @@ var _ = Describe("pasticheLocation", func() {
 					EndpointStub: func() *model.Endpoint {
 						return &model.Endpoint{}
 					},
-					EvalRequestStub: func(*url.URL, map[string]any) (model.Request, error) {
-						return testRequest{
-							headers: map[string][]string{
+					EvalRequestStub: func(*url.URL, map[string]any) (*model.Request, error) {
+						return &model.Request{
+							Headers: map[string][]string{
 								"X-Header": {"Value"},
 							},
 						}, nil
@@ -159,27 +158,4 @@ func mustParseURITemplate(t string) *uritemplates.URITemplate {
 		panic(err)
 	}
 	return u
-}
-
-type testRequest struct {
-	headers map[string][]string
-}
-
-func (t testRequest) URL() (*url.URL, error) {
-	return nil, nil
-}
-func (t testRequest) Body() io.ReadCloser {
-	return nil
-}
-func (t testRequest) Headers() http.Header {
-	return t.headers
-}
-func (t testRequest) Links() []model.Link {
-	return nil
-}
-func (t testRequest) Vars() map[string]any {
-	return nil
-}
-func (t testRequest) Auth() model.Auth {
-	return nil
 }

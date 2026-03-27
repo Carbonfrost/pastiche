@@ -200,7 +200,7 @@ func openSpec(r *Request, rel string) cli.Action {
 		if rel == "" {
 			panic("not implemented: file-based resolution")
 		}
-		for _, l := range request.Links() {
+		for _, l := range request.Links {
 			if l.Rel == rel {
 				return exec.Open(l.HRef)
 			}
@@ -209,7 +209,7 @@ func openSpec(r *Request, rel string) cli.Action {
 	})
 }
 
-func resolveRequest(c context.Context, req *Request) (model.Request, error) {
+func resolveRequest(c context.Context, req *Request) (*model.Request, error) {
 	cfg, _ := config.Load()
 	sr := httpclient.FromContext(c).LocationResolver.(LocationResolver)
 	mo := model.New(cfg)

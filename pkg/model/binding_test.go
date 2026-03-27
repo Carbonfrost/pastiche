@@ -76,7 +76,7 @@ var _ = Describe("Resolve", func() {
 				baseURL, _ := url.Parse("https://example.com")
 				merged, _ := rr.EvalRequest(baseURL, map[string]any{"var": "hello"})
 
-				Expect(merged.Links()[0].HRef).To(Equal("https://example.com/hello"))
+				Expect(merged.Links[0].HRef).To(Equal("https://example.com/hello"))
 			})
 
 		})
@@ -87,7 +87,7 @@ var _ = Describe("Resolve", func() {
 		DescribeTable("examples", func(spec string, m *model.Model) {
 			rr, _ := m.Resolve(strings.Fields(spec), "default", "")
 			merged, _ := rr.EvalRequest(nil, nil)
-			Expect(merged.Auth()).To(Equal(&model.BasicAuth{User: "expected"}))
+			Expect(merged.Auth).To(Equal(&model.BasicAuth{User: "expected"}))
 		},
 			Entry("from endpoint", "a b", model.New(&config.Config{
 				Services: []config.Service{
@@ -200,7 +200,7 @@ var _ = Describe("Header", func() {
 		spec := []string{"a", "b", "c"}
 		rr, _ := subject.Resolve(spec, "default", "")
 		merged, _ := rr.EvalRequest(nil, nil)
-		Expect(merged.Headers()).To(expected)
+		Expect(merged.Headers).To(expected)
 	},
 		Entry("copied from resource", HaveKeyWithValue("X-From-Resource", []string{"resource"})),
 		Entry("copied from endpoint", HaveKeyWithValue("X-From-Endpoint", []string{"endpoint"})),
@@ -244,9 +244,9 @@ var _ = Describe("Header", func() {
 		merged, _ := rr.EvalRequest(nil, uritemplates.Vars{
 			"var": "endpoint value from var",
 		})
-		Expect(merged.Headers()).To(HaveKeyWithValue("Test", []string{"endpoint value from var"}))
-		Expect(merged.Headers()).To(HaveKeyWithValue("S", []string{"endpoint value from S var set"}))
-		Expect(merged.Headers()).To(HaveKeyWithValue("R", []string{"endpoint value from R var set"}))
+		Expect(merged.Headers).To(HaveKeyWithValue("Test", []string{"endpoint value from var"}))
+		Expect(merged.Headers).To(HaveKeyWithValue("S", []string{"endpoint value from S var set"}))
+		Expect(merged.Headers).To(HaveKeyWithValue("R", []string{"endpoint value from R var set"}))
 	})
 })
 
@@ -298,9 +298,7 @@ var _ = Describe("ResolvedReference", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			merged, _ := rr.EvalRequest(nil, vars)
-			url, err := merged.URL()
-			Expect(err).NotTo(HaveOccurred())
-
+			url := merged.URL
 			Expect(url.String()).To(Equal(expected))
 		},
 			Entry("simple",
