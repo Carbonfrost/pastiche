@@ -67,7 +67,7 @@ var _ = Describe("ServiceResolver", func() {
 
 		DescribeTable("errors",
 			func(subject httpclient.LocationResolver, errExpected types.GomegaMatcher) {
-				_, err := subject.Resolve(context.TODO())
+				_, err := subject.Resolve(context.Background())
 				Expect(err).To(errExpected)
 			},
 			Entry(
@@ -95,8 +95,7 @@ var _ = Describe("ServiceResolver", func() {
 			// IP addresses should get treated as URLs
 			Entry("IPv4", "192.168.1.19", "http://192.168.1.19"),
 			// Supporting grpc
-			// TODO Requires update from joe-cli-http@futures to support correctly
-			XEntry("unix", "unix:///tmp/tmp.srKIC1Mk2e", "unix:///tmp/tmp.srKIC1Mk2e"),
+			Entry("unix", "unix:///tmp/tmp.srKIC1Mk2e", "unix:///tmp/tmp.srKIC1Mk2e"),
 
 			Entry("allow @ in service names", "@example/test", "https://foo.example/"),
 		)
