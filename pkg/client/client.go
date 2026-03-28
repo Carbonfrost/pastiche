@@ -14,6 +14,7 @@ import (
 
 	cli "github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
+	"github.com/Carbonfrost/joe-cli-http/uritemplates"
 	"github.com/Carbonfrost/joe-cli/extensions/bind"
 	"github.com/Carbonfrost/joe-cli/extensions/provider"
 	"github.com/Carbonfrost/pastiche/pkg/grpcclient"
@@ -114,6 +115,11 @@ func defaultAction(c *Client) cli.Action {
 			cli.ValueTransform(cli.TransformOptionalFileReference(cli.NewSysFS(cli.DirFS("."), os.Stdin, os.Stdout))),
 		),
 
+		cli.Customize(
+			"-cert",
+			cli.RemoveAlias("E"), // being used by --param-env
+		),
+
 		FilterRegistry,
 		FlagsAndArgs(),
 		ContextValue(c),
@@ -164,6 +170,33 @@ func (c *Client) SetType(t Type) error {
 func (c *Client) SetIncludeMetadata(t bool) error {
 	c.includeMetadata = t
 	return nil
+}
+
+func (c *Client) SetVarFromEnvVar(v *uritemplates.Var) error {
+	v = VarFromEnv(v)
+	return c.locationResolver.AddVar(v.Name, v.Value)
+}
+
+// VarFromEnv interprets the value of the URI template variable as an
+// environment variable.
+func VarFromEnv(v *uritemplates.Var) *uritemplates.Var {
+	switch value := v.Value.(type) {
+	case map[string]any:
+		values := make(map[string]any)
+		for k, v := range value {
+			values[k] = os.Getenv(fmt.Sprint(v))
+		}
+		return uritemplates.MapVar(v.Name, values)
+
+	case []any:
+		values := make([]any, len(value))
+		for i := range value {
+			values[i] = os.Getenv(fmt.Sprint(value[i]))
+		}
+		return uritemplates.ArrayVar(v.Name, values...)
+	default:
+		return uritemplates.StringVar(v.Name, os.Getenv(fmt.Sprint(v.Value)))
+	}
 }
 
 func (c *Client) historyLog(ctx context.Context, r *httpclient.Response) (*history, io.Writer) {

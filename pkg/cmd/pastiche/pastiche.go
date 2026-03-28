@@ -59,7 +59,10 @@ func NewApp() *cli.App {
 			{Name: "describe", Uses: client.Describe()},
 			{Name: "serve", Uses: server.Serve()},
 			{Name: "log", Uses: workspace.Log()},
-			{Name: "fetch", Uses: client.Do()},
+			{Name: "fetch", Uses: client.Do(),
+				Flags: []*cli.Flag{
+					{Uses: client.SetVarFromEnvVar()},
+				}},
 			{Name: "import", Uses: client.Import()},
 			{
 				Name: "open",

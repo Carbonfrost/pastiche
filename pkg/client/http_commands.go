@@ -13,12 +13,17 @@ import (
 
 	"github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
+	"github.com/Carbonfrost/joe-cli-http/uritemplates"
 	"github.com/Carbonfrost/joe-cli/extensions/bind"
 	"github.com/Carbonfrost/joe-cli/extensions/exec"
 	"github.com/Carbonfrost/pastiche/pkg/contextual"
 	"github.com/Carbonfrost/pastiche/pkg/grpcclient"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 	"sigs.k8s.io/yaml"
+)
+
+const (
+	requestOptions = "Request options"
 )
 
 type Request struct {
@@ -161,6 +166,20 @@ func Import() cli.Action {
 			},
 		}...),
 		bind.Call2(importSpec, bind.Context(), useRequest()),
+	)
+}
+
+func SetVarFromEnvVar(v ...*uritemplates.Var) cli.Action {
+	return cli.Pipeline(
+		&cli.Prototype{
+			Name:     "param-env",
+			Aliases:  []string{"E"},
+			HelpText: "Specify a value used to fill URI templates and variable expansion using an environment variable",
+			Value:    new(uritemplates.Var),
+			Category: requestOptions,
+			Options:  cli.EachOccurrence,
+		},
+		withBinding((*Client).SetVarFromEnvVar, v),
 	)
 }
 
