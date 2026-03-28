@@ -11,7 +11,7 @@ import (
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli/extensions/color"
 	"github.com/Carbonfrost/joe-cli/extensions/table"
-	phttpclient "github.com/Carbonfrost/pastiche/pkg/client"
+	"github.com/Carbonfrost/pastiche/pkg/client"
 	"github.com/Carbonfrost/pastiche/pkg/internal/build"
 	"github.com/Carbonfrost/pastiche/pkg/server"
 	"github.com/Carbonfrost/pastiche/pkg/workspace"
@@ -63,7 +63,7 @@ func NewApp() *cli.App {
 			{
 				Name: "describe",
 				Uses: cli.Pipeline(
-					phttpclient.Describe(),
+					client.Describe(),
 				),
 			},
 			{Name: "serve", Uses: server.Serve()},
@@ -76,13 +76,10 @@ func NewApp() *cli.App {
 			{
 				Name: "fetch",
 				Uses: cli.Pipeline(
-					phttpclient.New(
-						phttpclient.WithDefaultLocationResolver(),
-					),
-					phttpclient.Do(),
+					client.Do(),
 				),
 			},
-			{Name: "import", Uses: phttpclient.Import()},
+			{Name: "import", Uses: client.Import()},
 			{
 				Name: "open",
 				Uses: cli.Pipeline(
@@ -91,7 +88,7 @@ func NewApp() *cli.App {
 						{Uses: httpclient.SetURITemplateVar()},
 						{Uses: httpclient.SetURITemplateVars()},
 					}...),
-					phttpclient.Open(),
+					client.Open(),
 				),
 			},
 		},

@@ -51,7 +51,19 @@ func SetType(v ...Type) cli.Action {
 // This can be assigned to the Uses pipeline to set up necessary prerequisites. The actual action
 // is [FetchAndPrint]
 func Do() cli.Action {
-	return invokeUsingMethod()
+	return cli.Pipeline(
+		cli.Prototype{
+			HelpText: "Make a request using the given service",
+		},
+		New(
+			WithDefaultLocationResolver(),
+		),
+		useRequest(),
+		cli.Setup{
+			Action: cli.Pipeline(
+				FetchAndPrint(),
+			),
+		})
 }
 
 // Describe provides the action for describing a resource
@@ -280,19 +292,6 @@ func importSpec(c *cli.Context, r *Request) error {
 	fmt.Println(string(data))
 
 	return nil
-}
-
-func invokeUsingMethod() cli.Action {
-	return cli.Pipeline(
-		cli.Prototype{
-			Description: "Make a request using the given service",
-		},
-		useRequest(),
-		cli.Setup{
-			Action: cli.Pipeline(
-				FetchAndPrint(),
-			),
-		})
 }
 
 func useRequest() bind.ActionBinder[*Request] {

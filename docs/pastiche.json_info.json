@@ -844,7 +844,8 @@
                     "name": "args",
                     "options": "EACH_OCCURRENCE"
                 }
-            ]
+            ],
+            "helpText": "Make a request using the given service"
         },
         {
             "name": "import",
@@ -1001,7 +1002,7 @@
     ],
     "helpText": "Make requests to HTTP APIs using their OpenAPI schemas and definitions.",
     "version": "(devel)",
-    "buildDate": "2026-03-22T23:44:39.617455365-07:00",
+    "buildDate": "2026-03-28T00:04:36.819672-07:00",
     "comment": "Smart OpenAPI client",
     "options": "SORTED_FLAGS, SORTED_COMMANDS, SORTED_EXPRS"
 }
