@@ -30,6 +30,10 @@ type xmlResponse struct {
 	data []byte
 }
 
+type rawResponse struct {
+	data []byte
+}
+
 func (x *xmlResponse) Reader() io.Reader {
 	return bytes.NewReader(x.data)
 }
@@ -66,4 +70,16 @@ func (j *jsonResponse) Data() (any, error) {
 	}
 
 	return data, nil
+}
+
+func (r *rawResponse) Reader() io.Reader {
+	return bytes.NewReader(r.data)
+}
+
+func (*rawResponse) Document() (any, error) {
+	return nil, fmt.Errorf("raw response cannot be filtered as document")
+}
+
+func (*rawResponse) Data() (any, error) {
+	return nil, fmt.Errorf("raw response cannot be filtered as data")
 }

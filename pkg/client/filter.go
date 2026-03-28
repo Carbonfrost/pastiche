@@ -98,6 +98,8 @@ type namedOutputFilter struct {
 	name string
 }
 
+type rawFilter struct{}
+
 type metaResponse struct {
 	Schema string   `json:"$schema"`
 	Meta   *history `json:"$meta"`
@@ -156,9 +158,20 @@ var (
 				Defaults: map[string]string{},
 				HelpText: "Generate YAML output",
 			},
+			"raw": {
+				Value:    NewRawFilter(),
+				Defaults: map[string]string{},
+				Aliases:  []string{"r", "text"},
+				HelpText: "Raw text without processing",
+			},
 		},
 	}
 )
+
+// NewRawFilter provides a filter which does not processing
+func NewRawFilter() Filter {
+	return rawFilter{}
+}
 
 // NewJMESPathFilter provides a filter which uses the given query to search
 // a data structure with JSON semantics using JMESPath.
@@ -275,14 +288,20 @@ func (c *filteredWriter) parseResponse(data []byte) (Response, error) {
 	switch {
 	case strings.HasPrefix(ct, "application/x-www-form-urlencoded"),
 		strings.HasPrefix(ct, "multipart/form-data"):
-		panic("not implement: multipart forms")
+		// TODO: Support form parsing and responses
+		return &rawResponse{data}, nil
 
 	case strings.HasPrefix(ct, "application/xml"),
 		strings.HasPrefix(ct, "text/xml"):
 		return &xmlResponse{data}, nil
 
-	default:
+	case strings.HasPrefix(ct, "application/json"),
+		strings.HasPrefix(ct, "text/json"),
+		ct == "":
 		return &jsonResponse{data, c.history}, nil
+
+	default:
+		return &rawResponse{data}, nil
 	}
 }
 
@@ -430,6 +449,10 @@ func (y yamlFilter) Search(_ context.Context, resp Response) ([]byte, error) {
 		return nil, err
 	}
 	return yaml.Marshal(data)
+}
+
+func (r rawFilter) Search(_ context.Context, resp Response) ([]byte, error) {
+	return io.ReadAll(resp.Reader())
 }
 
 // ListFilters provides an action which lists all filters available to the filter registry.

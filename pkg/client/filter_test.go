@@ -132,6 +132,79 @@ var _ = Describe("FilterDownloader", func() {
 		})
 	})
 
+	Context("when RawFilter", func() {
+
+		It("outputs raw data without processing", func() {
+			rawData := "This is raw text data"
+			testResponse := &joehttpclient.Response{
+				Response: &http.Response{
+					Header: http.Header{
+						"Content-Type": []string{"text/plain"},
+					},
+					Body: io.NopCloser(bytes.NewBufferString(rawData)),
+				},
+			}
+
+			var buf bytes.Buffer
+			d := client.NewFilterDownloader(
+				client.NewRawFilter(),
+				joehttpclient.NewDownloaderTo(&buf),
+				nil,
+			)
+
+			writer, err := d.OpenDownload(context.Background(), testResponse)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = testResponse.CopyTo(writer)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = writer.Close()
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(buf.String()).To(Equal(rawData))
+		})
+
+		It("can be accessed via alias 'r'", func() {
+			f, _ := client.FilterRegistry.New("r", nil)
+			Expect(f).NotTo(BeNil())
+		})
+
+		It("can be accessed via alias 'text'", func() {
+			f, _ := client.FilterRegistry.New("text", nil)
+			Expect(f).NotTo(BeNil())
+		})
+
+		It("handles unsupported content types as raw", func() {
+			rawData := "application/pdf content here"
+			testResponse := &joehttpclient.Response{
+				Response: &http.Response{
+					Header: http.Header{
+						"Content-Type": []string{"application/pdf"},
+					},
+					Body: io.NopCloser(bytes.NewBufferString(rawData)),
+				},
+			}
+
+			var buf bytes.Buffer
+			d := client.NewFilterDownloader(
+				nil, // nil filter uses defaultFilter
+				joehttpclient.NewDownloaderTo(&buf),
+				nil,
+			)
+
+			writer, err := d.OpenDownload(context.Background(), testResponse)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = testResponse.CopyTo(writer)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = writer.Close()
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(buf.String()).To(Equal(rawData))
+		})
+	})
+
 })
 
 func must[T any](t T, err any) T {
