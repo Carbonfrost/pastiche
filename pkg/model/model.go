@@ -109,12 +109,13 @@ type Link struct {
 }
 
 type OutputConfig struct {
-	Name        string
-	Comment     string
-	Title       string
-	Description string
-	Links       []Link
-	Filter      OutputFilter
+	Name            string
+	Comment         string
+	Title           string
+	Description     string
+	Links           []Link
+	Filter          OutputFilter
+	IncludeMetadata bool
 }
 
 type OutputFilter interface {

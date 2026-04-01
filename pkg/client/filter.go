@@ -34,6 +34,13 @@ type Filter interface {
 	Search(context.Context, Response) ([]byte, error)
 }
 
+// IncludeMetadataFilter is a filter which can request metadata
+// be included in the response data
+type IncludeMetadataFilter interface {
+	Filter
+	IncludeMetadata() bool
+}
+
 type defaultFilter int
 
 type jsonFilter struct {
@@ -95,7 +102,8 @@ type filteredWriter struct {
 }
 
 type namedOutputFilter struct {
-	name string
+	name            string
+	includeMetadata *bool
 }
 
 type rawFilter struct{}
@@ -502,7 +510,9 @@ func NewTemplateFilter(tpl string) (Filter, error) {
 	return newTemplateFilterString(tpl), nil
 }
 
-func (templateFilter) IncludeMetadata() {}
+func (templateFilter) IncludeMetadata() bool {
+	return true
+}
 
 func (t templateFilter) Search(_ context.Context, resp Response) ([]byte, error) {
 	text, err := t.loader()
@@ -595,11 +605,19 @@ func (n namedOutputFilter) Search(ctx context.Context, resp Response) ([]byte, e
 			if err != nil {
 				return nil, err
 			}
+			n.includeMetadata = &o.IncludeMetadata
 			return f.Search(ctx, resp)
 		}
 	}
 
 	return nil, fmt.Errorf("output configuration %q not found", n.name)
+}
+
+func (n namedOutputFilter) IncludeMetadata() bool {
+	if n.includeMetadata != nil {
+		return *n.includeMetadata
+	}
+	return false
 }
 
 func outputFilterToFilter(of model.OutputFilter) (Filter, error) {

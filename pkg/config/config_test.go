@@ -119,10 +119,11 @@ var _ = Describe("Config", func() {
 				"output.yml",
 				haveResource(
 					MatchFields(IgnoreExtras, Fields{"Output": ConsistOf(config.Output{
-						Name:        "template",
-						Title:       "Go Template",
-						Description: "Description",
-						Comment:     "Comment",
+						Name:            "template",
+						Title:           "Go Template",
+						Description:     "Description",
+						Comment:         "Comment",
+						IncludeMetadata: true,
 						Links: []config.Link{
 							{Rel: "example", HRef: "https://example.com/go"},
 						},

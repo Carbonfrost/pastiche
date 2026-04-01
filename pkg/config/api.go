@@ -99,18 +99,19 @@ type BasicAuth struct {
 }
 
 type Output struct {
-	Name        string          `json:"name,omitempty"`
-	Comment     string          `json:"comment,omitempty"`
-	Title       string          `json:"title,omitempty"`
-	Description string          `json:"description,omitempty"`
-	Links       []Link          `json:"links,omitempty"`
-	Template    *TemplateOutput `json:"template,omitempty"`
-	JMESPath    *JMESPathOutput `json:"jmespath,omitempty"`
-	XPath       *XPathOutput    `json:"xpath,omitempty"`
-	Dig         *DigOutput      `json:"dig,omitempty"`
-	JSON        *JSONOutput     `json:"json,omitempty"`
-	XML         *XMLOutput      `json:"xml,omitempty"`
-	YAML        *YAMLOutput     `json:"yaml,omitempty"`
+	Name            string          `json:"name,omitempty"`
+	Comment         string          `json:"comment,omitempty"`
+	Title           string          `json:"title,omitempty"`
+	Description     string          `json:"description,omitempty"`
+	Links           []Link          `json:"links,omitempty"`
+	IncludeMetadata bool            `json:"includeMetadata,omitzero"`
+	Template        *TemplateOutput `json:"template,omitempty"`
+	JMESPath        *JMESPathOutput `json:"jmespath,omitempty"`
+	XPath           *XPathOutput    `json:"xpath,omitempty"`
+	Dig             *DigOutput      `json:"dig,omitempty"`
+	JSON            *JSONOutput     `json:"json,omitempty"`
+	XML             *XMLOutput      `json:"xml,omitempty"`
+	YAML            *YAMLOutput     `json:"yaml,omitempty"`
 }
 
 type TemplateOutput struct {

@@ -79,7 +79,7 @@ func (c *Client) Apply(opts ...Option) {
 func (c *Client) filterResponse(d httpclient.Downloader) httpclient.Downloader {
 	var history historyGenerator
 
-	if _, ok := c.filter.(interface{ IncludeMetadata() }); c.includeMetadata || ok {
+	if f, ok := c.filter.(IncludeMetadataFilter); c.includeMetadata || (ok && f.IncludeMetadata()) {
 		history = c.historyLog
 	}
 

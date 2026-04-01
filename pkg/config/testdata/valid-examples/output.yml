@@ -10,6 +10,7 @@ resources:
         title: Go Template
         description: Description
         comment: Comment
+        includeMetadata: true
         links:
           - rel: example
             href: https://example.com/go

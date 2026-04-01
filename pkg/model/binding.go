@@ -202,12 +202,13 @@ func outputs(outs []config.Output) []*OutputConfig {
 
 func output(o config.Output) *OutputConfig {
 	return &OutputConfig{
-		Name:        o.Name,
-		Comment:     o.Comment,
-		Title:       o.Title,
-		Description: o.Description,
-		Links:       links(o.Links),
-		Filter:      outputFilter(o),
+		Name:            o.Name,
+		Comment:         o.Comment,
+		Title:           o.Title,
+		Description:     o.Description,
+		IncludeMetadata: o.IncludeMetadata,
+		Links:           links(o.Links),
+		Filter:          outputFilter(o),
 	}
 }
 
