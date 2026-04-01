@@ -165,6 +165,29 @@ type XMLOutput struct {
 type YAMLOutput struct {
 }
 
+type TSVOutput struct {
+	Fields   []string
+	Dig      string
+	JMESPath string
+	Comma    string
+	UseCRLF  bool
+}
+
+type TableOutput struct {
+	Fields              []string
+	Dig                 string
+	JMESPath            string
+	MinWidth            int
+	TabWidth            int
+	Padding             int
+	PadChar             string
+	FilterHTML          bool
+	AlignRight          bool
+	Debug               bool
+	StripEscape         bool
+	DiscardEmptyColumns bool
+}
+
 type Client interface {
 	clientSigil()
 }
@@ -676,3 +699,5 @@ func (*DigOutput) outputFilterSigil()      {}
 func (*JSONOutput) outputFilterSigil()     {}
 func (*XMLOutput) outputFilterSigil()      {}
 func (*YAMLOutput) outputFilterSigil()     {}
+func (*TSVOutput) outputFilterSigil()      {}
+func (*TableOutput) outputFilterSigil()    {}

@@ -7,12 +7,14 @@ package client
 import (
 	"bytes"
 	"context"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"strconv"
 	"strings"
+	"text/tabwriter"
 	"text/template"
 
 	cli "github.com/Carbonfrost/joe-cli"
@@ -76,6 +78,53 @@ type filterOpts struct {
 }
 
 type yamlFilter struct{}
+
+type tsvFilter struct {
+	fields   []string
+	dig      string
+	jmespath string
+	comma    rune
+	useCRLF  bool
+}
+
+type tsvFilterOpts struct {
+	Fields   []string `mapstructure:"fields"`
+	Dig      string   `mapstructure:"dig"`
+	JMESPath string   `mapstructure:"jmespath"`
+	Comma    string   `mapstructure:"comma"`
+	UseCRLF  bool     `mapstructure:"useCRLF"`
+}
+
+type tableFilter struct {
+	fields              []string
+	dig                 string
+	jmespath            string
+	minWidth            int
+	tabWidth            int
+	padding             int
+	padChar             byte
+	flags               uint
+	filterFlags         bool
+	alignRight          bool
+	debug               bool
+	stripEscape         bool
+	discardEmptyColumns bool
+}
+
+type tableFilterOpts struct {
+	Fields              []string `mapstructure:"fields"`
+	Dig                 string   `mapstructure:"dig"`
+	JMESPath            string   `mapstructure:"jmespath"`
+	MinWidth            int      `mapstructure:"minWidth"`
+	TabWidth            int      `mapstructure:"tabWidth"`
+	Padding             int      `mapstructure:"padding"`
+	PadChar             string   `mapstructure:"padChar"`
+	FilterHTML          bool     `mapstructure:"filterHTML"`
+	AlignRight          bool     `mapstructure:"alignRight"`
+	Debug               bool     `mapstructure:"debug"`
+	StripEscape         bool     `mapstructure:"stripEscape"`
+	DiscardEmptyColumns bool     `mapstructure:"discardEmptyColumns"`
+}
 
 type jmesPathFilter struct {
 	q *jmespath.JMESPath
@@ -173,6 +222,38 @@ var (
 				Aliases:  []string{"r", "text"},
 				HelpText: "Raw text without processing",
 			},
+			"tsv": {
+				Factory: provider.FactoryOf(newTSVFilter),
+				Defaults: map[string]string{
+					"comma":   "\t",
+					"useCRLF": "false",
+				},
+				HelpText: "Generate TSV output with field selection",
+			},
+			"csv": {
+				Factory: provider.FactoryOf(newTSVFilter),
+				Defaults: map[string]string{
+					"comma":   ",",
+					"useCRLF": "false",
+				},
+				HelpText: "Generate CSV output with field selection",
+			},
+			"table": {
+				Factory: provider.FactoryOf(newTableFilter),
+				Defaults: map[string]string{
+					"minWidth":            "0",
+					"tabWidth":            "8",
+					"padding":             "1",
+					"padChar":             " ",
+					"filterHTML":          "false",
+					"alignRight":          "false",
+					"debug":               "false",
+					"stripEscape":         "false",
+					"discardEmptyColumns": "false",
+				},
+				HelpText: "Generate table output with field selection",
+				Aliases:  []string{"t"},
+			},
 		},
 	}
 )
@@ -230,6 +311,58 @@ func newXMLFilter(opts xmlFilterOpts) (Filter, error) {
 
 func newYAMLFilter(opts struct{}) (Filter, error) {
 	return yamlFilter{}, nil
+}
+
+func newTSVFilter(opts tsvFilterOpts) (Filter, error) {
+	comma := '\t'
+	if opts.Comma != "" {
+		runes := []rune(opts.Comma)
+		if len(runes) > 0 {
+			comma = runes[0]
+		}
+	}
+	return tsvFilter{
+		fields:   opts.Fields,
+		dig:      opts.Dig,
+		jmespath: opts.JMESPath,
+		comma:    comma,
+		useCRLF:  opts.UseCRLF,
+	}, nil
+}
+
+func newTableFilter(opts tableFilterOpts) (Filter, error) {
+	var flags uint
+	if opts.FilterHTML {
+		flags |= tabwriter.FilterHTML
+	}
+	if opts.AlignRight {
+		flags |= tabwriter.AlignRight
+	}
+	if opts.Debug {
+		flags |= tabwriter.Debug
+	}
+	if opts.StripEscape {
+		flags |= tabwriter.StripEscape
+	}
+	if opts.DiscardEmptyColumns {
+		flags |= tabwriter.DiscardEmptyColumns
+	}
+
+	padChar := byte(' ')
+	if opts.PadChar != "" {
+		padChar = opts.PadChar[0]
+	}
+
+	return tableFilter{
+		fields:   opts.Fields,
+		dig:      opts.Dig,
+		jmespath: opts.JMESPath,
+		minWidth: opts.MinWidth,
+		tabWidth: opts.TabWidth,
+		padding:  opts.Padding,
+		padChar:  padChar,
+		flags:    flags,
+	}, nil
 }
 
 func newXPathFilter(opts filterOpts) (Filter, error) {
@@ -464,6 +597,154 @@ func (r rawFilter) Search(_ context.Context, resp Response) ([]byte, error) {
 	return io.ReadAll(resp.Reader())
 }
 
+func (t tsvFilter) Search(ctx context.Context, resp Response) ([]byte, error) {
+	data, err := resp.Data()
+	if err != nil {
+		return nil, err
+	}
+
+	// Apply dig or jmespath query if specified
+	if t.jmespath != "" {
+		q, err := jmespath.Compile(t.jmespath)
+		if err != nil {
+			return nil, err
+		}
+		data, err = q.Search(data)
+		if err != nil {
+			return nil, err
+		}
+	} else if t.dig != "" {
+		for name := range strings.SplitSeq(strings.TrimLeft(t.dig, "."), ".") {
+			data, err = dig(data, name)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	var results bytes.Buffer
+	w := csv.NewWriter(&results)
+	w.Comma = t.comma
+	w.UseCRLF = t.useCRLF
+
+	// If data is a slice, iterate over all items
+	if slice, ok := data.([]any); ok {
+		for _, item := range slice {
+			row := make([]string, len(t.fields))
+			for i, field := range t.fields {
+				row[i] = extractFieldValue(item, field)
+			}
+			if err := w.Write(row); err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		// Single row output
+		row := make([]string, len(t.fields))
+		for i, field := range t.fields {
+			row[i] = extractFieldValue(data, field)
+		}
+		if err := w.Write(row); err != nil {
+			return nil, err
+		}
+	}
+
+	w.Flush()
+	if err := w.Error(); err != nil {
+		return nil, err
+	}
+
+	return results.Bytes(), nil
+}
+
+func extractFieldValue(data any, field string) string {
+	// Navigate to the field using dig logic
+	var current any = data
+	var err error
+
+	for name := range strings.SplitSeq(strings.TrimLeft(field, "."), ".") {
+		current, err = dig(current, name)
+		if err != nil {
+			return ""
+		}
+	}
+
+	// Convert to string
+	switch v := current.(type) {
+	case string:
+		return v
+	case nil:
+		return ""
+	default:
+		// Marshal to JSON for complex types
+		b, err := json.Marshal(v)
+		if err != nil {
+			return fmt.Sprintf("%v", v)
+		}
+		return string(b)
+	}
+}
+
+func (t tableFilter) Search(ctx context.Context, resp Response) ([]byte, error) {
+	data, err := resp.Data()
+	if err != nil {
+		return nil, err
+	}
+
+	// Apply dig or jmespath query if specified
+	if t.jmespath != "" {
+		q, err := jmespath.Compile(t.jmespath)
+		if err != nil {
+			return nil, err
+		}
+		data, err = q.Search(data)
+		if err != nil {
+			return nil, err
+		}
+	} else if t.dig != "" {
+		for name := range strings.SplitSeq(strings.TrimLeft(t.dig, "."), ".") {
+			data, err = dig(data, name)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	var results bytes.Buffer
+	w := tabwriter.NewWriter(&results, t.minWidth, t.tabWidth, t.padding, t.padChar, t.flags)
+
+	// If data is a slice, iterate over all items
+	if slice, ok := data.([]any); ok {
+		for _, item := range slice {
+			row := make([]string, len(t.fields))
+			for i, field := range t.fields {
+				row[i] = escapeTabValue(extractFieldValue(item, field))
+			}
+			fmt.Fprintln(w, strings.Join(row, "\t"))
+		}
+	} else {
+		// Single row output
+		row := make([]string, len(t.fields))
+		for i, field := range t.fields {
+			row[i] = escapeTabValue(extractFieldValue(data, field))
+		}
+		fmt.Fprintln(w, strings.Join(row, "\t"))
+	}
+
+	if err := w.Flush(); err != nil {
+		return nil, err
+	}
+
+	return results.Bytes(), nil
+}
+
+func escapeTabValue(s string) string {
+	if strings.Contains(s, "\t") {
+		return "\xff" + s + "\xff"
+	}
+	return s
+}
+
 // ListFilters provides an action which lists all filters available to the filter registry.
 func ListFilters() cli.Action {
 	return cli.Pipeline(
@@ -646,6 +927,31 @@ func outputFilterToFilter(of model.OutputFilter) (Filter, error) {
 
 	case *model.YAMLOutput:
 		return newYAMLFilter(struct{}{})
+
+	case *model.TSVOutput:
+		return newTSVFilter(tsvFilterOpts{
+			Fields:   f.Fields,
+			Dig:      f.Dig,
+			JMESPath: f.JMESPath,
+			Comma:    f.Comma,
+			UseCRLF:  f.UseCRLF,
+		})
+
+	case *model.TableOutput:
+		return newTableFilter(tableFilterOpts{
+			Fields:              f.Fields,
+			Dig:                 f.Dig,
+			JMESPath:            f.JMESPath,
+			MinWidth:            f.MinWidth,
+			TabWidth:            f.TabWidth,
+			Padding:             f.Padding,
+			PadChar:             f.PadChar,
+			FilterHTML:          f.FilterHTML,
+			AlignRight:          f.AlignRight,
+			Debug:               f.Debug,
+			StripEscape:         f.StripEscape,
+			DiscardEmptyColumns: f.DiscardEmptyColumns,
+		})
 
 	default:
 		return nil, fmt.Errorf("unsupported output filter type: %T", of)
