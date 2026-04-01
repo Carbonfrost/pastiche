@@ -136,6 +136,12 @@ var _ = Describe("Config", func() {
 							Template: &config.TemplateOutput{
 								File: "valid-examples/f.tpl",
 							},
+						},
+						config.Output{
+							Name: "absolute template",
+							Template: &config.TemplateOutput{
+								File: "/g.tpl",
+							},
 						})}),
 				),
 			),

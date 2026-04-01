@@ -261,7 +261,7 @@ func sources[V any](s sourcer, basefilename string, values []V) error {
 }
 
 func fixRelative(basefilename string, path *string) {
-	if path == nil || *path == "" {
+	if path == nil || *path == "" || strings.HasPrefix(*path, "/") {
 		return
 	}
 	resolvedFile := filepath.Join(filepath.Dir(basefilename), *path)
