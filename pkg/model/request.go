@@ -12,12 +12,13 @@ import (
 )
 
 type Request struct {
-	URL     *url.URL
-	Body    io.ReadCloser
-	Headers http.Header
-	Vars    map[string]any
-	Links   []Link
-	Auth    Auth
+	URL      *url.URL
+	Body     io.ReadCloser
+	Headers  http.Header
+	Vars     map[string]any
+	Links    []Link
+	Auth     Auth
+	Expander e.Interface
 }
 
 type RequestOption interface {
@@ -106,12 +107,13 @@ func (b *requestBuilder) build(r ResolvedResource) (*Request, error) {
 	}
 
 	return &Request{
-		URL:     u,
-		Vars:    combinedVars,
-		Headers: expandHeader(r.Headers(), expander),
-		Body:    body,
-		Links:   links,
-		Auth:    expandAuth(r.Auth(), expander),
+		URL:      u,
+		Vars:     combinedVars,
+		Headers:  expandHeader(r.Headers(), expander),
+		Body:     body,
+		Links:    links,
+		Auth:     expandAuth(r.Auth(), expander),
+		Expander: expander,
 	}, nil
 }
 
