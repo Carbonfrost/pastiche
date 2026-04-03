@@ -35,6 +35,20 @@ var _ = Describe("Config", func() {
 					haveResources(ContainElement(
 						config.Resource{Name: "r", URI: "/api/{name}.json"},
 					)),
+					PointTo(MatchFields(IgnoreExtras,
+						Fields{
+							"VarSets": Equal([]config.VarSet{
+								{
+									Name: "v",
+									Vars: map[string]map[string]any{
+										"a": {
+											"b": float64(0),
+										},
+									},
+								},
+							}),
+						},
+					)),
 				),
 			),
 			Entry(
@@ -144,6 +158,28 @@ var _ = Describe("Config", func() {
 							},
 						})}),
 				),
+			),
+			Entry(
+				"vars",
+				"vars.ymlvars",
+				PointTo(MatchFields(IgnoreExtras, Fields{"VarSets": ConsistOf(config.VarSet{
+					Name:        "@example/customers",
+					Title:       "Customers",
+					Description: "Description",
+					Comment:     "Comment",
+					Links: []config.Link{
+						{Rel: "example", HRef: "https://example.com/go"},
+					},
+					Vars: map[string]map[string]any{
+						"one": map[string]any{
+							"id": float64(11),
+						},
+						"two": map[string]any{
+							"id": float64(12),
+						},
+					},
+				},
+				)})),
 			),
 		)
 

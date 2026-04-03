@@ -31,11 +31,12 @@ func service(v config.Service) *Service {
 				},
 			},
 		},
-		Links:  links(v.Links),
-		Vars:   v.Vars,
-		Client: client(v.Client),
-		Auth:   auth(v.Auth),
-		Output: outputs(v.Output),
+		Links:   links(v.Links),
+		Vars:    v.Vars,
+		Client:  client(v.Client),
+		Auth:    auth(v.Auth),
+		Output:  outputs(v.Output),
+		VarSets: varSets(v.VarSets),
 	}
 }
 
@@ -60,6 +61,7 @@ func server(s config.Server) *Server {
 		Vars:        s.Vars,
 		Auth:        auth(s.Auth),
 		Output:      outputs(s.Output),
+		VarSets:     varSets(s.VarSets),
 	}
 }
 
@@ -80,6 +82,7 @@ func resource(r config.Resource) *Resource {
 		Form:        r.Form,
 		Auth:        auth(r.Auth),
 		Output:      outputs(r.Output),
+		VarSets:     varSets(r.VarSets),
 	}
 	if r.Get != nil {
 		res.Endpoints = append(res.Endpoints, endpoint("GET", r.Get))
@@ -141,6 +144,7 @@ func endpoint(method string, r *config.Endpoint) *Endpoint {
 		Form:        r.Form,
 		Auth:        auth(r.Auth),
 		Output:      outputs(r.Output),
+		VarSets:     varSets(r.VarSets),
 	}
 }
 
@@ -190,6 +194,25 @@ func auth(a *config.Auth) Auth {
 	}
 
 	return nil
+}
+
+func varSets(sets []config.VarSet) []*VarSet {
+	res := make([]*VarSet, len(sets))
+	for i, s := range sets {
+		res[i] = varSet(s)
+	}
+	return res
+}
+
+func varSet(s config.VarSet) *VarSet {
+	return &VarSet{
+		Name:        s.Name,
+		Comment:     s.Comment,
+		Title:       s.Title,
+		Description: s.Description,
+		Links:       links(s.Links),
+		Vars:        s.Vars,
+	}
 }
 
 func outputs(outs []config.Output) []*OutputConfig {

@@ -27,7 +27,9 @@ import (
 //counterfeiter:generate . ResolvedResource
 
 type Model struct {
-	Services    []*Service
+	Services []*Service
+	VarSets  []*VarSet
+
 	cacheByName map[string]*Service
 }
 
@@ -44,6 +46,7 @@ type Service struct {
 	Client      Client
 	Auth        Auth
 	Output      []*OutputConfig
+	VarSets     []*VarSet
 }
 
 type Server struct {
@@ -59,6 +62,7 @@ type Server struct {
 	Vars        map[string]any
 	Auth        Auth
 	Output      []*OutputConfig
+	VarSets     []*VarSet
 }
 
 type Resource struct {
@@ -79,6 +83,7 @@ type Resource struct {
 	Vars        map[string]any
 	Auth        Auth
 	Output      []*OutputConfig
+	VarSets     []*VarSet
 }
 
 type Endpoint struct {
@@ -96,6 +101,7 @@ type Endpoint struct {
 	Vars        map[string]any
 	Auth        Auth
 	Output      []*OutputConfig
+	VarSets     []*VarSet
 }
 
 type Link struct {
@@ -106,6 +112,15 @@ type Link struct {
 	Title      string
 	Type       string
 	IsTemplate bool
+}
+
+type VarSet struct {
+	Name        string
+	Comment     string
+	Title       string
+	Description string
+	Links       []Link
+	Vars        map[string]map[string]any
 }
 
 type OutputConfig struct {
@@ -185,6 +200,7 @@ type ResolvedResource interface {
 	Output() []*OutputConfig
 	Headers() http.Header
 	Vars() map[string]any
+	VarSets() []*VarSet
 	Links() []Link
 
 	EvalRequest(baseURL *url.URL, vars map[string]any) (*Request, error)
@@ -202,6 +218,7 @@ var looksLikeURLPattern = regexp.MustCompile(`^(unix|https?)://`)
 // New creates a new model from configuration files
 func New(files ...*config.File) *Model {
 	services := []*Service{}
+	varSets := make([]*VarSet, 0)
 
 	for _, file := range files {
 		if file.Service != nil {
@@ -210,11 +227,15 @@ func New(files ...*config.File) *Model {
 		for _, s := range file.Services {
 			services = append(services, service(s))
 		}
+		for _, v := range file.VarSets {
+			varSets = append(varSets, varSet(v))
+		}
 	}
 
 	slices.SortStableFunc(services, serviceByName2)
 	return &Model{
 		Services: services,
+		VarSets:  varSets,
 	}
 }
 
@@ -431,6 +452,18 @@ func (r *resolvedResource) Vars() map[string]any {
 	)
 }
 
+func (r *resolvedResource) VarSets() []*VarSet {
+	return locate(
+		r,
+		reduceVarSet,
+		make([]*VarSet, 0),
+		(*Endpoint).varSets,
+		(*Resource).varSets,
+		(*Server).varSets,
+		(*Service).varSets,
+	)
+}
+
 func (r *resolvedResource) Links() []Link {
 	var result []Link
 	if r.Server() != nil {
@@ -544,6 +577,11 @@ func (r *Resource) output() []*OutputConfig { return r.Output }
 func (s *Server) output() []*OutputConfig   { return s.Output }
 func (s *Service) output() []*OutputConfig  { return s.Output }
 
+func (e *Endpoint) varSets() []*VarSet { return e.VarSets }
+func (r *Resource) varSets() []*VarSet { return r.VarSets }
+func (s *Server) varSets() []*VarSet   { return s.VarSets }
+func (s *Service) varSets() []*VarSet  { return s.VarSets }
+
 func reduceAuth(x, y Auth) Auth {
 	if y == nil {
 		return x
@@ -586,6 +624,11 @@ func reduceHeader(x, y http.Header) http.Header {
 func reduceVars(x, y map[string]any) map[string]any {
 	maps.Copy(x, y)
 	return x
+}
+
+func reduceVarSet(x, y []*VarSet) []*VarSet {
+	// TODO Duplicate names between varsets should be consolidated
+	return append(x, y...)
 }
 
 func reduceOutput(x, y []*OutputConfig) []*OutputConfig {

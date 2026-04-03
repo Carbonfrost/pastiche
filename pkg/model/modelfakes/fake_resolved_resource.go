@@ -124,6 +124,16 @@ type FakeResolvedResource struct {
 	serviceReturnsOnCall map[int]struct {
 		result1 *model.Service
 	}
+	VarSetsStub        func() []*model.VarSet
+	varSetsMutex       sync.RWMutex
+	varSetsArgsForCall []struct {
+	}
+	varSetsReturns struct {
+		result1 []*model.VarSet
+	}
+	varSetsReturnsOnCall map[int]struct {
+		result1 []*model.VarSet
+	}
 	VarsStub        func() map[string]any
 	varsMutex       sync.RWMutex
 	varsArgsForCall []struct {
@@ -730,6 +740,59 @@ func (fake *FakeResolvedResource) ServiceReturnsOnCall(i int, result1 *model.Ser
 	}
 	fake.serviceReturnsOnCall[i] = struct {
 		result1 *model.Service
+	}{result1}
+}
+
+func (fake *FakeResolvedResource) VarSets() []*model.VarSet {
+	fake.varSetsMutex.Lock()
+	ret, specificReturn := fake.varSetsReturnsOnCall[len(fake.varSetsArgsForCall)]
+	fake.varSetsArgsForCall = append(fake.varSetsArgsForCall, struct {
+	}{})
+	stub := fake.VarSetsStub
+	fakeReturns := fake.varSetsReturns
+	fake.recordInvocation("VarSets", []interface{}{})
+	fake.varSetsMutex.Unlock()
+	if stub != nil {
+		return stub()
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeResolvedResource) VarSetsCallCount() int {
+	fake.varSetsMutex.RLock()
+	defer fake.varSetsMutex.RUnlock()
+	return len(fake.varSetsArgsForCall)
+}
+
+func (fake *FakeResolvedResource) VarSetsCalls(stub func() []*model.VarSet) {
+	fake.varSetsMutex.Lock()
+	defer fake.varSetsMutex.Unlock()
+	fake.VarSetsStub = stub
+}
+
+func (fake *FakeResolvedResource) VarSetsReturns(result1 []*model.VarSet) {
+	fake.varSetsMutex.Lock()
+	defer fake.varSetsMutex.Unlock()
+	fake.VarSetsStub = nil
+	fake.varSetsReturns = struct {
+		result1 []*model.VarSet
+	}{result1}
+}
+
+func (fake *FakeResolvedResource) VarSetsReturnsOnCall(i int, result1 []*model.VarSet) {
+	fake.varSetsMutex.Lock()
+	defer fake.varSetsMutex.Unlock()
+	fake.VarSetsStub = nil
+	if fake.varSetsReturnsOnCall == nil {
+		fake.varSetsReturnsOnCall = make(map[int]struct {
+			result1 []*model.VarSet
+		})
+	}
+	fake.varSetsReturnsOnCall[i] = struct {
+		result1 []*model.VarSet
 	}{result1}
 }
 

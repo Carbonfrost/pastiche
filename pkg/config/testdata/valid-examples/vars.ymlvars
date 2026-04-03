@@ -1,0 +1,12 @@
+- name: "@example/customers"
+  title: Customers
+  description: Description
+  comment: Comment
+  links:
+    - rel: example
+      href: https://example.com/go
+  vars:
+    one:
+      id: 11
+    two:
+      id: 12

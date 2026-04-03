@@ -28,9 +28,11 @@ type sourcer struct {
 type unmarshaler func([]byte, any) error
 
 var unmarshalers = map[string]unmarshaler{
-	".json": json.Unmarshal,
-	".yaml": unmarshalYaml,
-	".yml":  unmarshalYaml,
+	".json":     json.Unmarshal,
+	".yaml":     unmarshalYaml,
+	".yamlvars": unmarshalYamlVarSet,
+	".yml":      unmarshalYaml,
+	".ymlvars":  unmarshalYamlVarSet,
 }
 
 var ErrUnsupportedFileFormat = errors.New("unsupported file format")
@@ -163,6 +165,10 @@ func (s sourcer) sources(basefilename string, values ...any) error {
 
 func unmarshalYaml(data []byte, v any) error {
 	return yaml.UnmarshalStrict(preprocessYAML(data), v)
+}
+
+func unmarshalYamlVarSet(data []byte, v any) error {
+	return unmarshalYaml(data, &v.(*File).VarSets)
 }
 
 func sources[V any](s sourcer, basefilename string, values []V) error {
