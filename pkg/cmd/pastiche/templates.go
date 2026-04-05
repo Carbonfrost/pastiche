@@ -1,4 +1,4 @@
-// Copyright 2023, 2025 The Pastiche Authors. All rights reserved.
+// Copyright 2023, 2025, 2026 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -10,8 +10,9 @@ import (
 
 	"github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli/extensions/bind"
-	. "github.com/Carbonfrost/joe-cli/extensions/template"
+	. "github.com/Carbonfrost/joe-cli/extensions/template" // improve readability
 	"github.com/Carbonfrost/pastiche/pkg/config"
+	"sigs.k8s.io/yaml"
 )
 
 type InitServiceCommand struct {
@@ -80,7 +81,12 @@ func applyInitTemplate(cmd *InitServiceCommand) cli.Action {
 			Vars{
 				"ServiceName": cmd.Name,
 			},
-			File("{{ .ServiceName }}.json", Contents(cmd.toService())),
+			File("{{ .ServiceName }}.yml", yamlContents(cmd.toService())),
 		),
 	)
+}
+
+func yamlContents(v any) FileGenerator {
+	data, _ := yaml.Marshal(v)
+	return Contents(data)
 }
