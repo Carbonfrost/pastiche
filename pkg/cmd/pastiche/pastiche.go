@@ -61,36 +61,14 @@ func NewApp() *cli.App {
 					InitCommand(),
 				),
 			},
-			{
-				Name: "describe",
-				Uses: cli.Pipeline(
-					client.Describe(),
-				),
-			},
+			{Name: "describe", Uses: client.Describe()},
 			{Name: "serve", Uses: server.Serve()},
-			{
-				Name: "log",
-				Uses: cli.Pipeline(
-					workspace.Log(),
-				),
-			},
-			{
-				Name: "fetch",
-				Uses: cli.Pipeline(
-					client.Do(),
-				),
-			},
+			{Name: "log", Uses: workspace.Log()},
+			{Name: "fetch", Uses: client.Do()},
 			{Name: "import", Uses: client.Import()},
 			{
 				Name: "open",
-				Uses: cli.Pipeline(
-					// Allow params to be used to fill template variables
-					cli.AddFlags([]*cli.Flag{
-						{Uses: httpclient.SetURITemplateVar()},
-						{Uses: httpclient.SetURITemplateVars()},
-					}...),
-					client.Open(),
-				),
+				Uses: client.Open(),
 			},
 		},
 		Flags: []*cli.Flag{

@@ -132,6 +132,9 @@ func Open() cli.Action {
 				HelpText: "Follow the given link by RELATIONSHIP",
 				Value:    new(string),
 			},
+			// Allow params to be used to fill template variables
+			{Uses: httpclient.SetURITemplateVar()},
+			{Uses: httpclient.SetURITemplateVars()},
 		}...),
 		bind.Action2(openSpec, useRequest(), bind.String("rel")),
 	)
