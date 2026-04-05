@@ -7,6 +7,7 @@ package funcs
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -15,6 +16,18 @@ import (
 
 type TermFuncs struct {
 	ColorEnabled bool
+}
+
+// rule maps a regex pattern string to a transformation function.
+type rule struct {
+	Pattern string
+	Fn      sprinter
+}
+
+// compiledRules holds the combined regex and dispatch table.
+type compiledRules struct {
+	re        *regexp.Regexp
+	groupToFn map[int]sprinter
 }
 
 func NewTermFuncs() *TermFuncs {
@@ -34,46 +47,150 @@ func (t *TermFuncs) Reset() string {
 	return ""
 }
 
-func (t *TermFuncs) ResetColor() string {
-	return fmt.Sprintf("\x1b[%dm", 39)
+func (t *TermFuncs) ResetColor(v ...any) string {
+	return fmt.Sprintf("\x1b[%dm", 39) + fmt.Sprint(v...)
+}
+
+func (t *TermFuncs) Colorize(str string, colorpattern ...string) (string, error) {
+	if len(colorpattern) == 0 {
+		return str, nil
+	}
+
+	rules := make([]rule, len(colorpattern))
+	for i, cp := range colorpattern {
+		color, pattern, ok := strings.Cut(cp, ":")
+		if !ok {
+			// TODO Probably need a better definition of what to do here
+			continue
+		}
+
+		fn, err := t.colorSprinter(color)
+		if err != nil {
+			return str, err
+		}
+
+		rules[i] = rule{
+			Pattern: pattern,
+			Fn:      fn,
+		}
+	}
+
+	cr, err := compileRules(rules)
+	if err != nil {
+		panic(err)
+	}
+
+	return cr.Apply(str), nil
+}
+
+func compileRules(rules []rule) (*compiledRules, error) {
+	var parts []string
+	groupToFn := make(map[int]sprinter)
+
+	for i, r := range rules {
+		groupName := fmt.Sprintf("R%d", i)
+		parts = append(parts, fmt.Sprintf("(?P<%s>%s)", groupName, r.Pattern))
+	}
+
+	combined := strings.Join(parts, "|")
+	re, err := regexp.Compile(combined)
+	if err != nil {
+		return nil, err
+	}
+
+	// Map capture group index to function
+	subexpNames := re.SubexpNames()
+	for idx, name := range subexpNames {
+		if name == "" {
+			continue
+		}
+		var ruleIndex int
+		_, err := fmt.Sscanf(name, "R%d", &ruleIndex)
+		if err != nil {
+			continue
+		}
+		groupToFn[idx] = rules[ruleIndex].Fn
+	}
+
+	return &compiledRules{
+		re:        re,
+		groupToFn: groupToFn,
+	}, nil
+}
+
+// Apply applies the compiled rules to the input string.
+func (cr *compiledRules) Apply(input string) string {
+	var result strings.Builder
+	last := 0
+
+	matches := cr.re.FindAllStringSubmatchIndex(input, -1)
+
+	for _, m := range matches {
+		start, end := m[0], m[1]
+		result.WriteString(input[last:start])
+
+		for groupIdx, fn := range cr.groupToFn {
+			gStart := m[2*groupIdx]
+			gEnd := m[2*groupIdx+1]
+			if gStart != -1 && gEnd != -1 {
+				result.WriteString(fn(input[gStart:gEnd]))
+				break
+			}
+		}
+
+		last = end
+	}
+
+	result.WriteString(input[last:])
+	return result.String()
 }
 
 func (t *TermFuncs) Color(color string, v ...any) (string, error) {
-	switch color {
-	case "Black":
-		return t.Black(v...), nil
-	case "Red":
-		return t.Red(v...), nil
-	case "Green":
-		return t.Green(v...), nil
-	case "Yellow":
-		return t.Yellow(v...), nil
-	case "Blue":
-		return t.Blue(v...), nil
-	case "Magenta":
-		return t.Magenta(v...), nil
-	case "Cyan":
-		return t.Cyan(v...), nil
-	case "White":
-		return t.White(v...), nil
-	case "BrightBlack":
-		return t.BrightBlack(v...), nil
-	case "BrightRed":
-		return t.BrightRed(v...), nil
-	case "BrightGreen":
-		return t.BrightGreen(v...), nil
-	case "BrightYellow":
-		return t.BrightYellow(v...), nil
-	case "BrightBlue":
-		return t.BrightBlue(v...), nil
-	case "BrightMagenta":
-		return t.BrightMagenta(v...), nil
-	case "BrightCyan":
-		return t.BrightCyan(v...), nil
-	case "BrightWhite":
-		return t.BrightWhite(v...), nil
+	sp, err := t.colorSprinter(color)
+	if err != nil {
+		return "", err
 	}
-	return "", fmt.Errorf("unknown or unsupported color %q", color)
+	return sp(v...), nil
+}
+
+func (t *TermFuncs) colorSprinter(color string) (sprinter, error) {
+	switch strings.ToLower(color) {
+	case "black":
+		return t.Black, nil
+	case "red":
+		return t.Red, nil
+	case "green":
+		return t.Green, nil
+	case "yellow":
+		return t.Yellow, nil
+	case "blue":
+		return t.Blue, nil
+	case "magenta":
+		return t.Magenta, nil
+	case "cyan":
+		return t.Cyan, nil
+	case "white":
+		return t.White, nil
+	case "brightblack":
+		return t.BrightBlack, nil
+	case "brightred":
+		return t.BrightRed, nil
+	case "brightgreen":
+		return t.BrightGreen, nil
+	case "brightyellow":
+		return t.BrightYellow, nil
+	case "brightblue":
+		return t.BrightBlue, nil
+	case "brightmagenta":
+		return t.BrightMagenta, nil
+	case "brightcyan":
+		return t.BrightCyan, nil
+	case "brightwhite":
+		return t.BrightWhite, nil
+	case "resetcolor":
+		return t.ResetColor, nil
+	}
+	return nil, fmt.Errorf("unknown or unsupported color %q", color)
 }
 
 type sprinter func(...any) string

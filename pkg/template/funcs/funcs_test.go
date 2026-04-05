@@ -7,8 +7,11 @@ package funcs_test
 import (
 	"bytes"
 	"errors"
+	"fmt"
+	"strings"
 	"text/template"
 
+	"github.com/Carbonfrost/joe-cli/extensions/expr/expander"
 	"github.com/Carbonfrost/pastiche/pkg/template/funcs"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -29,6 +32,7 @@ var _ = Describe("TermFuncs", func() {
 				"Int":        420,
 				"Items":      []string{"A", "B"},
 				"EmptyItems": []string{},
+				"Tokens":     "The quick brown fox jumped over a lazy dog",
 			}
 
 			var results bytes.Buffer
@@ -66,6 +70,60 @@ var _ = Describe("TermFuncs", func() {
 			Entry("invalid style", `{{ .term.Style "unknown" }}`, MatchError("not valid style: \"unknown\"")),
 			Entry("invalid styles", `{{ .term.Style "Bold Superscript" }} Style`, MatchError("not valid style: \"Bold Superscript\"")),
 		)
+
+		Describe("Colorize", func() {
+
+			DescribeTable("examples", func(input string, colorpatterns []string, expected types.GomegaMatcher) {
+				output, err := (&funcs.TermFuncs{true}).Colorize(input, colorpatterns...)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(derefANSICodes(output)).To(expected)
+			},
+				Entry(
+					"nominal",
+					"The quick brown fox jumped over a lazy dog",
+					[]string{"red:quick"},
+					Equal("The {red}quick{resetColor} brown fox jumped over a lazy dog"),
+				),
+				Entry(
+					"empty",
+					"unchanged",
+					[]string{},
+					Equal("unchanged"),
+				),
+				Entry(
+					"meta chars",
+					"The actor provides acting advice for action movies",
+					[]string{"green:act[\\S]+"},
+					Equal("The {green}actor{resetColor} provides {green}acting{resetColor} advice for {green}action{resetColor} movies"),
+				),
+			)
+
+			DescribeTable("template examples", func(tpl string, expected types.GomegaMatcher) {
+				output, err := render(tpl)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(derefANSICodes(output)).To(expected)
+			},
+				Entry(
+					"func",
+					`{{ .term.Colorize .Tokens "red:quick" "blue:(fox|dog)" }}`,
+					Equal("The {red}quick{resetColor} brown {blue}fox{resetColor} jumped over a lazy {blue}dog{resetColor}"),
+				),
+			)
+		})
 	})
 
 })
+
+func derefANSICodes(s string) string {
+	for _, k := range []string{"reset", "blue", "magenta", "green", "red"} {
+		s = strings.ReplaceAll(
+			s,
+			expander.Colors().Expand(k).(string),
+			fmt.Sprintf("{%s}", k))
+	}
+
+	// TODO joe-cli@futures defines resetColor
+	s = strings.ReplaceAll(s, fmt.Sprintf("\x1b[%dm", 39), "{resetColor}")
+
+	return s
+}
