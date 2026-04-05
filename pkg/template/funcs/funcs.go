@@ -21,6 +21,8 @@ func AddTo(data map[string]any) {
 }
 
 func AddToFuncs(funcMap template.FuncMap) {
+	funcMap["base64"] = new(Base64Funcs).Self
+	funcMap["term"] = NewTermFuncs().Self
 	funcMap["env"] = os.Getenv
 }
 

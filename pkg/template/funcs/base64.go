@@ -21,6 +21,10 @@ func (f *Base64Funcs) Decode(in any) (string, error) {
 	return string(out), err
 }
 
+func (f *Base64Funcs) Self() any {
+	return f
+}
+
 func toBytes(in any) []byte {
 	if in == nil {
 		return []byte{}

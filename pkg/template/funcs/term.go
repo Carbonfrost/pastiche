@@ -23,6 +23,10 @@ func NewTermFuncs() *TermFuncs {
 	}
 }
 
+func (t *TermFuncs) Self() any {
+	return t
+}
+
 func (t *TermFuncs) Reset() string {
 	if t.ColorEnabled {
 		return "\x1b[0m"
