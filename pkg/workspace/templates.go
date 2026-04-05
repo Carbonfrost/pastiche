@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Carbonfrost/joe-cli"
+	cli "github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli/extensions/bind"
 	"github.com/Carbonfrost/joe-cli/extensions/template"
 	"github.com/Carbonfrost/pastiche/pkg/config"
@@ -26,9 +26,9 @@ type InitServiceCommand struct {
 func NewInitServiceCommand() *InitServiceCommand {
 	req := &InitServiceCommand{}
 	req.Action = cli.Pipeline(
-		pointerTo(&req.Title, bind.String("title")),
-		pointerTo(&req.Name, bind.Func[string](fallbackServiceName)),
-		pointerTo(&req.Description, bind.String("description")),
+		bind.SetPointer(&req.Title, bind.String("title")),
+		bind.SetPointer(&req.Name, bind.Func[string](fallbackServiceName)),
+		bind.SetPointer(&req.Description, bind.String("description")),
 		bind.Action(applyInitTemplate, bind.Exact(req)),
 	)
 	return req
@@ -53,14 +53,6 @@ func (c *InitServiceCommand) toService() *config.Service {
 			},
 		},
 	}
-}
-
-func pointerTo[T any](v *T, binder bind.Binder[T]) cli.Action {
-	fn := func(in T) error {
-		*v = in
-		return nil
-	}
-	return bind.Call(fn, binder)
 }
 
 func fallbackServiceName(c *cli.Context) (string, error) {
