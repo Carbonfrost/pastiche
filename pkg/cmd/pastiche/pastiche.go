@@ -78,6 +78,7 @@ func NewApp() *cli.App {
 				Value:       cli.Bool(),
 				Options:     cli.NonPersistent,
 				Description: "'pastiche --help --all' displays information about HTTP client options and other advanced features",
+				Uses:        cli.Requires("help"),
 			},
 		},
 	}
