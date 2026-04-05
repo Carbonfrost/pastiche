@@ -8,6 +8,29 @@ import (
 	"github.com/Carbonfrost/joe-cli"
 )
 
+func Init() cli.Action {
+	return cli.Pipeline(
+		cli.Prototype{
+			HelpText: "Initialize the current directory with a new service definition",
+			Uses: cli.AddFlags([]*cli.Flag{
+				{
+					Name:     "name",
+					HelpText: "Name of the service",
+				},
+				{
+					Name:     "title",
+					HelpText: "Title of the service",
+				},
+				{
+					Name:     "description",
+					HelpText: "Short description of the service",
+				},
+			}...),
+		},
+		cli.At(cli.ActionTiming, NewInitServiceCommand()),
+	)
+}
+
 // Log provides the action to access logs
 func Log() cli.Action {
 	return cli.Pipeline(

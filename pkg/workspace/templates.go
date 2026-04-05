@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package pastiche
+package workspace
 
 import (
 	"os"
@@ -10,7 +10,7 @@ import (
 
 	"github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli/extensions/bind"
-	. "github.com/Carbonfrost/joe-cli/extensions/template" // improve readability
+	"github.com/Carbonfrost/joe-cli/extensions/template"
 	"github.com/Carbonfrost/pastiche/pkg/config"
 	"sigs.k8s.io/yaml"
 )
@@ -76,17 +76,17 @@ func fallbackServiceName(c *cli.Context) (string, error) {
 }
 
 func applyInitTemplate(cmd *InitServiceCommand) cli.Action {
-	return New(
-		Dir(".pastiche",
-			Vars{
+	return template.New(
+		template.Dir(".pastiche",
+			template.Vars{
 				"ServiceName": cmd.Name,
 			},
-			File("{{ .ServiceName }}.yml", yamlContents(cmd.toService())),
+			template.File("{{ .ServiceName }}.yml", yamlContents(cmd.toService())),
 		),
 	)
 }
 
-func yamlContents(v any) FileGenerator {
+func yamlContents(v any) template.FileGenerator {
 	data, _ := yaml.Marshal(v)
-	return Contents(data)
+	return template.Contents(data)
 }

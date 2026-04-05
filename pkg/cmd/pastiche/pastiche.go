@@ -54,13 +54,7 @@ func NewApp() *cli.App {
 			suppressHTTPClientHelpByDefault(),
 		),
 		Commands: []*cli.Command{
-			{
-				Name:     "init",
-				HelpText: "Initialize the current directory with a new service definition",
-				Uses: cli.Pipeline(
-					InitCommand(),
-				),
-			},
+			{Name: "init", Uses: workspace.Init()},
 			{Name: "describe", Uses: client.Describe()},
 			{Name: "serve", Uses: server.Serve()},
 			{Name: "log", Uses: workspace.Log()},
