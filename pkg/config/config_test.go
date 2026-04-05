@@ -202,7 +202,11 @@ var _ = Describe("Config", func() {
 			Entry(
 				"missing included file",
 				"error_includeNotFound.yml",
-				MatchError(ContainSubstring("no such file or directory")),
+				MatchError(
+					Or(
+						ContainSubstring("no such file or directory"),
+						ContainSubstring("cannot find the file specified"),
+					)),
 			),
 			Entry(
 				"unknown attributes",

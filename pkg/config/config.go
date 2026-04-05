@@ -11,6 +11,7 @@ import (
 	"io"
 	"io/fs"
 	"maps"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -101,7 +102,7 @@ func (s sourcer) source(basefilename string, v any) error {
 	if file == "" {
 		file = basefilename
 	} else {
-		resolvedFile := filepath.Join(filepath.Dir(basefilename), file)
+		resolvedFile := path.Join(path.Dir(basefilename), file)
 		reader, err := s.f.Open(resolvedFile)
 		if err != nil {
 			return err
@@ -182,12 +183,12 @@ func sources[V any](s sourcer, basefilename string, values []V) error {
 	return nil
 }
 
-func fixRelative(basefilename string, path *string) {
-	if path == nil || *path == "" || strings.HasPrefix(*path, "/") {
+func fixRelative(basefilename string, pathStr *string) {
+	if pathStr == nil || *pathStr == "" || strings.HasPrefix(*pathStr, "/") {
 		return
 	}
-	resolvedFile := filepath.Join(filepath.Dir(basefilename), *path)
-	*path = resolvedFile
+	resolvedFile := path.Join(path.Dir(basefilename), *pathStr)
+	*pathStr = resolvedFile
 }
 
 func fixOutputsRelative(basefilename string, out []Output) []Output {
