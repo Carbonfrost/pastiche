@@ -62,18 +62,17 @@ type contextKey string
 
 const servicesKey contextKey = "grpcclient_services"
 
+var (
+	defaultOpts = []Option{
+		WithDefaultAction(),
+	}
+)
+
 func New(opts ...Option) *Client {
 	c := &Client{}
+	c.Apply(defaultOpts...)
 	c.Apply(opts...)
-	c.Action = defaultAction(c)
 	return c
-}
-
-func defaultAction(c *Client) cli.Action {
-	return cli.Pipeline(
-		FlagsAndArgs(),
-		ContextValue(c),
-	)
 }
 
 func (c *Client) Apply(opts ...Option) {
@@ -168,6 +167,21 @@ func formatHeaders(m map[string][]string) []string {
 		res = append(res, fmt.Sprintf("%s: %s", k, strings.Join(v, ",")))
 	}
 	return res
+}
+
+func WithAction(a cli.Action) Option {
+	return func(c *Client) {
+		c.Action = a
+	}
+}
+
+func WithDefaultAction() Option {
+	return func(c *Client) {
+		c.Action = cli.Pipeline(
+			FlagsAndArgs(),
+			ContextValue(c),
+		)
+	}
 }
 
 func WithLocationResolver(value httpclient.LocationResolver) Option {
