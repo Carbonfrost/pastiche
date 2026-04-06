@@ -83,8 +83,9 @@ func (h historyDownloader) OpenDownload(ctx context.Context, r *httpclient.Respo
 		c = io.NopCloser(nil)
 	}
 
+	ws := workspace.FromContext(ctx)
 	return &historyWriter{
-		logDir:  workspace.LogDir(ctx),
+		logDir:  ws.LogDir(),
 		Writer:  io.MultiWriter(output, responseBody),
 		output:  c,
 		history: history,

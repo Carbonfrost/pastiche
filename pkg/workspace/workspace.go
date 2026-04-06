@@ -9,8 +9,11 @@ import (
 	"context"
 	"errors"
 	"io/fs"
+	"iter"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	cli "github.com/Carbonfrost/joe-cli"
@@ -152,20 +155,35 @@ func (w *Workspace) loadFiles(root string) error {
 	})
 }
 
-func LogDir(_ context.Context) string {
-	// TODO This directory should be the workspace
-	logDir := filepath.Join(".pastiche", "logs")
+func (w *Workspace) Env() iter.Seq2[string, string] {
+	m := map[string]string{
+		"PASTICHE_DIR":        w.Dir(),
+		"PASTICHE_LOG_DIR":    w.LogDir(),
+		"PASTICHE_CONFIG_DIR": w.ConfigDir(),
+	}
+
+	return func(yield func(string, string) bool) {
+		for _, key := range slices.Sorted(maps.Keys(m)) {
+			if !yield(key, m[key]) {
+				return
+			}
+		}
+	}
+}
+
+func (w *Workspace) LogDir() string {
+	logDir := filepath.Join(w.Dir(), ".pastiche", "logs")
 	os.MkdirAll(logDir, 0755)
 
 	return logDir
 }
 
-func ClearLogDir(c context.Context) error {
-	err := os.RemoveAll(LogDir(c))
+func (w *Workspace) ClearLogDir() error {
+	err := os.RemoveAll(w.LogDir())
 	if err != nil {
 		return err
 	}
 
-	_ = LogDir(c) // Recreate the directory
+	_ = w.LogDir() // Recreate the directory
 	return nil
 }

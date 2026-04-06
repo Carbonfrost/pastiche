@@ -5,7 +5,10 @@
 package workspace
 
 import (
-	"github.com/Carbonfrost/joe-cli"
+	"fmt"
+
+	cli "github.com/Carbonfrost/joe-cli"
+	"github.com/Carbonfrost/joe-cli/extensions/bind"
 )
 
 func Init() cli.Action {
@@ -28,6 +31,17 @@ func Init() cli.Action {
 			}...),
 		},
 		cli.At(cli.ActionTiming, NewInitServiceCommand()),
+	)
+}
+
+func Env() cli.Action {
+	return cli.Pipeline(
+		cli.At(cli.ActionTiming, cli.ActionOf(func(c *cli.Context) {
+			ws := FromContext(c)
+			for k, v := range ws.Env() {
+				fmt.Fprintln(c.Stdout, k, "=", v)
+			}
+		})),
 	)
 }
 
@@ -54,6 +68,6 @@ func ClearLogs() cli.Action {
 			Options:  cli.Exits,
 			Value:    new(bool),
 		},
-		cli.At(cli.ActionTiming, cli.ActionOf(ClearLogDir)),
+		bind.Call((*Workspace).ClearLogDir, bind.FromContext(FromContext)),
 	)
 }
