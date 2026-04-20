@@ -60,7 +60,11 @@ func FromContext(ctx context.Context) *Workspace {
 // ContextValue provides an action that sets the given value into the context.
 // The only supported type is *Workspace.
 func ContextValue(v *Workspace) cli.Action {
-	return cli.ContextValue(contextkey.Workspace, v)
+	return cli.WithContextValue(contextkey.Workspace, v)
+}
+
+func (w *Workspace) Pipeline() cli.Action {
+	return w.Action
 }
 
 // Load will load the workspace, returning the error that occurred

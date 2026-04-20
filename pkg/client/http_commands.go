@@ -389,7 +389,7 @@ func completeServices() cli.CompletionFunc {
 		for _, s := range mo.Services {
 			names = append(names, s.Name)
 		}
-		return cli.CompletionValues(names...).Complete(cc)
+		return cli.ValueCompletion(names...).Complete(cc)
 	}
 }
 
@@ -401,7 +401,7 @@ func completeServiceArgs() cli.CompletionFunc {
 		}
 
 		names := resource.URITemplate.Names()
-		return cli.CompletionValues(names...).Complete(cc)
+		return cli.ValueCompletion(names...).Complete(cc)
 	}
 }
 
@@ -416,7 +416,7 @@ func completeServer() cli.CompletionFunc {
 		for _, s := range service.Servers {
 			names = append(names, s.Name)
 		}
-		return cli.CompletionValues(names...).Complete(cc)
+		return cli.ValueCompletion(names...).Complete(cc)
 	}
 }
 
@@ -481,7 +481,7 @@ func httpClientInterop(c *cli.Context) error {
 			continue
 		}
 
-		if v, ok := f.LookupData(src); ok && tag == v {
+		if v, ok := f.Data[src]; ok && tag == v {
 
 			// TODO Only supports last value in binding lookup
 			actual := c.BindingLookup().Value(flag)

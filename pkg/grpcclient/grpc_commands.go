@@ -29,7 +29,7 @@ func FetchAndPrint() cli.Action {
 }
 
 func ContextValue(c *Client) cli.Action {
-	return cli.ContextValue(servicesKey, c)
+	return cli.WithContextValue(servicesKey, c)
 }
 
 func FromContext(c context.Context) *Client {

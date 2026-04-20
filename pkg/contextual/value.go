@@ -18,7 +18,7 @@ func FromContext[T any](ctx context.Context) T {
 // ContextValue provides an action that sets the given value into the context.
 // The only supported type is *Workspace.
 func ContextValue(k any) cli.Action {
-	return cli.ContextValue(keyFor(k), k)
+	return cli.WithContextValue(keyFor(k), k)
 }
 
 // Workspace gets the Workspace from the context otherwise panics

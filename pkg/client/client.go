@@ -52,12 +52,12 @@ func New(opts ...Option) *Client {
 
 	sr := res.locationResolver
 	client := httpclient.New(
-		httpclient.WithDefaultUserAgent(build.DefaultUserAgent()),
+		httpclient.WithUserAgent(build.DefaultUserAgent()),
 		httpclient.WithLocationResolver(
 			sr,
 		),
-		httpclient.WithDownloadMiddleware(res.filterResponse),
-		httpclient.WithDownloadMiddleware(res.historyLogMiddleware),
+		httpclient.WithDownloaderMiddleware(res.filterResponse),
+		httpclient.WithDownloaderMiddleware(res.historyLogMiddleware),
 	)
 
 	res.http = client
@@ -76,7 +76,7 @@ func (c *Client) Apply(opts ...Option) {
 	}
 }
 
-func (c *Client) filterResponse(d httpclient.Downloader) httpclient.Downloader {
+func (c *Client) filterResponse(_ context.Context, d httpclient.Downloader) httpclient.Downloader {
 	var history historyGenerator
 
 	if f, ok := c.filter.(IncludeMetadataFilter); c.includeMetadata || (ok && f.IncludeMetadata()) {
@@ -86,13 +86,17 @@ func (c *Client) filterResponse(d httpclient.Downloader) httpclient.Downloader {
 	return NewFilterDownloader(c.filter, d, history)
 }
 
-func (c *Client) historyLogMiddleware(d httpclient.Downloader) httpclient.Downloader {
+func (c *Client) historyLogMiddleware(_ context.Context, d httpclient.Downloader) httpclient.Downloader {
 	return newHistoryDownloader(d, c.historyLog)
 }
 
 // Type gets the client type that was requested
 func (c *Client) Type() Type {
 	return c.clientType
+}
+
+func (c *Client) Pipeline() cli.Action {
+	return c.Action
 }
 
 // FromContext obtains the client stored in the context
@@ -128,7 +132,7 @@ func defaultAction(c *Client) cli.Action {
 
 // ContextValue provides an action which sets the client into the context.
 func ContextValue(c *Client) cli.Action {
-	return cli.ContextValue(servicesKey, c)
+	return cli.WithContextValue(servicesKey, c)
 }
 
 // FlagsAndArgs provides an action which sets up flags and args used by the client.

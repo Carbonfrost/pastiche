@@ -6,16 +6,16 @@ module github.com/Carbonfrost/pastiche
 go 1.26.1
 
 require (
-	github.com/Carbonfrost/joe-cli v0.13.0
-	github.com/Carbonfrost/joe-cli-http v0.7.2
+	github.com/Carbonfrost/joe-cli v0.15.0
+	github.com/Carbonfrost/joe-cli-http v0.7.4
 	github.com/antchfx/xmlquery v1.5.0
 	github.com/antchfx/xpath v1.3.5
 	github.com/fullstorydev/grpcurl v1.9.3
 	github.com/jhump/protoreflect v1.17.0
 	github.com/jmespath/go-jmespath v0.4.0
-	github.com/onsi/ginkgo/v2 v2.28.1
-	github.com/onsi/gomega v1.39.1
-	golang.org/x/term v0.41.0
+	github.com/onsi/ginkgo/v2 v2.28.3
+	github.com/onsi/gomega v1.40.0
+	golang.org/x/term v0.42.0
 	google.golang.org/grpc v1.80.0
 	sigs.k8s.io/yaml v1.6.0
 )
@@ -52,7 +52,7 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.12.1 // indirect
 	github.com/mgechev/dots v1.0.0 // indirect
@@ -70,16 +70,16 @@ require (
 	github.com/spiffe/go-spiffe/v2 v2.6.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/exp/typeparams v0.0.0-20260112195511-716be5621a96 // indirect
-	golang.org/x/mod v0.34.0 // indirect
-	golang.org/x/net v0.52.0 // indirect
+	golang.org/x/exp/typeparams v0.0.0-20260410095643-746e56fc9e2f // indirect
+	golang.org/x/mod v0.35.0 // indirect
+	golang.org/x/net v0.53.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.42.0 // indirect
-	golang.org/x/text v0.35.0 // indirect
-	golang.org/x/tools v0.43.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
+	golang.org/x/text v0.36.0 // indirect
+	golang.org/x/tools v0.44.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260401024825-9d38bb4040a9 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
-	honnef.co/go/tools v0.6.1 // indirect
+	honnef.co/go/tools v0.7.0 // indirect
 )
 
 tool (
