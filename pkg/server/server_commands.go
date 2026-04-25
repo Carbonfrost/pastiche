@@ -6,13 +6,13 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	"github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli-http/httpserver"
 	"github.com/Carbonfrost/pastiche/pkg/contextual"
 	"github.com/Carbonfrost/pastiche/pkg/server/dashboardapp"
+	"github.com/Carbonfrost/pastiche/pkg/server/metaapi"
 )
 
 // Serve provides the action to run the server
@@ -36,12 +36,8 @@ func Serve() cli.Action {
 }
 
 func handleGetModel(c context.Context) (http.Handler, error) {
-	// Load configuration, converted to model but canonicalized back into model
 	mo := contextual.Workspace(c).Model()
-
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(mo)
-	}), nil
+	return metaapi.New(mo)
 }
 
 func handleDashboard(c context.Context) (http.Handler, error) {
