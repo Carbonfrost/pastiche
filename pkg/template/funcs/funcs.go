@@ -17,11 +17,15 @@ type Expander = expander.Interface
 
 func AddTo(data map[string]any) {
 	data["base64"] = &Base64Funcs{}
+	data["base32"] = &Base32Funcs{}
+	data["hex"] = &HexFuncs{}
 	data["term"] = NewTermFuncs()
 }
 
 func AddToFuncs(funcMap template.FuncMap) {
 	funcMap["base64"] = new(Base64Funcs).Self
+	funcMap["base32"] = new(Base32Funcs).Self
+	funcMap["hex"] = new(HexFuncs).Self
 	funcMap["term"] = NewTermFuncs().Self
 	funcMap["env"] = os.Getenv
 }
