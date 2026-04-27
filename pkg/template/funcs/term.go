@@ -277,7 +277,46 @@ func (t *TermFuncs) BrightMagenta(v ...any) string { return t.sgr(95, 39, v...) 
 func (t *TermFuncs) BrightCyan(v ...any) string    { return t.sgr(96, 39, v...) }
 func (t *TermFuncs) BrightWhite(v ...any) string   { return t.sgr(97, 39, v...) }
 
-// TODO Support Background colors
+func (t *TermFuncs) Background(color string, v ...any) (string, error) {
+	var code int
+	switch strings.ToLower(color) {
+	case "black":
+		code = 40
+	case "red":
+		code = 41
+	case "green":
+		code = 42
+	case "yellow":
+		code = 43
+	case "blue":
+		code = 44
+	case "magenta":
+		code = 45
+	case "cyan":
+		code = 46
+	case "white":
+		code = 47
+	case "brightblack":
+		code = 100
+	case "brightred":
+		code = 101
+	case "brightgreen":
+		code = 102
+	case "brightyellow":
+		code = 103
+	case "brightblue":
+		code = 104
+	case "brightmagenta":
+		code = 105
+	case "brightcyan":
+		code = 106
+	case "brightwhite":
+		code = 107
+	default:
+		return "", fmt.Errorf("unknown or unsupported background color %q", color)
+	}
+	return t.sgr(code, 49, v...), nil
+}
 
 func (t *TermFuncs) sgr(on, off int, v ...any) string {
 	if !t.ColorEnabled {
