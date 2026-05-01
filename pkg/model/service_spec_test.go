@@ -46,15 +46,19 @@ var _ = Describe("ServiceSpecCounter", func() {
 
 var _ = Describe("ServiceSpec", func() {
 
-	Describe("Path", func() {
+	Describe("Path and parse", func() {
 
 		DescribeTable("examples", func(spec []string, expected string) {
 			subject := model.ServiceSpec(spec)
 			Expect(subject.Path()).To(Equal(expected))
+
+			parseOutput, err := model.ParseServiceSpec(subject.Path())
+			Expect(err).NotTo(HaveOccurred())
+			Expect(parseOutput.Path()).To(Equal(expected))
 		},
 			Entry("nominal",
 				[]string{"homebrew", "formula"},
-				"homebrew/formula",
+				"homebrew.formula",
 			),
 			Entry("split with dots",
 				[]string{"@homebrew/formula", "keg"},

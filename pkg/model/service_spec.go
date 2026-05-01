@@ -6,6 +6,7 @@ package model
 
 import (
 	"flag"
+	"fmt"
 	"strings"
 
 	"github.com/Carbonfrost/joe-cli"
@@ -44,10 +45,24 @@ func (s ServiceSpec) String() string {
 }
 
 func (s ServiceSpec) Path() string {
-	if strings.ContainsAny(s[0], "/") {
-		return strings.Join(s, ".")
+	return strings.Join(s, ".")
+}
+
+// ParseServiceSpec parses a service spec
+func ParseServiceSpec(text string) (ServiceSpec, error) {
+	names := strings.Split(text, ".")
+	for index, name := range names {
+		var err error
+		if index == 0 {
+			err = checkQName(name)
+		} else {
+			err = checkName(name)
+		}
+		if err != nil {
+			return nil, fmt.Errorf("invalid name %q: %w", name, err)
+		}
 	}
-	return strings.Join(s, "/")
+	return ServiceSpec(names), nil
 }
 
 func (s *serviceSpecCounter) Take(arg string, possibleFlag bool) error {

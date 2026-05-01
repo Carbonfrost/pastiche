@@ -112,6 +112,7 @@ func checkQName(name string) error {
 				return errors.New(badQIdentifierDetail)
 			}
 		}
+		return nil
 	}
 	return checkName(name)
 }

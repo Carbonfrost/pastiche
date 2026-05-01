@@ -14,7 +14,28 @@ import (
 
 var _ = Describe("Validate", func() {
 
-	DescribeTable("examples", func(m *model.Model, expected types.GomegaMatcher) {
+	DescribeTable("examples", func(m *model.Model) {
+		err := model.Validate(m)
+		Expect(err).NotTo(HaveOccurred())
+	},
+		Entry("valid",
+			&model.Model{
+				Services: []*model.Service{
+					{
+						Name: "valid",
+					},
+					{
+						Name: "@also/valid",
+						Resource: &model.Resource{
+							Name: "valid",
+						},
+					},
+				},
+			},
+		),
+	)
+
+	DescribeTable("errors", func(m *model.Model, expected types.GomegaMatcher) {
 		err := model.Validate(m)
 		Expect(err).To(expected)
 	},
@@ -55,6 +76,19 @@ var _ = Describe("Validate", func() {
 						Name: "@httpbin/name",
 						Resource: &model.Resource{
 							Name: "invalid resource",
+						},
+					},
+				},
+			},
+			MatchError(ContainSubstring("A name must start with a letter")),
+		),
+		Entry("invalid qualified resource name",
+			&model.Model{
+				Services: []*model.Service{
+					{
+						Name: "@httpbin/name",
+						Resource: &model.Resource{
+							Name: "invalid.resource",
 						},
 					},
 				},
