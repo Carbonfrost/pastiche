@@ -36,6 +36,13 @@ type DescribeParams struct {
 	*Request
 }
 
+type ImportParams struct {
+	*Request
+	Name        string
+	Title       string
+	Description string
+}
+
 func newParams[T any](action cli.Action, binder bind.Func[T]) bind.ActionBinder[T] {
 	return bind.NewActionBinder(action, binder)
 }
@@ -124,6 +131,37 @@ func useDescribeParams() bind.ActionBinder[*DescribeParams] {
 	)
 }
 
+func useImportParams() bind.ActionBinder[*ImportParams] {
+	requestBinder := useRequest()
+	return newParams(cli.Pipeline(
+		requestBinder,
+		cli.AddFlags([]*cli.Flag{
+			{
+				Name:     "name",
+				HelpText: "Set the name of the resource",
+			},
+			{
+				Name:     "title",
+				HelpText: "Set the title of the resource",
+			},
+			{
+				Name:     "description",
+				HelpText: "Set the description of the resource",
+			},
+		}...),
+	),
+		func(c *cli.Context) (*ImportParams, error) {
+			r, err := requestBinder.Bind(c)
+			return &ImportParams{
+				Request:     r,
+				Name:        c.String("name"),
+				Title:       c.String("title"),
+				Description: c.String("description"),
+			}, err
+		},
+	)
+}
+
 // Open reveals a particular file or link in the editor or web browser
 func Open() cli.Action {
 	return cli.Pipeline(
@@ -151,21 +189,7 @@ func Import() cli.Action {
 		cli.Prototype{
 			Description: "Import a service configuration from another format",
 		},
-		cli.AddFlags([]*cli.Flag{
-			{
-				Name:     "name",
-				HelpText: "Set the name of the resource",
-			},
-			{
-				Name:     "title",
-				HelpText: "Set the title of the resource",
-			},
-			{
-				Name:     "description",
-				HelpText: "Set the description of the resource",
-			},
-		}...),
-		bind.Call2(importSpec, bind.Context(), useRequest()),
+		bind.Call2(importSpec, bind.Context(), useImportParams()),
 	)
 }
 
@@ -251,7 +275,7 @@ func resolveRequest(c context.Context, req *Request) (*model.Request, error) {
 	return merged.EvalRequest(sr.BaseURL(), sr.Vars())
 }
 
-func importSpec(c *cli.Context, r *Request) error {
+func importSpec(c *cli.Context, params *ImportParams) error {
 	in, err := io.ReadAll(c.Stdin)
 	if err != nil {
 		return err
@@ -266,19 +290,19 @@ func importSpec(c *cli.Context, r *Request) error {
 	}
 
 	endpoint := call.ToEndpoint()
-	endpoint.Name = c.String("name")
-	endpoint.Description = c.String("description")
-	endpoint.Title = c.String("title")
+	endpoint.Name = params.Name
+	endpoint.Description = params.Description
+	endpoint.Title = params.Title
 
-	ss := *r.Spec
+	ss := *params.Spec
 	var servers []*model.Server
-	if r.Server != "" {
+	if params.Server != "" {
 		servers = append(servers, &model.Server{
-			Name: r.Server,
+			Name: params.Server,
 		})
 	}
-	if r.Method != "" {
-		endpoint.Method = r.Method
+	if params.Method != "" {
+		endpoint.Method = params.Method
 	}
 
 	mo := &model.Model{
