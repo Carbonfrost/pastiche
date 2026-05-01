@@ -128,11 +128,14 @@ func (w *Workspace) loadFiles(root string) error {
 		if d.IsDir() && d.Name() == "logs" {
 			return fs.SkipDir
 		}
-		if d.IsDir() {
+		if strings.HasPrefix(d.Name(), "_") {
+			if d.IsDir() {
+				return fs.SkipDir
+			}
 			return nil
 		}
 
-		if strings.HasPrefix(name, "_") {
+		if d.IsDir() {
 			return nil
 		}
 
