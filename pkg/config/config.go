@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Package config provides the configuration for Pastiche service
+// definitions.
 package config
 
 import (
@@ -17,10 +19,6 @@ import (
 
 	"sigs.k8s.io/yaml"
 )
-
-type Config struct {
-	Services []Service
-}
 
 type sourcer struct {
 	f fs.FS
