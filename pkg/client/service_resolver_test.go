@@ -30,6 +30,9 @@ var _ = Describe("ServiceResolver", func() {
 					Servers: []*model.Server{},
 					Resource: &model.Resource{
 						URITemplate: mustParseURITemplate("https://example.com"),
+						Endpoints: []*model.Endpoint{
+							{},
+						},
 					},
 				},
 				{
@@ -77,7 +80,11 @@ var _ = Describe("ServiceResolver", func() {
 			Entry(
 				"default server requested but has no servers",
 				phttpclient.NewServiceResolver(contextOfModel, specTo("hasNoServers"), stringTo(""), stringTo("")),
-				MatchError(`no servers defined for service "hasNoServers"`)),
+				Not(HaveOccurred())),
+			Entry(
+				"missing server",
+				phttpclient.NewServiceResolver(contextOfModel, specTo("@example/test"), stringTo("missing"), stringTo("")),
+				MatchError(`no server "missing" defined for service "@example/test"`)),
 		)
 	})
 

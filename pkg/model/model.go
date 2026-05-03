@@ -301,15 +301,14 @@ func (m *Model) Resolve(spec ServiceSpec, server string, method string) (Resolve
 		return nil, fmt.Errorf("service not found: %q", spec[0])
 	}
 
-	if len(svc.Servers) == 0 {
-		return nil, fmt.Errorf("no servers defined for service %q", svc.Name)
-	}
-
-	svr := svc.Servers[0]
-	if server != "" {
-		svr, ok = svc.Server(server)
-		if !ok {
-			return nil, fmt.Errorf("no server %q defined for service %q", server, svc.Name)
+	var svr *Server
+	if len(svc.Servers) > 0 {
+		svr = svc.Servers[0]
+		if server != "" {
+			svr, ok = svc.Server(server)
+			if !ok {
+				return nil, fmt.Errorf("no server %q defined for service %q", server, svc.Name)
+			}
 		}
 	}
 

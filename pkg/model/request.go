@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"io"
 	"maps"
 	"net/http"
@@ -29,6 +30,9 @@ func NewRequest(r ResolvedResource, opts ...RequestOption) (*Request, error) {
 	b := &requestBuilder{
 		baseURL: func() (*uritemplates.URITemplate, error) {
 			// Treat server baseURL as a potential URI template
+			if r.Server() == nil {
+				return nil, nil
+			}
 			return uritemplates.Parse(r.Server().BaseURL)
 		},
 	}
@@ -87,7 +91,7 @@ func (b *requestBuilder) build(r ResolvedResource) (*Request, error) {
 
 	links := resolveLinks(
 		expandLinks(r.Links(), expander),
-		baseURITemplate.String(),
+		fmt.Sprint(baseURITemplate),
 		combinedVars,
 	)
 
@@ -100,7 +104,7 @@ func (b *requestBuilder) build(r ResolvedResource) (*Request, error) {
 		return io.NopCloser(content.Read())
 	}()
 
-	base := baseURITemplate.String()
+	base := fmt.Sprint(baseURITemplate)
 	u, err := resolveURL(base, prefix, combinedVars)
 	if err != nil {
 		return nil, err
