@@ -17,6 +17,7 @@ import (
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
 	"github.com/Carbonfrost/joe-cli/extensions/bind"
 	"github.com/Carbonfrost/joe-cli/extensions/provider"
+	"github.com/Carbonfrost/pastiche/pkg/contextual"
 	"github.com/Carbonfrost/pastiche/pkg/grpcclient"
 	"github.com/Carbonfrost/pastiche/pkg/internal/build"
 	"github.com/Carbonfrost/pastiche/pkg/model"
@@ -250,9 +251,11 @@ func WithLocationResolver(value httpclient.LocationResolver) Option {
 // WithDefaultLocationResolver provides a client option which sets up the
 // default location resolver, which uses the CLI arguments and flags named
 // "service", "server", and "method"
-func WithDefaultLocationResolver(m *model.Model) Option {
+func WithDefaultLocationResolver() Option {
 	sr := NewServiceResolver(
-		m,
+		func(ctx context.Context) *model.Model {
+			return contextual.Workspace(ctx).Model()
+		},
 		lateBinding[*model.ServiceSpec]("service"),
 		lateBinding[string]("server"),
 		lateBinding[string]("method"),

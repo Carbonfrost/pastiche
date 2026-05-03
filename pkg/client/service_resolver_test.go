@@ -61,6 +61,10 @@ var _ = Describe("ServiceResolver", func() {
 				return name
 			}
 		}
+
+		contextOfModel = func(context.Context) *model.Model {
+			return exampleModel
+		}
 	)
 
 	Describe("NewServiceResolver", func() {
@@ -72,7 +76,7 @@ var _ = Describe("ServiceResolver", func() {
 			},
 			Entry(
 				"default server requested but has no servers",
-				phttpclient.NewServiceResolver(exampleModel, specTo("hasNoServers"), stringTo(""), stringTo("")),
+				phttpclient.NewServiceResolver(contextOfModel, specTo("hasNoServers"), stringTo(""), stringTo("")),
 				MatchError(`no servers defined for service "hasNoServers"`)),
 		)
 	})
@@ -80,7 +84,7 @@ var _ = Describe("ServiceResolver", func() {
 	Describe("Resolve", func() {
 
 		DescribeTable("examples", func(s string, expected string) {
-			r := phttpclient.NewServiceResolver(exampleModel, specTo(s), stringTo(""), stringTo(""))
+			r := phttpclient.NewServiceResolver(contextOfModel, specTo(s), stringTo(""), stringTo(""))
 			loc, err := r.Resolve(context.Background())
 			Expect(err).NotTo(HaveOccurred())
 

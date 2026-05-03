@@ -67,12 +67,9 @@ func Do() cli.Action {
 		cli.Prototype{
 			HelpText: "Make a request using the given service",
 		},
-		func(ctx context.Context) error {
-			ws := contextual.Workspace(ctx)
-			return cli.Do(ctx, New(
-				WithDefaultLocationResolver(ws.Model()),
-			))
-		},
+		New(
+			WithDefaultLocationResolver(),
+		),
 		useRequest(),
 		cli.Setup{
 			Action: cli.Pipeline(
