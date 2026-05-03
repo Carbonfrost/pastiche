@@ -8,7 +8,6 @@ import (
 	"os"
 
 	cli "github.com/Carbonfrost/joe-cli"
-	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli/extensions/color"
 	"github.com/Carbonfrost/joe-cli/extensions/table"
 	"github.com/Carbonfrost/pastiche/pkg/client"
@@ -50,9 +49,6 @@ func NewApp() *cli.App {
 
 			workspace.New(),
 		),
-		Before: cli.Pipeline(
-			suppressHTTPClientHelpByDefault(),
-		),
 		Commands: []*cli.Command{
 			{Name: "init", Uses: workspace.Init()},
 			{Name: "env", Uses: workspace.Env()},
@@ -69,35 +65,5 @@ func NewApp() *cli.App {
 				Uses: client.Open(),
 			},
 		},
-		Flags: []*cli.Flag{
-			{
-				Name:        "all",
-				HelpText:    "Facilitates displaying help text that is suppressed by default (used with --help)",
-				Value:       cli.Bool(),
-				Options:     cli.NonPersistent,
-				Description: "'pastiche --help --all' displays information about HTTP client options and other advanced features",
-				Uses:        cli.Requires("help"),
-			},
-		},
-	}
-}
-
-func suppressHTTPClientHelpByDefault() cli.ActionFunc {
-	// There are quite a number of options to display for the HTTP client, so
-	// hide these until they are requested explicitly
-	return func(c *cli.Context) error {
-		if c.Seen("all") {
-			return nil
-		}
-		n, v := httpclient.SourceAnnotation()
-		return c.Walk(func(cmd *cli.Context) error {
-			for _, f := range cmd.Command().Flags {
-
-				if f.Data[n] == v {
-					f.SetHidden(true)
-				}
-			}
-			return nil
-		})
 	}
 }
