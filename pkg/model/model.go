@@ -133,6 +133,45 @@ type OutputConfig struct {
 	IncludeMetadata bool
 }
 
+type Flow struct {
+	Name        string
+	Comment     string
+	Title       string
+	Description string
+	Tags        []string
+	Links       []Link
+	Steps       []*Step
+	Vars        map[string]any
+}
+
+type Step struct {
+	Name        string
+	Comment     string
+	Title       string
+	Description string
+	Tags        []string
+	Links       []Link
+	Method      string
+	Headers     map[string][]string
+	Form        map[string][]string
+	Body        any
+	RawBody     any
+	Vars        map[string]any
+	StepType    StepType
+}
+
+type StepType interface {
+	stepTypeSigil()
+}
+
+type SpecStep struct {
+	Spec string
+}
+
+type URLStep struct {
+	URL string
+}
+
 type OutputFilter interface {
 	outputFilterSigil()
 }
@@ -700,3 +739,6 @@ func (*XMLOutput) outputFilterSigil()      {}
 func (*YAMLOutput) outputFilterSigil()     {}
 func (*TSVOutput) outputFilterSigil()      {}
 func (*TableOutput) outputFilterSigil()    {}
+
+func (*SpecStep) stepTypeSigil() {}
+func (*URLStep) stepTypeSigil()  {}

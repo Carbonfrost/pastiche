@@ -11,7 +11,9 @@ type File struct {
 
 	Services []Service `json:"services,omitempty"`
 	VarSets  []VarSet  `json:"varSets,omitempty"`
-	name     string
+	Flows    []Flow    `json:"flows,omitempty"`
+
+	name string
 }
 
 type Service struct {
@@ -184,6 +186,36 @@ type Link struct {
 	Title      string `json:"title,omitempty"`
 	Type       string `json:"type,omitempty"`
 	IsTemplate bool   `json:"isTemplate,omitempty"`
+}
+
+type Flow struct {
+	Schema      string         `json:"$schema,omitempty"`
+	Name        string         `json:"name"`
+	Source      string         `json:"source,omitempty"`
+	Comment     string         `json:"comment,omitempty"`
+	Title       string         `json:"title,omitempty"`
+	Description string         `json:"description,omitempty"`
+	Tags        []string       `json:"tags,omitempty"`
+	Links       []Link         `json:"links,omitempty"`
+	Steps       []Step         `json:"steps,omitempty"`
+	Vars        map[string]any `json:"vars,omitempty"`
+}
+
+type Step struct {
+	Name        string         `json:"name,omitempty"`
+	Comment     string         `json:"comment,omitempty"`
+	Title       string         `json:"title,omitempty"`
+	Description string         `json:"description,omitempty"`
+	Tags        []string       `json:"tags,omitempty"`
+	Links       []Link         `json:"links,omitempty"`
+	Method      string         `json:"method,omitempty"`
+	Headers     Header         `json:"headers,omitempty"`
+	Form        Form           `json:"form,omitempty"`
+	Body        any            `json:"body,omitempty"`
+	RawBody     any            `json:"rawBody,omitempty"`
+	Vars        map[string]any `json:"vars,omitempty"`
+	Spec        string         `json:"spec,omitempty"`
+	URL         string         `json:"url,omitempty"`
 }
 
 func (f *File) Name() string {

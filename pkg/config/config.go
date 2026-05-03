@@ -72,7 +72,11 @@ func (s sourcer) source(basefilename string, v any) error {
 	switch a := v.(type) {
 	case *File:
 		if a.Service == nil {
-			return sources(s, basefilename, a.Services)
+			err := sources(s, basefilename, a.Services)
+			if err != nil {
+				return err
+			}
+			return sources(s, basefilename, a.Flows)
 		}
 		return s.source(basefilename, a.Service)
 	case *Service:
@@ -95,6 +99,16 @@ func (s sourcer) source(basefilename string, v any) error {
 			return nil
 		}
 		file = a.Source
+	case *Flow:
+		if a == nil {
+			return nil
+		}
+		file = a.Source
+	case *Step:
+		if a == nil {
+			return nil
+		}
+		// Steps don't have a source attribute
 	}
 
 	if file == "" {
@@ -148,6 +162,12 @@ func (s sourcer) source(basefilename string, v any) error {
 
 	case *Endpoint:
 		// Nothing to do for endpoints
+
+	case *Flow:
+		return sources(s, file, a.Steps)
+
+	case *Step:
+		// Nothing to do for steps
 	}
 	return nil
 }

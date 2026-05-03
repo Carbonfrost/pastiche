@@ -273,3 +273,64 @@ func outputFilter(o config.Output) OutputFilter {
 
 	return nil
 }
+
+func flows(fls []config.Flow) []*Flow {
+	res := make([]*Flow, len(fls))
+	for i, f := range fls {
+		res[i] = flow(f)
+	}
+	return res
+}
+
+func flow(f config.Flow) *Flow {
+	return &Flow{
+		Name:        f.Name,
+		Comment:     f.Comment,
+		Title:       f.Title,
+		Description: f.Description,
+		Tags:        f.Tags,
+		Links:       links(f.Links),
+		Steps:       steps(f.Steps),
+		Vars:        f.Vars,
+	}
+}
+
+func steps(stps []config.Step) []*Step {
+	res := make([]*Step, len(stps))
+	for i, s := range stps {
+		res[i] = step(s)
+	}
+	return res
+}
+
+func step(s config.Step) *Step {
+	return &Step{
+		Name:        s.Name,
+		Comment:     s.Comment,
+		Title:       s.Title,
+		Description: s.Description,
+		Tags:        s.Tags,
+		Links:       links(s.Links),
+		Method:      s.Method,
+		Headers:     s.Headers,
+		Form:        s.Form,
+		Body:        s.Body,
+		RawBody:     s.RawBody,
+		Vars:        s.Vars,
+		StepType:    stepType(s),
+	}
+}
+
+func stepType(s config.Step) StepType {
+	if s.Spec != "" {
+		return &SpecStep{
+			Spec: s.Spec,
+		}
+	}
+	if s.URL != "" {
+		return &URLStep{
+			URL: s.URL,
+		}
+	}
+	return nil
+}

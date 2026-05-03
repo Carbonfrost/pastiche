@@ -181,6 +181,43 @@ var _ = Describe("Config", func() {
 				},
 				)})),
 			),
+			Entry(
+				"flows",
+				"flows.yml",
+				haveFlows(ContainElement(
+					MatchFields(IgnoreExtras, Fields{
+						"Name":        Equal("@linear/gql.newBillRentIssue"),
+						"Title":       Equal("Linear Flow"),
+						"Description": Equal("Example flow description"),
+						"Comment":     Equal("Example flow comment"),
+						"Tags":        ConsistOf("example", "test"),
+						"Links": ConsistOf(config.Link{
+							Rel:  "documentation",
+							HRef: "https://example.com/docs",
+						}),
+						"Steps": ConsistOf(
+							MatchFields(IgnoreExtras, Fields{
+								"Name":        Equal("example spec-based step"),
+								"Title":       Equal("Spec Step"),
+								"Description": Equal("A spec-based step"),
+								"Comment":     Equal("Spec step comment"),
+								"Tags":        ConsistOf("spec"),
+								"Spec":        Equal("@linear/gql.issue"),
+								"Method":      Equal("POST"),
+							}),
+							MatchFields(IgnoreExtras, Fields{
+								"Name":        Equal("example URL-based step"),
+								"Title":       Equal("URL Step"),
+								"Description": Equal("A URL-based step"),
+								"Comment":     Equal("URL step comment"),
+								"Tags":        ConsistOf("url"),
+								"URL":         Equal("https://go.example.com/"),
+								"Method":      Equal("GET"),
+							}),
+						),
+					}),
+				)),
+			),
 		)
 
 		DescribeTable("errors",
@@ -251,5 +288,11 @@ func haveResources(m OmegaMatcher) OmegaMatcher {
 func haveResource(m OmegaMatcher) OmegaMatcher {
 	return WithTransform(func(cfg any) any {
 		return cfg.(*config.File).Service.Resources[0]
+	}, m)
+}
+
+func haveFlows(m OmegaMatcher) OmegaMatcher {
+	return WithTransform(func(cfg any) any {
+		return cfg.(*config.File).Flows
 	}, m)
 }

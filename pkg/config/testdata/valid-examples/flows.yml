@@ -1,0 +1,31 @@
+flows:
+  - $schema: "pastiche:flow"
+    name: "@linear/gql.newBillRentIssue"
+    title: "Linear Flow"
+    description: "Example flow description"
+    comment: "Example flow comment"
+    tags:
+      - example
+      - test
+    links:
+      - rel: documentation
+        href: https://example.com/docs
+    steps:
+      - name: example spec-based step
+        title: "Spec Step"
+        description: "A spec-based step"
+        comment: "Spec step comment"
+        tags:
+          - spec
+        spec: "@linear/gql.issue"
+        method: POST
+        headers:
+          Content-Type: application/json
+      - name: example URL-based step
+        title: "URL Step"
+        description: "A URL-based step"
+        comment: "URL step comment"
+        tags:
+          - url
+        url: https://go.example.com/
+        method: GET
