@@ -114,12 +114,6 @@ func defaultAction(c *Client) cli.Action {
 		cli.RemoveArg(0), // Remove address and symbol contributed by client
 		cli.RemoveArg(0),
 
-		// TODO This will be available from joe-cli-http@futures
-		cli.Customize(
-			"-param",
-			cli.ValueTransform(cli.TransformOptionalFileReference(cli.NewSysFS(cli.DirFS("."), os.Stdin, os.Stdout))),
-		),
-
 		cli.Customize(
 			"-cert",
 			cli.RemoveAlias("E"), // being used by --param-env
