@@ -22,7 +22,7 @@ import (
 	"github.com/Carbonfrost/pastiche/pkg/internal/log"
 )
 
-//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+//go:generate go tool counterfeiter -generate
 
 //counterfeiter:generate . ResolvedResource
 

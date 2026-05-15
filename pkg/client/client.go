@@ -23,7 +23,7 @@ import (
 	"github.com/Carbonfrost/pastiche/pkg/model"
 )
 
-//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+//go:generate go tool counterfeiter -generate
 
 // Client provides the Pastiche client, which can invoke underlying HTTP or gRPC
 // services
