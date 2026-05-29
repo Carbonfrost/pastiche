@@ -244,6 +244,10 @@ func SetVarFromEnvVar(v ...*uritemplates.Var) cli.Action {
 // FetchAndPrint invokes the client and prints the results.
 func FetchAndPrint() cli.Action {
 	return cli.ActionOf(func(ctx context.Context) error {
+		if !cli.FromContext(ctx).Seen("service") {
+			return fmt.Errorf("required argument URL missing")
+		}
+
 		c := FromContext(ctx)
 
 		clientType := c.Type()
