@@ -37,16 +37,21 @@ func validateService(s *Service) error {
 	if s == nil {
 		return nil
 	}
-	if err := checkQName(s.Name); err != nil {
-		return err
+	return wrapError(
+		"service "+s.Name,
+		checkQName(s.Name),
+		validate(s.Servers, validateServer),
+		validateVars(s.Vars),
+		validateResource(s.Resource),
+	)
+}
+
+func wrapError(msg string, errs ...error) error {
+	err := errors.Join(errs...)
+	if err != nil {
+		return fmt.Errorf("%s: %w", msg, err)
 	}
-	if err := validate(s.Servers, validateServer); err != nil {
-		return err
-	}
-	if err := validateVars(s.Vars); err != nil {
-		return err
-	}
-	return validateResource(s.Resource)
+	return nil
 }
 
 func validateServer(s *Server) error {
@@ -124,7 +129,7 @@ func checkQName(name string) error {
 	if ok {
 		for _, name := range strings.SplitN(qname, "/", 2) {
 			if err := checkName(name); err != nil {
-				return errors.New(badQIdentifierDetail)
+				return fmt.Errorf("%q: %s", qname, badQIdentifierDetail)
 			}
 		}
 		return nil
@@ -137,5 +142,5 @@ func checkName(name string) error {
 		return nil
 	}
 
-	return errors.New(badIdentifierDetail)
+	return fmt.Errorf("%q: %s", name, badIdentifierDetail)
 }

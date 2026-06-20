@@ -36,21 +36,51 @@ type Workspace struct {
 
 	files []*config.File
 	model *model.Model
+
+	disableValidation bool
 }
+
+// Option sets up an option to configure the workspace
+type Option interface {
+	cli.Action
+	apply(*Workspace)
+}
+
+type optionFunc func(*Workspace)
+
+func (f optionFunc) Execute(ctx context.Context) error {
+	f.apply(FromContext(ctx))
+	return nil
+}
+
+func (f optionFunc) apply(ws *Workspace) {
+	f(ws)
+}
+
+var (
+	defaultOptions = []Option{
+		withDefaultAction(),
+	}
+)
 
 // New creates a new workspace
-func New() *Workspace {
-	return withDefaultAction(&Workspace{
+func New(opts ...Option) *Workspace {
+	ws := &Workspace{
 		Workspace: joeconfig.NewWorkspace(),
-	})
+	}
+	for _, o := range append(defaultOptions, opts...) {
+		o.apply(ws)
+	}
+	return ws
 }
 
-func withDefaultAction(w *Workspace) *Workspace {
-	w.Action = cli.Pipeline(
-		w.Workspace.Action,
-		ContextValue(w),
-	)
-	return w
+func withDefaultAction() optionFunc {
+	return func(w *Workspace) {
+		w.Action = cli.Pipeline(
+			w.Workspace.Action,
+			ContextValue(w),
+		)
+	}
 }
 
 // FromContext gets the Workspace from the context otherwise panics
@@ -83,7 +113,12 @@ func (w *Workspace) Load() (*model.Model, error) {
 		return nil, err
 	}
 
-	return model.New(w.files...), nil
+	result := model.New(w.files...)
+	if !w.disableValidation {
+		return result, model.Validate(result)
+	}
+
+	return result, nil
 }
 
 // Model obtains the model for the workspace. This method implicitly
@@ -203,4 +238,10 @@ func (w *Workspace) ClearLogDir() error {
 
 	_ = w.LogDir() // Recreate the directory
 	return nil
+}
+
+func DisableValidation() Option {
+	return optionFunc(func(w *Workspace) {
+		w.disableValidation = true
+	})
 }

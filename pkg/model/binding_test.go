@@ -343,7 +343,7 @@ var _ = Describe("New", func() {
 	},
 		Entry("assume GET when no endpoint is defined",
 			config.Resource{
-				Name: "/",
+				Name: "",
 			},
 			PointTo(MatchFields(IgnoreExtras,
 				Fields{

@@ -71,6 +71,17 @@ func ClearLogs() cli.Action {
 	)
 }
 
+func SetDisableValidation() cli.Action {
+	return cli.Pipeline(
+		&cli.Prototype{
+			Name:     "disable-validation",
+			HelpText: "Disable validation of configuration files",
+			Value:    new(bool),
+		},
+		cli.At(cli.ActionTiming, DisableValidation()),
+	)
+}
+
 func nilError(fn func(*Workspace)) func(*Workspace) error {
 	return func(w *Workspace) error {
 		fn(w)
