@@ -29,6 +29,7 @@ import (
 type Model struct {
 	Services []*Service
 	VarSets  []*VarSet
+	Flows    []*Flow
 
 	cacheByName map[string]*Service
 }
@@ -281,6 +282,7 @@ var looksLikeURLPattern = regexp.MustCompile(`^(unix|https?)://`)
 func New(files ...*config.File) *Model {
 	services := []*Service{}
 	varSets := make([]*VarSet, 0)
+	flows := make([]*Flow, 0)
 
 	for _, file := range files {
 		if file.Service != nil {
@@ -292,12 +294,16 @@ func New(files ...*config.File) *Model {
 		for _, v := range file.VarSets {
 			varSets = append(varSets, varSet(v))
 		}
+		for _, v := range file.Flows {
+			flows = append(flows, flow(v))
+		}
 	}
 
 	slices.SortStableFunc(services, serviceByName2)
 	return &Model{
 		Services: services,
 		VarSets:  varSets,
+		Flows:    flows,
 	}
 }
 
