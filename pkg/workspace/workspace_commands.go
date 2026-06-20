@@ -5,8 +5,6 @@
 package workspace
 
 import (
-	"fmt"
-
 	cli "github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli/extensions/bind"
 )
@@ -36,12 +34,13 @@ func Init() cli.Action {
 
 func Env() cli.Action {
 	return cli.Pipeline(
-		cli.At(cli.ActionTiming, cli.ActionOf(func(c *cli.Context) {
-			ws := FromContext(c)
-			for k, v := range ws.Env() {
-				fmt.Fprintln(c.Stdout, k, "=", v)
-			}
-		})),
+		&cli.Prototype{
+			Name:     "env",
+			HelpText: "Display information about the Pastiche environment",
+			Options:  cli.Exits,
+			Value:    new(bool),
+		},
+		bind.Call(nilError((*Workspace).PrintEnv), bind.FromContext(FromContext)),
 	)
 }
 
@@ -70,4 +69,11 @@ func ClearLogs() cli.Action {
 		},
 		bind.Call((*Workspace).ClearLogDir, bind.FromContext(FromContext)),
 	)
+}
+
+func nilError(fn func(*Workspace)) func(*Workspace) error {
+	return func(w *Workspace) error {
+		fn(w)
+		return nil
+	}
 }

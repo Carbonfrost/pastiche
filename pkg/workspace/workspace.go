@@ -8,6 +8,7 @@ package workspace
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io/fs"
 	"iter"
 	"maps"
@@ -175,6 +176,15 @@ func (w *Workspace) Env() iter.Seq2[string, string] {
 				return
 			}
 		}
+	}
+}
+
+// PrintEnv prints the environment to stdout
+func (w *Workspace) PrintEnv() {
+	for k, v := range w.Env() {
+		fmt.Fprint(os.Stdout, k)
+		fmt.Fprint(os.Stdout, "=")
+		fmt.Fprintln(os.Stdout, v)
 	}
 }
 
