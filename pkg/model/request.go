@@ -72,7 +72,7 @@ type requestBuilder struct {
 func (b *requestBuilder) build(r ResolvedResource) (*Request, error) {
 	prefix := make([]string, len(r.Lineage()))
 	for i, c := range r.Lineage() {
-		prefix[i] = c.URITemplate.String()
+		prefix[i] = fmt.Sprint(c.URITemplate)
 	}
 
 	baseURITemplate, err := b.baseURL()
@@ -80,7 +80,7 @@ func (b *requestBuilder) build(r ResolvedResource) (*Request, error) {
 		return nil, err
 	}
 
-	combinedVars := r.Vars()
+	combinedVars := resolveVars(r)
 	maps.Copy(combinedVars, b.vars)
 
 	expander := e.Compose(
@@ -90,7 +90,7 @@ func (b *requestBuilder) build(r ResolvedResource) (*Request, error) {
 	)
 
 	links := resolveLinks(
-		expandLinks(r.Links(), expander),
+		expandLinks(resolveLinks2(r), expander),
 		fmt.Sprint(baseURITemplate),
 		combinedVars,
 	)
@@ -113,10 +113,10 @@ func (b *requestBuilder) build(r ResolvedResource) (*Request, error) {
 	return &Request{
 		URL:      u,
 		Vars:     combinedVars,
-		Headers:  expandHeader(r.Headers(), expander),
+		Headers:  expandHeader(resolveHeaders(r), expander),
 		Body:     body,
 		Links:    links,
-		Auth:     expandAuth(r.Auth(), expander),
+		Auth:     expandAuth(resolveAuth(r), expander),
 		Expander: expander,
 	}, nil
 }

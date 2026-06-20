@@ -257,14 +257,10 @@ type ResolvedResource interface {
 	Lineage() []*Resource
 	Endpoint() *Endpoint
 	Server() *Server
-	Client() Client
 
-	Auth() Auth
+	// TODO: These should probably be via request
 	Output() []*OutputConfig
-	Headers() http.Header
-	Vars() map[string]any
-	VarSets() []*VarSet
-	Links() []Link
+	Client() Client
 
 	EvalRequest(baseURL *url.URL, vars map[string]any) (*Request, error)
 }
@@ -495,7 +491,7 @@ func (r *resolvedResource) Output() []*OutputConfig {
 	)
 }
 
-func (r *resolvedResource) Headers() http.Header {
+func resolveHeaders(r ResolvedResource) http.Header {
 	return locate(
 		r,
 		reduceHeader,
@@ -507,7 +503,7 @@ func (r *resolvedResource) Headers() http.Header {
 	)
 }
 
-func (r *resolvedResource) Vars() map[string]any {
+func resolveVars(r ResolvedResource) map[string]any {
 	return locate(
 		r,
 		reduceVars,
@@ -519,7 +515,7 @@ func (r *resolvedResource) Vars() map[string]any {
 	)
 }
 
-func (r *resolvedResource) VarSets() []*VarSet {
+func resolveVarSets(r ResolvedResource) []*VarSet {
 	return locate(
 		r,
 		reduceVarSet,
@@ -531,7 +527,7 @@ func (r *resolvedResource) VarSets() []*VarSet {
 	)
 }
 
-func (r *resolvedResource) Links() []Link {
+func resolveLinks2(r ResolvedResource) []Link {
 	var result []Link
 	if r.Server() != nil {
 		result = append(result, r.Server().Links...)
@@ -548,7 +544,7 @@ func (r *resolvedResource) Links() []Link {
 	return result
 }
 
-func (r *resolvedResource) Auth() Auth {
+func resolveAuth(r ResolvedResource) Auth {
 	return locate(
 		r,
 		reduceAuth,
@@ -561,7 +557,7 @@ func (r *resolvedResource) Auth() Auth {
 }
 
 func locate[T any](
-	r *resolvedResource,
+	r ResolvedResource,
 	reducer func(T, T) T,
 	initial T,
 	onEndpoint func(*Endpoint) T,
@@ -571,23 +567,22 @@ func locate[T any](
 
 	res := initial
 
-	if onEndpoint != nil && r.Endpoint() != nil {
-		res = reducer(res, onEndpoint(r.Endpoint()))
+	if onService != nil && r.Service() != nil {
+		res = reducer(res, onService(r.Service()))
 	}
 
 	if onResource != nil {
-		if r.Resource() != nil {
-			res = reducer(res, onResource(r.Resource()))
-		}
 		for _, l := range r.Lineage() {
 			res = reducer(res, onResource(l))
 		}
 	}
+
+	if onEndpoint != nil && r.Endpoint() != nil {
+		res = reducer(res, onEndpoint(r.Endpoint()))
+	}
+
 	if onServer != nil && r.Server() != nil {
 		res = reducer(res, onServer(r.Server()))
-	}
-	if onService != nil && r.Service() != nil {
-		res = reducer(res, onService(r.Service()))
 	}
 
 	return res

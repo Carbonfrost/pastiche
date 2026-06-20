@@ -2,7 +2,6 @@
 package modelfakes
 
 import (
-	"net/http"
 	"net/url"
 	"sync"
 
@@ -10,16 +9,6 @@ import (
 )
 
 type FakeResolvedResource struct {
-	AuthStub        func() model.Auth
-	authMutex       sync.RWMutex
-	authArgsForCall []struct {
-	}
-	authReturns struct {
-		result1 model.Auth
-	}
-	authReturnsOnCall map[int]struct {
-		result1 model.Auth
-	}
 	ClientStub        func() model.Client
 	clientMutex       sync.RWMutex
 	clientArgsForCall []struct {
@@ -54,16 +43,6 @@ type FakeResolvedResource struct {
 		result1 *model.Request
 		result2 error
 	}
-	HeadersStub        func() http.Header
-	headersMutex       sync.RWMutex
-	headersArgsForCall []struct {
-	}
-	headersReturns struct {
-		result1 http.Header
-	}
-	headersReturnsOnCall map[int]struct {
-		result1 http.Header
-	}
 	LineageStub        func() []*model.Resource
 	lineageMutex       sync.RWMutex
 	lineageArgsForCall []struct {
@@ -73,16 +52,6 @@ type FakeResolvedResource struct {
 	}
 	lineageReturnsOnCall map[int]struct {
 		result1 []*model.Resource
-	}
-	LinksStub        func() []model.Link
-	linksMutex       sync.RWMutex
-	linksArgsForCall []struct {
-	}
-	linksReturns struct {
-		result1 []model.Link
-	}
-	linksReturnsOnCall map[int]struct {
-		result1 []model.Link
 	}
 	OutputStub        func() []*model.OutputConfig
 	outputMutex       sync.RWMutex
@@ -124,81 +93,8 @@ type FakeResolvedResource struct {
 	serviceReturnsOnCall map[int]struct {
 		result1 *model.Service
 	}
-	VarSetsStub        func() []*model.VarSet
-	varSetsMutex       sync.RWMutex
-	varSetsArgsForCall []struct {
-	}
-	varSetsReturns struct {
-		result1 []*model.VarSet
-	}
-	varSetsReturnsOnCall map[int]struct {
-		result1 []*model.VarSet
-	}
-	VarsStub        func() map[string]any
-	varsMutex       sync.RWMutex
-	varsArgsForCall []struct {
-	}
-	varsReturns struct {
-		result1 map[string]any
-	}
-	varsReturnsOnCall map[int]struct {
-		result1 map[string]any
-	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
-}
-
-func (fake *FakeResolvedResource) Auth() model.Auth {
-	fake.authMutex.Lock()
-	ret, specificReturn := fake.authReturnsOnCall[len(fake.authArgsForCall)]
-	fake.authArgsForCall = append(fake.authArgsForCall, struct {
-	}{})
-	stub := fake.AuthStub
-	fakeReturns := fake.authReturns
-	fake.recordInvocation("Auth", []interface{}{})
-	fake.authMutex.Unlock()
-	if stub != nil {
-		return stub()
-	}
-	if specificReturn {
-		return ret.result1
-	}
-	return fakeReturns.result1
-}
-
-func (fake *FakeResolvedResource) AuthCallCount() int {
-	fake.authMutex.RLock()
-	defer fake.authMutex.RUnlock()
-	return len(fake.authArgsForCall)
-}
-
-func (fake *FakeResolvedResource) AuthCalls(stub func() model.Auth) {
-	fake.authMutex.Lock()
-	defer fake.authMutex.Unlock()
-	fake.AuthStub = stub
-}
-
-func (fake *FakeResolvedResource) AuthReturns(result1 model.Auth) {
-	fake.authMutex.Lock()
-	defer fake.authMutex.Unlock()
-	fake.AuthStub = nil
-	fake.authReturns = struct {
-		result1 model.Auth
-	}{result1}
-}
-
-func (fake *FakeResolvedResource) AuthReturnsOnCall(i int, result1 model.Auth) {
-	fake.authMutex.Lock()
-	defer fake.authMutex.Unlock()
-	fake.AuthStub = nil
-	if fake.authReturnsOnCall == nil {
-		fake.authReturnsOnCall = make(map[int]struct {
-			result1 model.Auth
-		})
-	}
-	fake.authReturnsOnCall[i] = struct {
-		result1 model.Auth
-	}{result1}
 }
 
 func (fake *FakeResolvedResource) Client() model.Client {
@@ -372,59 +268,6 @@ func (fake *FakeResolvedResource) EvalRequestReturnsOnCall(i int, result1 *model
 	}{result1, result2}
 }
 
-func (fake *FakeResolvedResource) Headers() http.Header {
-	fake.headersMutex.Lock()
-	ret, specificReturn := fake.headersReturnsOnCall[len(fake.headersArgsForCall)]
-	fake.headersArgsForCall = append(fake.headersArgsForCall, struct {
-	}{})
-	stub := fake.HeadersStub
-	fakeReturns := fake.headersReturns
-	fake.recordInvocation("Headers", []interface{}{})
-	fake.headersMutex.Unlock()
-	if stub != nil {
-		return stub()
-	}
-	if specificReturn {
-		return ret.result1
-	}
-	return fakeReturns.result1
-}
-
-func (fake *FakeResolvedResource) HeadersCallCount() int {
-	fake.headersMutex.RLock()
-	defer fake.headersMutex.RUnlock()
-	return len(fake.headersArgsForCall)
-}
-
-func (fake *FakeResolvedResource) HeadersCalls(stub func() http.Header) {
-	fake.headersMutex.Lock()
-	defer fake.headersMutex.Unlock()
-	fake.HeadersStub = stub
-}
-
-func (fake *FakeResolvedResource) HeadersReturns(result1 http.Header) {
-	fake.headersMutex.Lock()
-	defer fake.headersMutex.Unlock()
-	fake.HeadersStub = nil
-	fake.headersReturns = struct {
-		result1 http.Header
-	}{result1}
-}
-
-func (fake *FakeResolvedResource) HeadersReturnsOnCall(i int, result1 http.Header) {
-	fake.headersMutex.Lock()
-	defer fake.headersMutex.Unlock()
-	fake.HeadersStub = nil
-	if fake.headersReturnsOnCall == nil {
-		fake.headersReturnsOnCall = make(map[int]struct {
-			result1 http.Header
-		})
-	}
-	fake.headersReturnsOnCall[i] = struct {
-		result1 http.Header
-	}{result1}
-}
-
 func (fake *FakeResolvedResource) Lineage() []*model.Resource {
 	fake.lineageMutex.Lock()
 	ret, specificReturn := fake.lineageReturnsOnCall[len(fake.lineageArgsForCall)]
@@ -475,59 +318,6 @@ func (fake *FakeResolvedResource) LineageReturnsOnCall(i int, result1 []*model.R
 	}
 	fake.lineageReturnsOnCall[i] = struct {
 		result1 []*model.Resource
-	}{result1}
-}
-
-func (fake *FakeResolvedResource) Links() []model.Link {
-	fake.linksMutex.Lock()
-	ret, specificReturn := fake.linksReturnsOnCall[len(fake.linksArgsForCall)]
-	fake.linksArgsForCall = append(fake.linksArgsForCall, struct {
-	}{})
-	stub := fake.LinksStub
-	fakeReturns := fake.linksReturns
-	fake.recordInvocation("Links", []interface{}{})
-	fake.linksMutex.Unlock()
-	if stub != nil {
-		return stub()
-	}
-	if specificReturn {
-		return ret.result1
-	}
-	return fakeReturns.result1
-}
-
-func (fake *FakeResolvedResource) LinksCallCount() int {
-	fake.linksMutex.RLock()
-	defer fake.linksMutex.RUnlock()
-	return len(fake.linksArgsForCall)
-}
-
-func (fake *FakeResolvedResource) LinksCalls(stub func() []model.Link) {
-	fake.linksMutex.Lock()
-	defer fake.linksMutex.Unlock()
-	fake.LinksStub = stub
-}
-
-func (fake *FakeResolvedResource) LinksReturns(result1 []model.Link) {
-	fake.linksMutex.Lock()
-	defer fake.linksMutex.Unlock()
-	fake.LinksStub = nil
-	fake.linksReturns = struct {
-		result1 []model.Link
-	}{result1}
-}
-
-func (fake *FakeResolvedResource) LinksReturnsOnCall(i int, result1 []model.Link) {
-	fake.linksMutex.Lock()
-	defer fake.linksMutex.Unlock()
-	fake.LinksStub = nil
-	if fake.linksReturnsOnCall == nil {
-		fake.linksReturnsOnCall = make(map[int]struct {
-			result1 []model.Link
-		})
-	}
-	fake.linksReturnsOnCall[i] = struct {
-		result1 []model.Link
 	}{result1}
 }
 
@@ -740,112 +530,6 @@ func (fake *FakeResolvedResource) ServiceReturnsOnCall(i int, result1 *model.Ser
 	}
 	fake.serviceReturnsOnCall[i] = struct {
 		result1 *model.Service
-	}{result1}
-}
-
-func (fake *FakeResolvedResource) VarSets() []*model.VarSet {
-	fake.varSetsMutex.Lock()
-	ret, specificReturn := fake.varSetsReturnsOnCall[len(fake.varSetsArgsForCall)]
-	fake.varSetsArgsForCall = append(fake.varSetsArgsForCall, struct {
-	}{})
-	stub := fake.VarSetsStub
-	fakeReturns := fake.varSetsReturns
-	fake.recordInvocation("VarSets", []interface{}{})
-	fake.varSetsMutex.Unlock()
-	if stub != nil {
-		return stub()
-	}
-	if specificReturn {
-		return ret.result1
-	}
-	return fakeReturns.result1
-}
-
-func (fake *FakeResolvedResource) VarSetsCallCount() int {
-	fake.varSetsMutex.RLock()
-	defer fake.varSetsMutex.RUnlock()
-	return len(fake.varSetsArgsForCall)
-}
-
-func (fake *FakeResolvedResource) VarSetsCalls(stub func() []*model.VarSet) {
-	fake.varSetsMutex.Lock()
-	defer fake.varSetsMutex.Unlock()
-	fake.VarSetsStub = stub
-}
-
-func (fake *FakeResolvedResource) VarSetsReturns(result1 []*model.VarSet) {
-	fake.varSetsMutex.Lock()
-	defer fake.varSetsMutex.Unlock()
-	fake.VarSetsStub = nil
-	fake.varSetsReturns = struct {
-		result1 []*model.VarSet
-	}{result1}
-}
-
-func (fake *FakeResolvedResource) VarSetsReturnsOnCall(i int, result1 []*model.VarSet) {
-	fake.varSetsMutex.Lock()
-	defer fake.varSetsMutex.Unlock()
-	fake.VarSetsStub = nil
-	if fake.varSetsReturnsOnCall == nil {
-		fake.varSetsReturnsOnCall = make(map[int]struct {
-			result1 []*model.VarSet
-		})
-	}
-	fake.varSetsReturnsOnCall[i] = struct {
-		result1 []*model.VarSet
-	}{result1}
-}
-
-func (fake *FakeResolvedResource) Vars() map[string]any {
-	fake.varsMutex.Lock()
-	ret, specificReturn := fake.varsReturnsOnCall[len(fake.varsArgsForCall)]
-	fake.varsArgsForCall = append(fake.varsArgsForCall, struct {
-	}{})
-	stub := fake.VarsStub
-	fakeReturns := fake.varsReturns
-	fake.recordInvocation("Vars", []interface{}{})
-	fake.varsMutex.Unlock()
-	if stub != nil {
-		return stub()
-	}
-	if specificReturn {
-		return ret.result1
-	}
-	return fakeReturns.result1
-}
-
-func (fake *FakeResolvedResource) VarsCallCount() int {
-	fake.varsMutex.RLock()
-	defer fake.varsMutex.RUnlock()
-	return len(fake.varsArgsForCall)
-}
-
-func (fake *FakeResolvedResource) VarsCalls(stub func() map[string]any) {
-	fake.varsMutex.Lock()
-	defer fake.varsMutex.Unlock()
-	fake.VarsStub = stub
-}
-
-func (fake *FakeResolvedResource) VarsReturns(result1 map[string]any) {
-	fake.varsMutex.Lock()
-	defer fake.varsMutex.Unlock()
-	fake.VarsStub = nil
-	fake.varsReturns = struct {
-		result1 map[string]any
-	}{result1}
-}
-
-func (fake *FakeResolvedResource) VarsReturnsOnCall(i int, result1 map[string]any) {
-	fake.varsMutex.Lock()
-	defer fake.varsMutex.Unlock()
-	fake.VarsStub = nil
-	if fake.varsReturnsOnCall == nil {
-		fake.varsReturnsOnCall = make(map[int]struct {
-			result1 map[string]any
-		})
-	}
-	fake.varsReturnsOnCall[i] = struct {
-		result1 map[string]any
 	}{result1}
 }
 
