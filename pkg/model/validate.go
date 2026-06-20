@@ -6,6 +6,7 @@ package model
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"strings"
 )
@@ -55,6 +56,9 @@ func validateServer(s *Server) error {
 	if err := checkName(s.Name); err != nil {
 		return err
 	}
+	if err := checkURLString(s.BaseURL); err != nil {
+		return err
+	}
 	return validateVars(s.Vars)
 }
 
@@ -63,6 +67,9 @@ func validateResource(s *Resource) error {
 		return nil
 	}
 	if err := checkName(s.Name); err != nil {
+		return err
+	}
+	if err := checkURLString(s.URITemplate); err != nil {
 		return err
 	}
 	if err := validateVars(s.Vars); err != nil {
@@ -100,6 +107,14 @@ func validate[V any](values []V, fn func(V) error) error {
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func checkURLString(v any) error {
+	s := fmt.Sprint(v)
+	if strings.Contains(s, "${") {
+		return fmt.Errorf("URL cannot contain template expressions ${...}")
 	}
 	return nil
 }

@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/Carbonfrost/joe-cli-http/uritemplates"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 	"github.com/onsi/gomega/types"
 )
@@ -95,5 +96,43 @@ var _ = Describe("Validate", func() {
 			},
 			MatchError(ContainSubstring("A name must start with a letter")),
 		),
+
+		Entry("unexpected template expression in service",
+			&model.Model{
+				Services: []*model.Service{
+					{
+						Name: "s",
+						Resource: &model.Resource{
+							URITemplate: mustParseURITemplate("https://local.example/${var.invalid}"),
+						},
+					},
+				},
+			},
+			MatchError(ContainSubstring("URL cannot contain template expressions ${...}")),
+		),
+
+		Entry("unexpected template expression in server",
+			&model.Model{
+				Services: []*model.Service{
+					{
+						Name: "s",
+						Servers: []*model.Server{
+							{
+								BaseURL: "https://local.example/${var.invalid}",
+							},
+						},
+					},
+				},
+			},
+			MatchError(ContainSubstring("URL cannot contain template expressions ${...}")),
+		),
 	)
 })
+
+func mustParseURITemplate(t string) *uritemplates.URITemplate {
+	u, err := uritemplates.Parse(t)
+	if err != nil {
+		panic(err)
+	}
+	return u
+}
