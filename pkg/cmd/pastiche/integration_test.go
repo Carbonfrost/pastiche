@@ -52,15 +52,14 @@ var _ = Describe("Integration", Label("integration"), Ordered, func() {
 					Expect(err).NotTo(HaveOccurred())
 					Expect(capture.String()).To(expected)
 				},
-				EntryDescription("%[1]s"),
 				Entry(
-					nil,
+					"pastiche <base>",
 					func() string {
 						return fmt.Sprintf("pastiche %v", baseURL)
 					},
 					Equal("Hello, world!")),
 				Entry(
-					nil,
+					"pastiche fetch <base>",
 					func() string {
 						return fmt.Sprintf("pastiche fetch %v", baseURL)
 					},

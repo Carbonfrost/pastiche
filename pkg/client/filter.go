@@ -96,19 +96,15 @@ type tsvFilterOpts struct {
 }
 
 type tableFilter struct {
-	fields              []string
-	dig                 string
-	jmespath            string
-	minWidth            int
-	tabWidth            int
-	padding             int
-	padChar             byte
-	flags               uint
-	filterFlags         bool
-	alignRight          bool
-	debug               bool
-	stripEscape         bool
-	discardEmptyColumns bool
+	fields      []string
+	dig         string
+	jmespath    string
+	minWidth    int
+	tabWidth    int
+	padding     int
+	padChar     byte
+	flags       uint
+	filterFlags bool
 }
 
 type tableFilterOpts struct {
