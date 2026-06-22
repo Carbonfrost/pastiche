@@ -89,9 +89,6 @@ func configResource(r *Resource) *config.Resource {
 		case "patch":
 			res.Patch = ep
 
-		case "query":
-			res.Query = ep
-
 		default:
 			panic("not implemented: custom endpoints")
 		}

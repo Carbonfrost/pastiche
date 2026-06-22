@@ -1,0 +1,6 @@
+name: query
+resources:
+  - name: r
+    query:
+      p: a
+      q: [a, r]

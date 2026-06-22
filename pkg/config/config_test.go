@@ -228,6 +228,19 @@ var _ = Describe("Config", func() {
 					}),
 				)),
 			),
+			Entry(
+				"query",
+				"query.yml",
+				haveResources(ContainElement(
+					config.Resource{
+						Name: "r",
+						Query: map[string][]string{
+							"p": []string{"a"},
+							"q": []string{"a", "r"},
+						},
+					},
+				)),
+			),
 		)
 
 		DescribeTable("errors",

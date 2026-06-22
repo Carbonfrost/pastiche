@@ -58,6 +58,7 @@ type Server struct {
 	Title       string
 	BaseURL     string
 	Headers     map[string][]string
+	Query       map[string][]string
 	Form        map[string][]string
 	Links       []Link
 	Vars        map[string]any
@@ -76,6 +77,7 @@ type Resource struct {
 	Endpoints   []*Endpoint
 	URITemplate *uritemplates.URITemplate
 	Headers     map[string][]string
+	Query       map[string][]string
 	Form        map[string][]string
 	Links       []Link
 	Command     []string
@@ -95,6 +97,7 @@ type Endpoint struct {
 	Tags        []string
 	Method      string
 	Headers     map[string][]string
+	Query       map[string][]string
 	Form        map[string][]string
 	Links       []Link
 	Body        any
@@ -468,6 +471,24 @@ func resolveURL(base string, prefix []string, vars map[string]any) (*url.URL, er
 	return u.JoinPath(), nil
 }
 
+func mergeQuery(u *url.URL, newVals url.Values) {
+	if u == nil {
+		return
+	}
+	// Parse existing query parameters
+	q := u.Query()
+
+	// Merge new values
+	for key, vals := range newVals {
+		for _, v := range vals {
+			q.Add(key, v) // Append instead of overwriting
+		}
+	}
+
+	// Encode back into the URL
+	u.RawQuery = q.Encode()
+}
+
 func (r *resolvedResource) Client() Client {
 	var client Client = &HTTPClient{}
 
@@ -499,6 +520,18 @@ func resolveHeaders(r ResolvedResource) http.Header {
 		func(d *Endpoint) http.Header { return d.Headers },
 		func(r *Resource) http.Header { return r.Headers },
 		func(s *Server) http.Header { return s.Headers },
+		nil,
+	)
+}
+
+func resolveQuery(r ResolvedResource) url.Values {
+	return locate(
+		r,
+		reduceHeader,
+		url.Values{},
+		func(d *Endpoint) url.Values { return d.Query },
+		func(r *Resource) url.Values { return r.Query },
+		func(s *Server) url.Values { return s.Query },
 		nil,
 	)
 }
@@ -664,7 +697,7 @@ func reduceAuth(x, y Auth) Auth {
 	return y
 }
 
-func reduceHeader(x, y http.Header) http.Header {
+func reduceHeader[H ~map[string][]string](x, y H) H {
 	for k, v := range y {
 		if name, ok := strings.CutPrefix(k, "+"); ok {
 			x[name] = append(x[name], v...)

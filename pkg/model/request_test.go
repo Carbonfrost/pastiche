@@ -61,7 +61,68 @@ var _ = Describe("NewRequest", func() {
 				HaveKeyWithValue("T", []string{"server"}),
 			),
 		)
+	})
 
+	Context("Query", func() {
+
+		It("merges into the result", func() {
+			resource := new(modelfakes.FakeResolvedResource)
+			resource.EndpointReturns(&model.Endpoint{
+				Query: newHeader("hello", "world", "in", "${var.s}"),
+			})
+			resource.LineageReturns([]*model.Resource{
+				{
+					URITemplate: mustParseURITemplate("/{?x}"),
+				},
+			})
+
+			result, _ := model.NewRequest(
+				resource,
+				model.WithBaseURL(mustParseURL("https://localhost:8080")),
+				model.WithVars(map[string]any{"s": "to", "x": "y"}),
+			)
+			Expect(result.URL.String()).To(Equal("https://localhost:8080/?hello=world&in=to&x=y"))
+		})
+
+		DescribeTable("examples", func(expected types.GomegaMatcher) {
+			resource := new(modelfakes.FakeResolvedResource)
+			resource.ServiceReturns(&model.Service{})
+			resource.ServerReturns(&model.Server{
+				Query: newHeader("T", "server"),
+			})
+			resource.EndpointReturns(&model.Endpoint{
+				Query: newHeader("S", "endpoint", "E", "endpoint", "T", "X"),
+			})
+			resource.LineageReturns([]*model.Resource{
+				{
+					Query: newHeader("S", "parent", "U", "lineage2", "W", "lineage2", "T", "X"),
+				},
+				{
+					Query: newHeader("S", "child", "V", "lineage1", "W", "lineage1", "T", "X"),
+				},
+			})
+
+			req, err := model.NewRequest(resource, model.WithBaseURL(mustParseURL("https://example.com")))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(req.URL.Query()).To(expected)
+		},
+			Entry(
+				"reduce by lineage",
+				And(
+					HaveKeyWithValue("U", []string{"lineage2"}),
+					HaveKeyWithValue("V", []string{"lineage1"}),
+					HaveKeyWithValue("W", []string{"lineage1"}),
+				),
+			),
+			Entry(
+				"narrowest child value",
+				HaveKeyWithValue("S", []string{"endpoint"}),
+			),
+			Entry(
+				"server overrides everything",
+				HaveKeyWithValue("T", []string{"server"}),
+			),
+		)
 	})
 })
 

@@ -106,6 +106,8 @@ func (b *requestBuilder) build(r ResolvedResource) (*Request, error) {
 
 	base := fmt.Sprint(baseURITemplate)
 	u, err := resolveURL(base, prefix, combinedVars)
+	mergeQuery(u, expandHeader(resolveQuery(r), expander))
+
 	if err != nil {
 		return nil, err
 	}

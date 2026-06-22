@@ -47,6 +47,7 @@ type Server struct {
 	Metadata
 	BaseURL string         `json:"baseUrl"`
 	Headers Header         `json:"headers,omitempty"`
+	Query   Header         `json:"query,omitempty"`
 	Vars    map[string]any `json:"vars,omitempty"`
 	Auth    *Auth          `json:"auth,omitempty"`
 	Output  []Output       `json:"output,omitempty"`
@@ -62,6 +63,7 @@ type Resource struct {
 	Resources []Resource     `json:"resources,omitempty"`
 	URI       string         `json:"uri,omitempty"`
 	Headers   Header         `json:"headers,omitempty"`
+	Query     Header         `json:"query,omitempty"`
 	Form      Form           `json:"form,omitempty"`
 	Get       *Endpoint      `json:"get,omitempty"`
 	Put       *Endpoint      `json:"put,omitempty"`
@@ -71,7 +73,6 @@ type Resource struct {
 	Head      *Endpoint      `json:"head,omitempty"`
 	Trace     *Endpoint      `json:"trace,omitempty"`
 	Patch     *Endpoint      `json:"patch,omitempty"`
-	Query     *Endpoint      `json:"query,omitempty"`
 	Body      any            `json:"body,omitempty"`
 	RawBody   any            `json:"rawBody,omitempty"`
 	Vars      map[string]any `json:"vars,omitempty"`
@@ -161,6 +162,7 @@ type Endpoint struct {
 
 	Metadata
 	Headers Header         `json:"headers,omitempty"`
+	Query   Header         `json:"query,omitempty"`
 	Form    Form           `json:"form,omitempty"`
 	Body    any            `json:"body,omitempty"`
 	RawBody any            `json:"rawBody,omitempty"`

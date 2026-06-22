@@ -57,6 +57,7 @@ func server(s config.Server) *Server {
 		Tags:        s.Tags,
 		Title:       s.Title,
 		Headers:     s.Headers,
+		Query:       s.Query,
 		Links:       links(s.Links),
 		Vars:        s.Vars,
 		Auth:        auth(s.Auth),
@@ -75,6 +76,7 @@ func resource(r config.Resource) *Resource {
 		Tags:        r.Tags,
 		URITemplate: uri,
 		Headers:     r.Headers,
+		Query:       r.Query,
 		Links:       links(r.Links),
 		Body:        r.Body,
 		RawBody:     r.RawBody,
@@ -108,9 +110,6 @@ func resource(r config.Resource) *Resource {
 	if r.Patch != nil {
 		res.Endpoints = append(res.Endpoints, endpoint("PATCH", r.Patch))
 	}
-	if r.Query != nil {
-		res.Endpoints = append(res.Endpoints, endpoint("QUERY", r.Query))
-	}
 
 	// Implicitly create GET endpoint if none other was created
 	if len(res.Endpoints) == 0 {
@@ -137,6 +136,7 @@ func endpoint(method string, r *config.Endpoint) *Endpoint {
 		Tags:        r.Tags,
 		Method:      method,
 		Headers:     r.Headers,
+		Query:       r.Query,
 		Links:       links(r.Links),
 		Body:        r.Body,
 		RawBody:     r.RawBody,
