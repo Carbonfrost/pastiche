@@ -60,10 +60,12 @@ var _ = Describe("Resolve", func() {
 					Services: []config.Service{
 						{
 							Name: "a",
-							Links: []config.Link{
-								{
-									IsTemplate: true,
-									HRef:       "/{var}",
+							Metadata: config.Metadata{
+								Links: []config.Link{
+									{
+										IsTemplate: true,
+										HRef:       "/{var}",
+									},
 								},
 							},
 							Servers: []config.Server{

@@ -16,80 +16,77 @@ type File struct {
 	name string
 }
 
+type Metadata struct {
+	Comment     string   `json:"comment,omitempty"`
+	Title       string   `json:"title,omitempty"`
+	Description string   `json:"description,omitempty"`
+	Tags        []string `json:"tags,omitempty"`
+	Links       []Link   `json:"links,omitempty"`
+}
+
 type Service struct {
-	Schema      string         `json:"$schema,omitempty"`
-	Name        string         `json:"name"`
-	Comment     string         `json:"comment,omitempty"`
-	Source      string         `json:"source,omitempty"`
-	Title       string         `json:"title,omitempty"`
-	Description string         `json:"description,omitempty"`
-	Tags        []string       `json:"tags,omitempty"`
-	Servers     []Server       `json:"servers,omitempty"`
-	Resources   []Resource     `json:"resources,omitempty"`
-	Links       []Link         `json:"links,omitempty"`
-	Vars        map[string]any `json:"vars,omitempty"`
-	Client      *Client        `json:"client,omitempty"`
-	Auth        *Auth          `json:"auth,omitempty"`
-	Output      []Output       `json:"output,omitempty"`
-	VarSets     []VarSet       `json:"varSets,omitempty"`
+	Schema string `json:"$schema,omitempty"`
+	Name   string `json:"name"`
+	Source string `json:"source,omitempty"`
+
+	Metadata
+	Servers   []Server       `json:"servers,omitempty"`
+	Resources []Resource     `json:"resources,omitempty"`
+	Vars      map[string]any `json:"vars,omitempty"`
+	Client    *Client        `json:"client,omitempty"`
+	Auth      *Auth          `json:"auth,omitempty"`
+	Output    []Output       `json:"output,omitempty"`
+	VarSets   []VarSet       `json:"varSets,omitempty"`
 }
 
 type Server struct {
-	Schema      string         `json:"$schema,omitempty"`
-	Name        string         `json:"name"`
-	Comment     string         `json:"comment,omitempty"`
-	Source      string         `json:"source,omitempty"`
-	Description string         `json:"description,omitempty"`
-	Tags        []string       `json:"tags,omitempty"`
-	Title       string         `json:"title,omitempty"`
-	BaseURL     string         `json:"baseUrl"`
-	Headers     Header         `json:"headers,omitempty"`
-	Links       []Link         `json:"links,omitempty"`
-	Vars        map[string]any `json:"vars,omitempty"`
-	Auth        *Auth          `json:"auth,omitempty"`
-	Output      []Output       `json:"output,omitempty"`
-	VarSets     []VarSet       `json:"varSets,omitempty"`
+	Schema string `json:"$schema,omitempty"`
+	Name   string `json:"name"`
+	Source string `json:"source,omitempty"`
+
+	Metadata
+	BaseURL string         `json:"baseUrl"`
+	Headers Header         `json:"headers,omitempty"`
+	Vars    map[string]any `json:"vars,omitempty"`
+	Auth    *Auth          `json:"auth,omitempty"`
+	Output  []Output       `json:"output,omitempty"`
+	VarSets []VarSet       `json:"varSets,omitempty"`
 }
 
 type Resource struct {
-	Schema      string         `json:"$schema,omitempty"`
-	Name        string         `json:"name,omitempty"`
-	Comment     string         `json:"comment,omitempty"`
-	Source      string         `json:"source,omitempty"`
-	Title       string         `json:"title,omitempty"`
-	Description string         `json:"description,omitempty"`
-	Tags        []string       `json:"tags,omitempty"`
-	Resources   []Resource     `json:"resources,omitempty"`
-	URI         string         `json:"uri,omitempty"`
-	Headers     Header         `json:"headers,omitempty"`
-	Form        Form           `json:"form,omitempty"`
-	Links       []Link         `json:"links,omitempty"`
-	Get         *Endpoint      `json:"get,omitempty"`
-	Put         *Endpoint      `json:"put,omitempty"`
-	Post        *Endpoint      `json:"post,omitempty"`
-	Delete      *Endpoint      `json:"delete,omitempty"`
-	Options     *Endpoint      `json:"options,omitempty"`
-	Head        *Endpoint      `json:"head,omitempty"`
-	Trace       *Endpoint      `json:"trace,omitempty"`
-	Patch       *Endpoint      `json:"patch,omitempty"`
-	Query       *Endpoint      `json:"query,omitempty"`
-	Body        any            `json:"body,omitempty"`
-	RawBody     any            `json:"rawBody,omitempty"`
-	Vars        map[string]any `json:"vars,omitempty"`
-	Auth        *Auth          `json:"auth,omitempty"`
-	Output      []Output       `json:"output,omitempty"`
-	VarSets     []VarSet       `json:"varSets,omitempty"`
+	Schema string `json:"$schema,omitempty"`
+	Name   string `json:"name,omitempty"`
+	Source string `json:"source,omitempty"`
+
+	Metadata
+	Resources []Resource     `json:"resources,omitempty"`
+	URI       string         `json:"uri,omitempty"`
+	Headers   Header         `json:"headers,omitempty"`
+	Form      Form           `json:"form,omitempty"`
+	Get       *Endpoint      `json:"get,omitempty"`
+	Put       *Endpoint      `json:"put,omitempty"`
+	Post      *Endpoint      `json:"post,omitempty"`
+	Delete    *Endpoint      `json:"delete,omitempty"`
+	Options   *Endpoint      `json:"options,omitempty"`
+	Head      *Endpoint      `json:"head,omitempty"`
+	Trace     *Endpoint      `json:"trace,omitempty"`
+	Patch     *Endpoint      `json:"patch,omitempty"`
+	Query     *Endpoint      `json:"query,omitempty"`
+	Body      any            `json:"body,omitempty"`
+	RawBody   any            `json:"rawBody,omitempty"`
+	Vars      map[string]any `json:"vars,omitempty"`
+	Auth      *Auth          `json:"auth,omitempty"`
+	Output    []Output       `json:"output,omitempty"`
+	VarSets   []VarSet       `json:"varSets,omitempty"`
 }
 
 type VarSet struct {
-	Schema      string                    `json:"$schema,omitempty"`
-	Name        string                    `json:"name,omitempty"`
-	Comment     string                    `json:"comment,omitempty"`
-	Source      string                    `json:"source,omitempty"`
-	Title       string                    `json:"title,omitempty"`
-	Description string                    `json:"description,omitempty"`
-	Links       []Link                    `json:"links,omitempty"`
-	Vars        map[string]map[string]any `json:"vars,omitempty"`
+	Schema string `json:"$schema,omitempty"`
+	Name   string `json:"name,omitempty"`
+	Source string `json:"source,omitempty"`
+
+	Metadata
+	Vars map[string]map[string]any `json:"vars,omitempty"`
 }
 
 type Client struct {
@@ -116,11 +113,9 @@ type BasicAuth struct {
 }
 
 type Output struct {
-	Name            string          `json:"name,omitempty"`
-	Comment         string          `json:"comment,omitempty"`
-	Title           string          `json:"title,omitempty"`
-	Description     string          `json:"description,omitempty"`
-	Links           []Link          `json:"links,omitempty"`
+	Name string `json:"name,omitempty"`
+
+	Metadata
 	IncludeMetadata bool            `json:"includeMetadata,omitzero"`
 	Template        *TemplateOutput `json:"template,omitempty"`
 	JMESPath        *JMESPathOutput `json:"jmespath,omitempty"`
@@ -160,22 +155,19 @@ type YAMLOutput struct {
 }
 
 type Endpoint struct {
-	Schema      string         `json:"$schema,omitempty"`
-	Name        string         `json:"name,omitempty"`
-	Comment     string         `json:"comment,omitempty"`
-	Title       string         `json:"title,omitempty"`
-	Source      string         `json:"source,omitempty"`
-	Description string         `json:"description,omitempty"`
-	Tags        []string       `json:"tags,omitempty"`
-	Headers     Header         `json:"headers,omitempty"`
-	Form        Form           `json:"form,omitempty"`
-	Links       []Link         `json:"links,omitempty"`
-	Body        any            `json:"body,omitempty"`
-	RawBody     any            `json:"rawBody,omitempty"`
-	Vars        map[string]any `json:"vars,omitempty"`
-	Auth        *Auth          `json:"auth,omitempty"`
-	Output      []Output       `json:"output,omitempty"`
-	VarSets     []VarSet       `json:"varSets,omitempty"`
+	Schema string `json:"$schema,omitempty"`
+	Name   string `json:"name,omitempty"`
+	Source string `json:"source,omitempty"`
+
+	Metadata
+	Headers Header         `json:"headers,omitempty"`
+	Form    Form           `json:"form,omitempty"`
+	Body    any            `json:"body,omitempty"`
+	RawBody any            `json:"rawBody,omitempty"`
+	Vars    map[string]any `json:"vars,omitempty"`
+	Auth    *Auth          `json:"auth,omitempty"`
+	Output  []Output       `json:"output,omitempty"`
+	VarSets []VarSet       `json:"varSets,omitempty"`
 }
 
 type Link struct {
@@ -189,33 +181,27 @@ type Link struct {
 }
 
 type Flow struct {
-	Schema      string         `json:"$schema,omitempty"`
-	Name        string         `json:"name"`
-	Source      string         `json:"source,omitempty"`
-	Comment     string         `json:"comment,omitempty"`
-	Title       string         `json:"title,omitempty"`
-	Description string         `json:"description,omitempty"`
-	Tags        []string       `json:"tags,omitempty"`
-	Links       []Link         `json:"links,omitempty"`
-	Steps       []Step         `json:"steps,omitempty"`
-	Vars        map[string]any `json:"vars,omitempty"`
+	Schema string `json:"$schema,omitempty"`
+	Name   string `json:"name"`
+	Source string `json:"source,omitempty"`
+
+	Metadata
+	Steps []Step         `json:"steps,omitempty"`
+	Vars  map[string]any `json:"vars,omitempty"`
 }
 
 type Step struct {
-	Name        string         `json:"name,omitempty"`
-	Comment     string         `json:"comment,omitempty"`
-	Title       string         `json:"title,omitempty"`
-	Description string         `json:"description,omitempty"`
-	Tags        []string       `json:"tags,omitempty"`
-	Links       []Link         `json:"links,omitempty"`
-	Method      string         `json:"method,omitempty"`
-	Headers     Header         `json:"headers,omitempty"`
-	Form        Form           `json:"form,omitempty"`
-	Body        any            `json:"body,omitempty"`
-	RawBody     any            `json:"rawBody,omitempty"`
-	Vars        map[string]any `json:"vars,omitempty"`
-	Spec        string         `json:"spec,omitempty"`
-	URL         string         `json:"url,omitempty"`
+	Name string `json:"name,omitempty"`
+
+	Metadata
+	Method  string         `json:"method,omitempty"`
+	Headers Header         `json:"headers,omitempty"`
+	Form    Form           `json:"form,omitempty"`
+	Body    any            `json:"body,omitempty"`
+	RawBody any            `json:"rawBody,omitempty"`
+	Vars    map[string]any `json:"vars,omitempty"`
+	Spec    string         `json:"spec,omitempty"`
+	URL     string         `json:"url,omitempty"`
 }
 
 func (f *File) Name() string {

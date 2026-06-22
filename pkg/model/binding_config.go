@@ -26,26 +26,22 @@ func configService(v *Service) config.Service {
 		servers[i] = configServer(s)
 	}
 	return config.Service{
-		Name:        v.Name,
-		Title:       v.Title,
-		Description: v.Description,
-		Servers:     servers,
-		Resources:   singleton(configResource(v.Resource)),
-		Links:       configLinks(v.Links),
-		Vars:        v.Vars,
-		Client:      configClient(v.Client),
+		Name:      v.Name,
+		Metadata:  config.Metadata{Title: v.Title, Description: v.Description, Links: configLinks(v.Links)},
+		Servers:   servers,
+		Resources: singleton(configResource(v.Resource)),
+		Vars:      v.Vars,
+		Client:    configClient(v.Client),
 	}
 }
 
 func configServer(s *Server) config.Server {
 	return config.Server{
-		Name:        s.Name,
-		BaseURL:     s.BaseURL,
-		Description: s.Description,
-		Title:       s.Title,
-		Headers:     s.Headers,
-		Links:       configLinks(s.Links),
-		Vars:        s.Vars,
+		Name:     s.Name,
+		Metadata: config.Metadata{Title: s.Title, Description: s.Description, Links: configLinks(s.Links)},
+		BaseURL:  s.BaseURL,
+		Headers:  s.Headers,
+		Vars:     s.Vars,
 	}
 }
 
@@ -55,16 +51,14 @@ func configResource(r *Resource) *config.Resource {
 		uri = r.URITemplate.String()
 	}
 	res := &config.Resource{
-		Name:        r.Name,
-		Title:       r.Title,
-		Description: r.Description,
-		URI:         uri,
-		Headers:     r.Headers,
-		Links:       configLinks(r.Links),
-		Body:        r.Body,
-		RawBody:     r.RawBody,
-		Vars:        r.Vars,
-		Form:        r.Form,
+		Name:     r.Name,
+		Metadata: config.Metadata{Title: r.Title, Description: r.Description, Links: configLinks(r.Links)},
+		URI:      uri,
+		Headers:  r.Headers,
+		Body:     r.Body,
+		RawBody:  r.RawBody,
+		Vars:     r.Vars,
+		Form:     r.Form,
 	}
 
 	for _, e := range r.Endpoints {
@@ -117,15 +111,13 @@ func configResources(resources []*Resource) []config.Resource {
 
 func configEndpoint(r *Endpoint) *config.Endpoint {
 	return &config.Endpoint{
-		Name:        r.Name,
-		Title:       r.Title,
-		Description: r.Description,
-		Headers:     r.Headers,
-		Links:       configLinks(r.Links),
-		Body:        r.Body,
-		RawBody:     r.RawBody,
-		Vars:        r.Vars,
-		Form:        r.Form,
+		Name:     r.Name,
+		Metadata: config.Metadata{Title: r.Title, Description: r.Description, Links: configLinks(r.Links)},
+		Headers:  r.Headers,
+		Body:     r.Body,
+		RawBody:  r.RawBody,
+		Vars:     r.Vars,
+		Form:     r.Form,
 	}
 }
 

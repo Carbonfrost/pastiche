@@ -123,8 +123,8 @@ var _ = Describe("Config", func() {
 				"preprocessed.yml",
 				haveService(
 					PointTo(MatchFields(IgnoreExtras, Fields{"Servers": ConsistOf(config.Server{
-						Name:  "s",
-						Title: "t",
+						Name:     "s",
+						Metadata: config.Metadata{Title: "t"},
 					})})),
 				),
 			),
@@ -133,14 +133,16 @@ var _ = Describe("Config", func() {
 				"output.yml",
 				haveResource(
 					MatchFields(IgnoreExtras, Fields{"Output": ConsistOf(config.Output{
-						Name:            "template",
-						Title:           "Go Template",
-						Description:     "Description",
-						Comment:         "Comment",
-						IncludeMetadata: true,
-						Links: []config.Link{
-							{Rel: "example", HRef: "https://example.com/go"},
+						Name: "template",
+						Metadata: config.Metadata{
+							Title:       "Go Template",
+							Description: "Description",
+							Comment:     "Comment",
+							Links: []config.Link{
+								{Rel: "example", HRef: "https://example.com/go"},
+							},
 						},
+						IncludeMetadata: true,
 						Template: &config.TemplateOutput{
 							Text: "template body text",
 						},
@@ -163,12 +165,14 @@ var _ = Describe("Config", func() {
 				"vars",
 				"vars.ymlvars",
 				PointTo(MatchFields(IgnoreExtras, Fields{"VarSets": ConsistOf(config.VarSet{
-					Name:        "@example/customers",
-					Title:       "Customers",
-					Description: "Description",
-					Comment:     "Comment",
-					Links: []config.Link{
-						{Rel: "example", HRef: "https://example.com/go"},
+					Name: "@example/customers",
+					Metadata: config.Metadata{
+						Title:       "Customers",
+						Description: "Description",
+						Comment:     "Comment",
+						Links: []config.Link{
+							{Rel: "example", HRef: "https://example.com/go"},
+						},
 					},
 					Vars: map[string]map[string]any{
 						"one": map[string]any{
@@ -186,33 +190,39 @@ var _ = Describe("Config", func() {
 				"flows.yml",
 				haveFlows(ContainElement(
 					MatchFields(IgnoreExtras, Fields{
-						"Name":        Equal("@linear/gql.newBillRentIssue"),
-						"Title":       Equal("Linear Flow"),
-						"Description": Equal("Example flow description"),
-						"Comment":     Equal("Example flow comment"),
-						"Tags":        ConsistOf("example", "test"),
-						"Links": ConsistOf(config.Link{
-							Rel:  "documentation",
-							HRef: "https://example.com/docs",
+						"Name": Equal("@linear/gql.newBillRentIssue"),
+						"Metadata": MatchFields(IgnoreExtras, Fields{
+							"Title":       Equal("Linear Flow"),
+							"Description": Equal("Example flow description"),
+							"Comment":     Equal("Example flow comment"),
+							"Links": ConsistOf(config.Link{
+								Rel:  "documentation",
+								HRef: "https://example.com/docs",
+							}),
+							"Tags": ConsistOf("example", "test"),
 						}),
 						"Steps": ConsistOf(
 							MatchFields(IgnoreExtras, Fields{
-								"Name":        Equal("example spec-based step"),
-								"Title":       Equal("Spec Step"),
-								"Description": Equal("A spec-based step"),
-								"Comment":     Equal("Spec step comment"),
-								"Tags":        ConsistOf("spec"),
-								"Spec":        Equal("@linear/gql.issue"),
-								"Method":      Equal("POST"),
+								"Name": Equal("example spec-based step"),
+								"Metadata": MatchFields(IgnoreExtras, Fields{
+									"Title":       Equal("Spec Step"),
+									"Description": Equal("A spec-based step"),
+									"Comment":     Equal("Spec step comment"),
+									"Tags":        ConsistOf("spec"),
+								}),
+								"Spec":   Equal("@linear/gql.issue"),
+								"Method": Equal("POST"),
 							}),
 							MatchFields(IgnoreExtras, Fields{
-								"Name":        Equal("example URL-based step"),
-								"Title":       Equal("URL Step"),
-								"Description": Equal("A URL-based step"),
-								"Comment":     Equal("URL step comment"),
-								"Tags":        ConsistOf("url"),
-								"URL":         Equal("https://go.example.com/"),
-								"Method":      Equal("GET"),
+								"Name": Equal("example URL-based step"),
+								"Metadata": MatchFields(IgnoreExtras, Fields{
+									"Title":       Equal("URL Step"),
+									"Description": Equal("A URL-based step"),
+									"Comment":     Equal("URL step comment"),
+									"Tags":        ConsistOf("url"),
+								}),
+								"URL":    Equal("https://go.example.com/"),
+								"Method": Equal("GET"),
 							}),
 						),
 					}),
