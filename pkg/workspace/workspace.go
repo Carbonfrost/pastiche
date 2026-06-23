@@ -78,9 +78,18 @@ func withDefaultAction() optionFunc {
 	return func(w *Workspace) {
 		w.Action = cli.Pipeline(
 			w.Workspace.Action,
+			FlagsAndArgs(),
 			ContextValue(w),
 		)
 	}
+}
+
+// FlagsAndArgs adds flags supporting the workspace. Despite its name, which is conventional,
+// this action adds to args.
+func FlagsAndArgs() cli.Action {
+	return cli.AddFlags([]*cli.Flag{
+		{Uses: SetDisableValidation()},
+	}...)
 }
 
 // FromContext gets the Workspace from the context otherwise panics

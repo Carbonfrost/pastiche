@@ -71,6 +71,7 @@ func ClearLogs() cli.Action {
 	)
 }
 
+// SetDisableValidation disables validattion of configuration in the workspace
 func SetDisableValidation() cli.Action {
 	return cli.Pipeline(
 		&cli.Prototype{
