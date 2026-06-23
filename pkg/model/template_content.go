@@ -63,6 +63,9 @@ func newTemplateContent(body any, vars map[string]any) joehttpclient.Content {
 			tpl:            str,
 		}
 	}
+	if body == nil {
+		return nil
+	}
 	return &objectContent{
 		contentSupport: newContentSupport(vars),
 		value:          body,
