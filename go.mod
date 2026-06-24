@@ -3,19 +3,19 @@
 // license that can be found in the LICENSE file.
 module github.com/Carbonfrost/pastiche
 
-go 1.26.1
+go 1.26.4
 
 require (
-	github.com/Carbonfrost/joe-cli v0.15.0
-	github.com/Carbonfrost/joe-cli-http v0.7.4
+	github.com/Carbonfrost/joe-cli v0.16.1
+	github.com/Carbonfrost/joe-cli-http v0.9.0
 	github.com/antchfx/xmlquery v1.5.0
 	github.com/antchfx/xpath v1.3.5
 	github.com/fullstorydev/grpcurl v1.9.3
 	github.com/jhump/protoreflect v1.17.0
 	github.com/jmespath/go-jmespath v0.4.0
-	github.com/onsi/ginkgo/v2 v2.28.3
-	github.com/onsi/gomega v1.40.0
-	golang.org/x/term v0.42.0
+	github.com/onsi/ginkgo/v2 v2.31.0
+	github.com/onsi/gomega v1.42.0
+	golang.org/x/term v0.44.0
 	google.golang.org/grpc v1.80.0
 	sigs.k8s.io/yaml v1.6.0
 )
@@ -23,7 +23,7 @@ require (
 require (
 	codeberg.org/chavacava/garif v0.2.0 // indirect
 	github.com/BurntSushi/toml v1.6.0 // indirect
-	github.com/Masterminds/semver/v3 v3.4.0 // indirect
+	github.com/Masterminds/semver/v3 v3.5.0 // indirect
 	github.com/bufbuild/protocompile v0.14.1 // indirect
 	github.com/cncf/xds/go v0.0.0-20251210132809-ee656c7534f5 // indirect
 	github.com/cristalhq/acmd v0.12.0 // indirect
@@ -46,12 +46,12 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/google/pprof v0.0.0-20260402051712-545e8a4df936 // indirect
+	github.com/google/pprof v0.0.0-20260604005048-7023385849c0 // indirect
 	github.com/hashicorp/go-version v1.8.0 // indirect
 	github.com/juju/ansiterm v1.0.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
-	github.com/mattn/go-colorable v0.1.14 // indirect
+	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.12.1 // indirect
@@ -71,12 +71,12 @@ require (
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20260410095643-746e56fc9e2f // indirect
-	golang.org/x/mod v0.35.0 // indirect
-	golang.org/x/net v0.53.0 // indirect
-	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.43.0 // indirect
-	golang.org/x/text v0.36.0 // indirect
-	golang.org/x/tools v0.44.0 // indirect
+	golang.org/x/mod v0.37.0 // indirect
+	golang.org/x/net v0.56.0 // indirect
+	golang.org/x/sync v0.21.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/text v0.38.0 // indirect
+	golang.org/x/tools v0.46.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260401024825-9d38bb4040a9 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	honnef.co/go/tools v0.7.0 // indirect
