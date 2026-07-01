@@ -75,6 +75,10 @@ func New(opts ...Option) *Client {
 	return c
 }
 
+func (c *Client) Pipeline() cli.Action {
+	return c.Action
+}
+
 func (c *Client) Apply(opts ...Option) {
 	for _, o := range opts {
 		o(c)
