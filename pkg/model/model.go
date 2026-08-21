@@ -31,7 +31,8 @@ type Model struct {
 	VarSets  []*VarSet
 	Flows    []*Flow
 
-	cacheByName map[string]*Service
+	cacheByName        map[string]*Service
+	cacheVarSetsByName map[string]*VarSet
 }
 
 type Service struct {
@@ -316,11 +317,30 @@ func (s *Service) Server(name string) (*Server, bool) {
 }
 
 func (m *Model) Service(name string) (*Service, bool) {
-	svc, ok := m.byName()[name]
+	svc, ok := m.servicesByName()[name]
 	return svc, ok
 }
 
-func (m *Model) byName() map[string]*Service {
+func (m *Model) Server(spec ServiceSpec) (*Server, bool) {
+	svc, ok := m.Service(spec.ServiceName())
+	if !ok {
+		return nil, false
+	}
+	if len(spec) < 2 {
+		if len(svc.Servers) == 0 {
+			return nil, false
+		}
+		return svc.Servers[0], true
+	}
+	return svc.Server(spec[1])
+}
+
+func (m *Model) VarSet(name string) (*VarSet, bool) {
+	svc, ok := m.varSetsByName()[name]
+	return svc, ok
+}
+
+func (m *Model) servicesByName() map[string]*Service {
 	if m.cacheByName == nil {
 		m.cacheByName = map[string]*Service{}
 		for _, v := range m.Services {
@@ -330,6 +350,18 @@ func (m *Model) byName() map[string]*Service {
 		}
 	}
 	return m.cacheByName
+}
+
+func (m *Model) varSetsByName() map[string]*VarSet {
+	if m.cacheVarSetsByName == nil {
+		m.cacheVarSetsByName = map[string]*VarSet{}
+		for _, v := range m.VarSets {
+			if v.Name != "" {
+				m.cacheVarSetsByName[v.Name] = v
+			}
+		}
+	}
+	return m.cacheVarSetsByName
 }
 
 func (m *Model) Resolve(spec ServiceSpec, server string, method string) (ResolvedResource, error) {
