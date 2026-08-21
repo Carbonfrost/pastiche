@@ -47,7 +47,6 @@ type Service struct {
 	Client      Client
 	Auth        Auth
 	Output      []*OutputConfig
-	VarSets     []*VarSet
 }
 
 type Server struct {
@@ -64,7 +63,6 @@ type Server struct {
 	Vars        map[string]any
 	Auth        Auth
 	Output      []*OutputConfig
-	VarSets     []*VarSet
 }
 
 type Resource struct {
@@ -86,7 +84,6 @@ type Resource struct {
 	Vars        map[string]any
 	Auth        Auth
 	Output      []*OutputConfig
-	VarSets     []*VarSet
 }
 
 type Endpoint struct {
@@ -105,7 +102,6 @@ type Endpoint struct {
 	Vars        map[string]any
 	Auth        Auth
 	Output      []*OutputConfig
-	VarSets     []*VarSet
 }
 
 type Link struct {
@@ -548,18 +544,6 @@ func resolveVars(r ResolvedResource) map[string]any {
 	)
 }
 
-func resolveVarSets(r ResolvedResource) []*VarSet {
-	return locate(
-		r,
-		reduceVarSet,
-		make([]*VarSet, 0),
-		(*Endpoint).varSets,
-		(*Resource).varSets,
-		(*Server).varSets,
-		(*Service).varSets,
-	)
-}
-
 func resolveLinks2(r ResolvedResource) []Link {
 	var result []Link
 	if r.Server() != nil {
@@ -672,11 +656,6 @@ func (r *Resource) output() []*OutputConfig { return r.Output }
 func (s *Server) output() []*OutputConfig   { return s.Output }
 func (s *Service) output() []*OutputConfig  { return s.Output }
 
-func (e *Endpoint) varSets() []*VarSet { return e.VarSets }
-func (r *Resource) varSets() []*VarSet { return r.VarSets }
-func (s *Server) varSets() []*VarSet   { return s.VarSets }
-func (s *Service) varSets() []*VarSet  { return s.VarSets }
-
 func reduceAuth(x, y Auth) Auth {
 	if y == nil {
 		return x
@@ -719,11 +698,6 @@ func reduceHeader[H ~map[string][]string](x, y H) H {
 func reduceVars(x, y map[string]any) map[string]any {
 	maps.Copy(x, y)
 	return x
-}
-
-func reduceVarSet(x, y []*VarSet) []*VarSet {
-	// TODO Duplicate names between varsets should be consolidated
-	return append(x, y...)
 }
 
 func reduceOutput(x, y []*OutputConfig) []*OutputConfig {

@@ -35,20 +35,6 @@ var _ = Describe("Config", func() {
 					haveResources(ContainElement(
 						config.Resource{Name: "r", URI: "/api/{name}.json"},
 					)),
-					PointTo(MatchFields(IgnoreExtras,
-						Fields{
-							"VarSets": Equal([]config.VarSet{
-								{
-									Name: "v",
-									Vars: map[string]map[string]any{
-										"a": {
-											"b": float64(0),
-										},
-									},
-								},
-							}),
-						},
-					)),
 				),
 			),
 			Entry(

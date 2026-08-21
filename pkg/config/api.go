@@ -36,7 +36,6 @@ type Service struct {
 	Client    *Client        `json:"client,omitempty"`
 	Auth      *Auth          `json:"auth,omitempty"`
 	Output    []Output       `json:"output,omitempty"`
-	VarSets   []VarSet       `json:"varSets,omitempty"`
 }
 
 type Server struct {
@@ -51,7 +50,6 @@ type Server struct {
 	Vars    map[string]any `json:"vars,omitempty"`
 	Auth    *Auth          `json:"auth,omitempty"`
 	Output  []Output       `json:"output,omitempty"`
-	VarSets []VarSet       `json:"varSets,omitempty"`
 }
 
 type Resource struct {
@@ -78,7 +76,6 @@ type Resource struct {
 	Vars      map[string]any `json:"vars,omitempty"`
 	Auth      *Auth          `json:"auth,omitempty"`
 	Output    []Output       `json:"output,omitempty"`
-	VarSets   []VarSet       `json:"varSets,omitempty"`
 }
 
 type VarSet struct {
@@ -169,7 +166,6 @@ type Endpoint struct {
 	Vars    map[string]any `json:"vars,omitempty"`
 	Auth    *Auth          `json:"auth,omitempty"`
 	Output  []Output       `json:"output,omitempty"`
-	VarSets []VarSet       `json:"varSets,omitempty"`
 }
 
 type Link struct {

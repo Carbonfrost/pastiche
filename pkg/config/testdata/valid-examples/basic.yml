@@ -5,8 +5,3 @@ servers:
 resources:
   - name: r
     uri: /api/{name}.json
-varSets:
-  - name: v
-    vars:
-      a:
-        b: 0
