@@ -74,6 +74,26 @@ var _ = Describe("newTemplateContent", func() {
 		}`))
 		})
 
+		It("expands JSON representation preserving arrays and maps", func() {
+			data := map[string]any{
+				"scopes": "${var.scopes}",
+				"filter": "${var.filter}",
+				"label":  "scopes: ${var.scopes}",
+			}
+
+			c := newTemplateContent(data, map[string]any{
+				"scopes": []any{"read", "write"},
+				"filter": map[string]any{"kind": "user"},
+			})
+
+			rendered, _ := io.ReadAll(c.Read())
+			Expect(string(rendered)).To(MatchJSON(`{
+				"scopes": ["read", "write"],
+				"filter": {"kind": "user"},
+				"label": "scopes: [read write]"
+			}`))
+		})
+
 	})
 })
 
@@ -95,8 +115,13 @@ var _ = Describe("expandObject", func() {
 
 	DescribeTable("examples", func(body any, expected any) {
 		c := expandObject(body, expander.Func(func(s string) any {
-			if s == "var.value" {
+			switch s {
+			case "var.value":
 				return "value"
+			case "var.list":
+				return []any{"a", "b"}
+			case "var.map":
+				return map[string]any{"e": "f"}
 			}
 			return ""
 		}))
@@ -105,6 +130,26 @@ var _ = Describe("expandObject", func() {
 		Entry("slice",
 			[]any{"d", "${var.value}"},
 			[]any{"d", "value"},
+		),
+		Entry("slice containing list value",
+			[]any{"d", "${var.list}"},
+			[]any{"d", []any{"a", "b"}},
+		),
+		Entry("map with list value",
+			map[string]any{"d": "${var.list}"},
+			map[string]any{"d": []any{"a", "b"}},
+		),
+		Entry("map with map value",
+			map[string]any{"d": "${var.map}"},
+			map[string]any{"d": map[string]any{"e": "f"}},
+		),
+		Entry("interpolated list value uses string interpolation",
+			map[string]any{"d": "prefix ${var.list}"},
+			map[string]any{"d": "prefix [a b]"},
+		),
+		Entry("header retains string interpolation",
+			map[string][]string{"Prefer": {"${var.list}"}},
+			map[string][]string{"Prefer": {"[a b]"}},
 		),
 		Entry("slice recursion",
 			[]any{"d", []any{"${var.value}"}},

@@ -166,7 +166,9 @@ func expandObject(v any, e Expander) any {
 	case nil:
 		return nil
 	case string:
-		return expandString(value, e)
+		// expandAny preserves the underlying type of the value from the expander if
+		// the expansion expression is not actually a string interpolation
+		return expandAny(value, e)
 	case map[string]any:
 		newValues := map[string]any{}
 		for k, v := range value {
@@ -211,7 +213,15 @@ func expandHeader(value map[string][]string, e Expander) map[string][]string {
 }
 
 func expandString(s string, e Expander) string {
-	return expander.SyntaxRecursive.CompilePattern(s, "${", "}").Expand(e)
+	return compilePattern(s).Expand(e)
+}
+
+func expandAny(s string, e Expander) any {
+	return compilePattern(s).ExpandAny(e)
+}
+
+func compilePattern(s string) *expander.Pattern {
+	return expander.Compile(s, expander.SyntaxRecursive, expander.WithDelimiters("${", "}"))
 }
 
 func expandURLValues(u url.Values) expander.Func {
