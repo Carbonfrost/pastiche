@@ -1,0 +1,27 @@
+services:
+  - name: "@go/vuln"
+    title: "Go Vulnerability Database"
+    description: |
+      The Go vulnerability database serves Go vulnerability information in the Open Source Vulnerability (OSV) schema.
+    links:
+      - rel: docs
+        href: https://go.dev/doc/security/vuln/database
+    servers:
+      - name: prod
+        baseUrl: https://vuln.go.dev/
+    resources:
+      - name: report
+        uri: /ID/{id}.json{.gz*}  # See /ID/GO-2022-0191.json for a live example.
+        description: Returns the individual report for the vulnerability with ID $id, in OSV format.
+
+      - name: reports
+        uri: /index/vulns.json{.gz*}
+        description: Returns a list containing metadata about each vulnerability in the database
+
+      - name: modules
+        uri: /index/modules.json{.gz*}
+        description: Returns a list containing metadata about each module in the database
+
+      - name: about
+        uri: /index/db.json{.gz*}
+        description: Returns metadata about the database
