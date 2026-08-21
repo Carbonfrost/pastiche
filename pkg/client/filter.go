@@ -21,7 +21,6 @@ import (
 	joehttpclient "github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli-http/httpclient/expr"
 	"github.com/Carbonfrost/joe-cli/extensions/bind"
-	e "github.com/Carbonfrost/joe-cli/extensions/expr/expander"
 	"github.com/Carbonfrost/joe-cli/extensions/provider"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 	"github.com/Carbonfrost/pastiche/pkg/template/funcs"
@@ -168,21 +167,21 @@ var (
 		Providers: provider.Details{
 			"jmespath": {
 				Factory: provider.FactoryOf(newJMESPath),
-				Defaults: map[string]string{
+				Defaults: map[string]any{
 					"query": "@",
 				},
 				HelpText: "Use JMES Path to select matching JSON data",
 			},
 			"dig": {
 				Factory: provider.FactoryOf(newDig),
-				Defaults: map[string]string{
+				Defaults: map[string]any{
 					"query": "",
 				},
 				HelpText: "Use a simple expression to retrieve a value",
 			},
 			"gotpl": {
 				Factory: provider.FactoryOf(newTemplate),
-				Defaults: map[string]string{
+				Defaults: map[string]any{
 					"text": "Result: {{ .Result }}",
 					"file": "",
 				},
@@ -190,37 +189,37 @@ var (
 			},
 			"json": {
 				Factory: provider.FactoryOf(newJSONFilter),
-				Defaults: map[string]string{
+				Defaults: map[string]any{
 					"pretty": "false",
 				},
 				HelpText: "Generate JSON output",
 			},
 			"xpath": {
 				Factory: provider.FactoryOf(newXPathFilter),
-				Defaults: map[string]string{
+				Defaults: map[string]any{
 					"query": "",
 				},
 				HelpText: "Apply an XPath expression",
 			},
 			"xml": {
 				Factory:  provider.FactoryOf(newXMLFilter),
-				Defaults: map[string]string{},
+				Defaults: map[string]any{},
 				HelpText: "Generate XML output",
 			},
 			"yaml": {
 				Factory:  provider.FactoryOf(newYAMLFilter),
-				Defaults: map[string]string{},
+				Defaults: map[string]any{},
 				HelpText: "Generate YAML output",
 			},
 			"raw": {
 				Value:    NewRawFilter(),
-				Defaults: map[string]string{},
+				Defaults: map[string]any{},
 				Aliases:  []string{"r", "text"},
 				HelpText: "Raw text without processing",
 			},
 			"tsv": {
 				Factory: provider.FactoryOf(newTSVFilter),
-				Defaults: map[string]string{
+				Defaults: map[string]any{
 					"comma":   "\t",
 					"useCRLF": "false",
 				},
@@ -228,7 +227,7 @@ var (
 			},
 			"csv": {
 				Factory: provider.FactoryOf(newTSVFilter),
-				Defaults: map[string]string{
+				Defaults: map[string]any{
 					"comma":   ",",
 					"useCRLF": "false",
 				},
@@ -236,7 +235,7 @@ var (
 			},
 			"table": {
 				Factory: provider.FactoryOf(newTableFilter),
-				Defaults: map[string]string{
+				Defaults: map[string]any{
 					"minWidth":            "0",
 					"tabWidth":            "8",
 					"padding":             "1",
@@ -803,7 +802,7 @@ func (t templateFilter) Search(_ context.Context, resp Response) ([]byte, error)
 	}
 
 	// TODO This should be expander capable of vars, form, etc.
-	expander := e.Func(expr.ExpandGlobals)
+	expander := expr.ExpandGlobals()
 
 	var results bytes.Buffer
 
