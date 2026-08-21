@@ -764,14 +764,18 @@ func SetIncludeMetadata(f ...bool) cli.Action {
 
 // SetFilter provides an action which sets the filter which will be used in the response.
 // This also provides an accessory flag.
-func SetFilter(f ...*provider.Value) cli.Action {
+func SetFilter(f ...Filter) cli.Action {
+	actualBind := provider.Bind[Filter]()
+	if len(f) > 0 {
+		actualBind = bind.Exact(f...)
+	}
 	return cli.Pipeline(
 		&cli.Prototype{
 			Name:     "filter",
 			Aliases:  []string{"l"},
 			HelpText: "Apply a filter query to the response data using a supported format",
 		},
-		withBinding((*Client).setFilterHelper, f),
+		bind.Call2((*Client).SetFilter, bind.FromContext(FromContext), actualBind),
 		cli.Accessory("-", (*provider.Value).ArgumentFlag),
 	)
 }

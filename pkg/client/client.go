@@ -16,7 +16,6 @@ import (
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
 	"github.com/Carbonfrost/joe-cli/extensions/bind"
-	"github.com/Carbonfrost/joe-cli/extensions/provider"
 	"github.com/Carbonfrost/pastiche/pkg/contextual"
 	"github.com/Carbonfrost/pastiche/pkg/grpcclient"
 	"github.com/Carbonfrost/pastiche/pkg/internal/build"
@@ -141,23 +140,6 @@ func FlagsAndArgs() cli.Action {
 			{Uses: SetIncludeMetadata()},
 		}...),
 	)
-}
-
-func (c *Client) setFilterHelper(v *provider.Value) error {
-	args := v.Args.(*map[string]string)
-
-	if _, ok := FilterRegistry.LookupProvider(v.Name); !ok {
-		// If the filter name is not in the registry, it might be a named output
-		// We'll create a wrapper that will resolve it at runtime
-		return c.SetFilter(NewNamedOutputFilter(v.Name))
-	}
-
-	// Try to create a filter from the registry
-	f, err := FilterRegistry.New(v.Name, *args)
-	if err != nil {
-		return err
-	}
-	return c.SetFilter(f.(Filter))
 }
 
 func (c *Client) SetFilter(f Filter) error {
