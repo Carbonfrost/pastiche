@@ -1,8 +1,79 @@
 # Changelog
 
+## v0.5.0 (August 22, 2026)
+
+### New Features
+
+* Codex:
+    * @go/vuln (3c64794)
+* API:
+    * Allow looking up server, varset by name from model (9b6ce7a)
+    * Introduce `metaapi` package (d954909)
+    * Grpc client: `WithDefaultAction`, `WithAction` (e60c38e)
+    * Template function helpers:
+        * Colorize (6be5dc3)
+        * Register funcs into funcmap (5125557)
+        * Update functions: background colors (dd549f5)
+        * Update functions: hex, base32 (c594a12)
+    * Flows (89070e3)
+    * Varsets (f6f4d7e)
+    * `SetVarFromEnvVar` (09e45ba)
+    * Expose flows from model (69f8316)
+    * `Env` command; encapsulate workspace dirs (a08c291)
+* Add `--disable-validation` to workspace flags (e3165a3)
+* Tags search in `describe` command (ae39160)
+* Validation of workspace configuration (01f5bb9)
+* Validation rules for URI templates (77bff96)
+* Query string support (4d60fbe)
+* Introduce TSV, Table filters (7a47742)
+
+### Bug fixes and improvements
+
+* Allow var expansion to preserve underlying type (c6965c3)
+* When resolving, remove requirement for server (6f40b96)
+* Bug fix: Enable skipping directories with underbar prefix (fe5cf2a)
+* Bug fix: Resolve a type conversion panic (195054e)
+* Bug fix: use `LookupProvider` to determine filter does not exist (66e4115)
+* Bug fix: ensure pipeline merges of grpc client (feba241)
+* Bug fix: ensure body is empty when not present (8024b46)
+* Bug fix: Ensure correct initialization of client by moving workspace evaluation into thunk (365c80a)
+* Bug fix: ensure usage error when no service is specified to fetch and print (a4a4e39)
+* Print out gRPC status code on error (4cfdf0d)
+* Fix env command; delegate to `PrintEnv` (631c160)
+* Remove --help --all flag option (0bb5e15)
+* Ensure all flag requires --help (53dcfbd)
+* Remove VarSet from nested scopes; unused functions (0debb4e)
+* Consolidate Metadata in config definitions (bf6837a)
+* Fix reducing order in resources; simplify ResolvedResource interface (c7ced55)
+* Update rules for parsing service spec to only separate on dots; tests (0c1c382)
+* Change init to use YAML for services (9fba63f)
+* Test improvements:
+    * Improve Windows compatibility with paths (4d7066f)
+    * Remove unused field; fix test names (b633758)
+    * Initial integration tests (9458542)
+* Modernizations and refactorings:
+    * Relocate open flags into core prototype (3d5bcf3)
+    * Modernize tool invocations (8faa7a3)
+    * Remove redundant configuration since upgrade (e3ccb53)
+    * Adopt config.Workspace (6a6c050)
+    * joe-cli Modernizations (fd510db)
+    * Remove init command to workspace package (2b1d886)
+    * Remove unused Config type (484c241)
+    * Use modern idioms for binding providers (195054e)
+    * Refactor Import to using action binder pattern (e3c50a9)
+* Chores:
+    * Update dependent versions (3b96950)
+    * Upgrade joe-cli-http (89ac683)
+    * Upgrade dependent versions: joe-cli-http (c060605)
+    * Update dependent versions (9fd96e5, f941534)
+    * Bump goreleaser/goreleaser-action from 6 to 7 (c2c7dbe)
+    * GitHub configuration chore: Bump Go build version (c9b3593)
+    * Add revive configuration (a5d5c8b)
+
+
 ## v0.4.0 (April 1, 2026)
 
-## New features
+### New features
 
 * Dashboard UI and metadata service
     * Dashboard app - prototype version (43b8c06)
@@ -104,7 +175,7 @@
 * URL encoded form content (d4a5984)
 * History logging download (16eeb07)
 
-## Bug fixes and improvements
+### Bug fixes and improvements
 
 * Command line improvements:
     * Revamp describe command (26c6e5b)
@@ -133,7 +204,6 @@
     * Expose base URL from service resolver (b3301d8)
     * Relocate method-context extraction to thunk (9f49d34)
     * Encapsulate client Option pattern; service resolver (c400c83)
-
 * Rename httpclient to just client (559506c)
 * Test improvements:
     * Suppress stderr traces in test (40d3f7e)
@@ -158,10 +228,9 @@
 * Bug fix: no trailing slash in resolved URLs (2de86e5)
 
 
-
 ## v0.3.0 (November 2, 2025)
 
-## New features
+### New features
 
 * Allow body to be specified and resolved in configuration (2414c01)
 * Allow templates in body content (a820350)
@@ -174,7 +243,7 @@
 * Introduce `Query` endpoint for use with resources (8ac4db8)
 * Support copying headers from `Server` configuration (d4feb13)
 
-## Bug fixes and improvements
+### Bug fixes and improvements
 
 * Bug fix: Ensure cumulative paths in resources (5026d8d)
 * Bug fix: Address typos in Link tags (54419b0)
