@@ -1,0 +1,90 @@
+services:
+  - name: "@go/pkg"
+    title: "Go package and modules API"
+    description: |
+      Pkgsite provides a JSON API for accessing information about Go packages and modules.
+    links:
+      - rel: docs
+        href: https://pkg.go.dev/v1/api
+    servers:
+      - name: prod
+        baseUrl: https://pkg.go.dev/
+    resources:
+      - name: pkg
+        uri: /v1/package/{path}  # See https://pkg.go.dev/v1/package/golang.org/x/time/rate for a live example
+        description: Information about the package at {path}.
+        query:
+          module: "${var.module:golang.org/x/time/rate}"
+          version: "${var.version:latest}"
+          goos: "${var.goos}"
+          goarch: "${var.goarch}"
+          doc: "${var.doc:text}" # text, html, md, markdown
+          examples: "${var.examples:true}"
+          imports: "${var.imports:true}"
+          licenses: "${var.licenses:true}"
+      - name: mod
+        uri: /v1/module/{path}
+        description: Information about the package at {path}.
+        query:
+          version: "${var.version:latest}"
+          licenses: "${var.licenses:true}"
+          readme: "${var.readme:true}"
+      - name: vulns
+        uri: /v1/vulns/{path}
+        description: Vulnerabilities of the module or package at {path}.
+        query:
+          module: "${var.module:golang.org/x/time/rate}"
+          version: "${var.version:latest}"
+          limit: "${var.limit}"
+          token: "${var.token}"
+          filter: "${var.doc:filter}"
+      - name: imported-by
+        uri: /v1/imported-by/{path}
+        description: Paths of packages importing the package at {path}.
+        query:
+          module: "${var.module:golang.org/x/time/rate}"
+          version: "${var.version:latest}"
+          limit: "${var.limit}"
+          token: "${var.token}"
+          filter: "${var.doc:filter}"
+      - name: symbols
+        uri: /v1/symbols/{path}
+        description: List of symbols for the package at {path}.
+        query:
+          module: "${var.module:golang.org/x/time/rate}"
+          version: "${var.version:latest}"
+          goos: "${var.goos}"
+          goarch: "${var.goarch}"
+          limit: "${var.limit}"
+          token: "${var.token}"
+          filter: "${var.doc:filter}"
+      - name: packages
+        uri: /v1/packages/{path}
+        description: Information about packages of the module at {path}.
+        query:
+          version: "${var.version:latest}"
+          limit: "${var.limit}"
+          token: "${var.token}"
+          filter: "${var.doc:filter}"
+      - name: search
+        uri: /v1/search
+        description: Search results
+        query:
+          q: "${var.query}"
+          symbol: "${var.symbol}"
+          limit: "${var.limit}"
+          token: "${var.token}"
+          filter: "${var.doc:filter}"
+      - name: versions
+        uri: /v1/versions/{path}
+        description: All versions of the module, including all major versions
+        query:
+          q: "${var.query}"
+          symbol: "${var.symbol}"
+          pseudo: "${var.pseudo}"
+          limit: "${var.limit}"
+          token: "${var.token}"
+          filter: "${var.doc:filter}"
+
+.examples:
+  pkg: pastiche @go/pkg pkg -Tpath=golang.org/x/time/rate -Tgoos=darwin
