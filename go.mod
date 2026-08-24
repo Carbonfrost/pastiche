@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 module github.com/Carbonfrost/pastiche
 
-go 1.26.5
+go 1.27.0
 
 require (
 	github.com/Carbonfrost/joe-cli v0.20.0
