@@ -120,6 +120,7 @@ type VarSet struct {
 	Comment     string
 	Title       string
 	Description string
+	Tags        []string
 	Links       []Link
 	Vars        map[string]map[string]any
 }
@@ -338,6 +339,15 @@ func (m *Model) Server(spec ServiceSpec) (*Server, bool) {
 func (m *Model) VarSet(name string) (*VarSet, bool) {
 	svc, ok := m.varSetsByName()[name]
 	return svc, ok
+}
+
+func (m *Model) Flow(name string) (*Flow, bool) {
+	for _, f := range m.Flows {
+		if f.Name == name {
+			return f, true
+		}
+	}
+	return nil, false
 }
 
 func (m *Model) servicesByName() map[string]*Service {

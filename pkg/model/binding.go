@@ -198,6 +198,7 @@ func varSet(s config.VarSet) *VarSet {
 		Comment:     s.Comment,
 		Title:       s.Title,
 		Description: s.Description,
+		Tags:        s.Tags,
 		Links:       links(s.Links),
 		Vars:        s.Vars,
 	}

@@ -33,5 +33,7 @@ var _ = Describe("metadata", func() {
 		Entry("server", new(model.Server)),
 		Entry("resource", new(model.Resource)),
 		Entry("endpoint", new(model.Endpoint)),
+		Entry("varSet", new(model.VarSet)),
+		Entry("flow", new(model.Flow)),
 	)
 })
