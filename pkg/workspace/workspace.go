@@ -32,7 +32,7 @@ type Workspace struct {
 	// added to a pipeline.
 	cli.Action
 
-	*joeconfig.Workspace
+	ws *joeconfig.Workspace
 
 	files []*config.File
 	model *model.Model
@@ -66,7 +66,7 @@ var (
 // New creates a new workspace
 func New(opts ...Option) *Workspace {
 	ws := &Workspace{
-		Workspace: joeconfig.NewWorkspace(),
+		ws: joeconfig.NewWorkspace(),
 	}
 	for _, o := range append(defaultOptions, opts...) {
 		o.apply(ws)
@@ -77,7 +77,7 @@ func New(opts ...Option) *Workspace {
 func withDefaultAction() optionFunc {
 	return func(w *Workspace) {
 		w.Action = cli.Pipeline(
-			w.Workspace.Action,
+			w.ws.Action,
 			FlagsAndArgs(),
 			ContextValue(w),
 		)
@@ -158,7 +158,6 @@ func (w *Workspace) loadFromUser() error {
 }
 
 func (w *Workspace) loadFromWorkspace() error {
-	w.LoadFiles(".pastiche")
 	root, err := filepath.Abs(".pastiche")
 	if err != nil {
 		return err
@@ -205,6 +204,14 @@ func (w *Workspace) loadFiles(root string) error {
 		w.files = append(w.files, file)
 		return nil
 	})
+}
+
+func (w *Workspace) Dir() string {
+	return w.ws.Dir()
+}
+
+func (w *Workspace) ConfigDir() string {
+	return w.ws.Dir()
 }
 
 func (w *Workspace) Env() iter.Seq2[string, string] {
