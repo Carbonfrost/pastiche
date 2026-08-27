@@ -45,6 +45,7 @@ func configServer(s *Server) config.Server {
 		Links:       configLinks(s.Links),
 		BaseURL:     s.BaseURL,
 		Headers:     s.Headers,
+		Query:       s.Query,
 		Vars:        s.Vars,
 	}
 }
@@ -61,6 +62,7 @@ func configResource(r *Resource) *config.Resource {
 		Links:       configLinks(r.Links),
 		URI:         uri,
 		Headers:     r.Headers,
+		Query:       r.Query,
 		Body:        r.Body,
 		RawBody:     r.RawBody,
 		Vars:        r.Vars,
@@ -119,6 +121,7 @@ func configEndpoint(r *Endpoint) *config.Endpoint {
 		Description: r.Description,
 		Links:       configLinks(r.Links),
 		Headers:     r.Headers,
+		Query:       r.Query,
 		Body:        r.Body,
 		RawBody:     r.RawBody,
 		Vars:        r.Vars,
