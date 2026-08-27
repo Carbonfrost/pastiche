@@ -26,21 +26,10 @@ const (
 	requestOptions = "Request options"
 )
 
-var httpMethods = []string{
-	"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "CONNECT", "OPTIONS", "TRACE",
-}
-
 type Request struct {
 	Spec   *model.ServiceSpec
 	Method string
 	Server string
-}
-
-type DescribeParams struct {
-	Spec   *model.ServiceSpec
-	Kind   model.ItemKind
-	Tags   []string
-	Method string
 }
 
 type ImportParams struct {
@@ -83,153 +72,6 @@ func Do() cli.Action {
 				FetchAndPrint(),
 			),
 		})
-}
-
-// Describe provides the action for describing a resource
-func Describe(paramsopt ...*DescribeParams) cli.Action {
-	if len(paramsopt) == 1 {
-		panic("not implemented")
-	}
-	return cli.Pipeline(
-		cli.Prototype{
-			Name:     "describe",
-			HelpText: "Describe resources within Pastiche workspace",
-		},
-		cli.HandleCommandNotFound(nil),
-		bind.Call2(describeSpec, bind.Context(), useDescribeParams()),
-	)
-}
-
-func describeSpec(c *cli.Context, params *DescribeParams) error {
-	mo := contextual.Workspace(c).Model()
-
-	results, err := mo.Search(params.SearchCriteria()).Results()
-	if err != nil {
-		return err
-	}
-
-	var services []*model.Service
-	for item := range results {
-		switch it := item.(type) {
-		case *model.Service:
-			services = append(services, it)
-		default:
-			panic("not implemented")
-		}
-	}
-
-	// A spec names the items which are expected to exist, so when the other
-	// criteria filter them all out, this is an error rather than empty output
-	if len(services) == 0 && params.Spec != nil && len(*params.Spec) > 0 {
-		if len(params.Tags) > 0 {
-			return fmt.Errorf("not found with tags %v: %q", params.Tags, params.Spec.Path())
-		}
-		return fmt.Errorf("not found: %q", params.Spec.Path())
-	}
-
-	return displayService(&model.Model{
-		Services: services,
-	})
-}
-
-// SearchCriteria obtains the criteria which the describe parameters select
-func (p *DescribeParams) SearchCriteria() *model.SearchCriteria {
-	return &model.SearchCriteria{
-		Spec:        p.Spec,
-		Kind:        p.Kind,
-		IncludeTags: p.Tags,
-		Method:      p.Method,
-	}
-}
-
-func displayService(m *model.Model) error {
-	data, _ := yaml.Marshal(model.ToConfig(m))
-	fmt.Println(string(data))
-	return nil
-}
-
-func useDescribeParams() bind.ActionBinder[*DescribeParams] {
-	return newParams(cli.Pipeline(
-		cli.Setup{
-			Uses: cli.Pipeline(
-				cli.AddArg(&cli.Arg{
-					Name:       "spec",
-					Value:      new(model.ServiceSpec),
-					Completion: completeServices(),
-					Uses:       setDescription,
-				}),
-				cli.AddFlags([]*cli.Flag{
-					{
-						Name:     "tags",
-						HelpText: "Filter items by tags",
-						Aliases:  []string{"t"},
-						Value:    new([]string),
-					},
-					{
-						Name:       "method",
-						Aliases:    []string{"X"},
-						UsageText:  "NAME",
-						HelpText:   "Search for endpoints which use the request method {NAME}",
-						Value:      new(string),
-						Completion: cli.ValueCompletion(httpMethods...),
-					},
-					{
-						Name:     "endpoint",
-						HelpText: "Search for endpoints",
-						Value:    new(bool),
-						Uses:     cli.Mutex("varset", "flow", "all"),
-					},
-					{
-						Name:     "varset",
-						Aliases:  []string{"V"},
-						HelpText: "Search for variable sets",
-						Value:    new(bool),
-						Uses:     cli.Mutex("endpoint", "flow", "all"),
-					},
-					{
-						Name:     "flow",
-						Aliases:  []string{"F"},
-						HelpText: "Search for flows",
-						Value:    new(bool),
-						Uses:     cli.Mutex("endpoint", "varset", "all"),
-					},
-					{
-						Name:     "all",
-						Aliases:  []string{"A"},
-						HelpText: "Search for all items",
-						Value:    new(bool),
-						Uses:     cli.Mutex("endpoint", "varset", "flow"),
-					},
-				}...),
-			),
-		},
-	),
-		func(c *cli.Context) (*DescribeParams, error) {
-			spec := c.Value("spec").(*model.ServiceSpec)
-			return &DescribeParams{
-				Spec:   spec,
-				Kind:   describeItemKind(c, spec),
-				Tags:   c.List("tags"),
-				Method: c.String("method"),
-			}, nil
-		},
-	)
-}
-
-func describeItemKind(c *cli.Context, spec *model.ServiceSpec) model.ItemKind {
-	switch {
-	case c.Bool("all"):
-		return model.ItemKindAll
-	case c.Bool("varset"):
-		return model.ItemKindVarSet
-	case c.Bool("flow"):
-		return model.ItemKindFlow
-	case c.Bool("endpoint"), c.Seen("method"):
-		return model.ItemKindEndpoint
-	case spec != nil && len(*spec) > 1:
-		return model.ItemKindResource
-	}
-	return model.ItemKindService
 }
 
 func useImportParams() bind.ActionBinder[*ImportParams] {

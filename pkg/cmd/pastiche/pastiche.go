@@ -52,7 +52,7 @@ func NewApp() *cli.App {
 		Commands: []*cli.Command{
 			{Name: "init", Uses: workspace.Init()},
 			{Name: "env", Uses: workspace.Env()},
-			{Name: "describe", Uses: client.Describe()},
+			{Name: "describe", Uses: workspace.Describe()},
 			{Name: "serve", Uses: server.Serve()},
 			{Name: "log", Uses: workspace.Log()},
 			{Name: "fetch", Uses: client.Do(),

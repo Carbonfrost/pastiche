@@ -23,6 +23,7 @@ import (
 	"github.com/Carbonfrost/pastiche/pkg/internal/contextkey"
 	"github.com/Carbonfrost/pastiche/pkg/internal/log"
 	"github.com/Carbonfrost/pastiche/pkg/model"
+	"sigs.k8s.io/yaml"
 )
 
 // Workspace represents the information about the Pastiche
@@ -253,6 +254,47 @@ func (w *Workspace) ClearLogDir() error {
 	}
 
 	_ = w.LogDir() // Recreate the directory
+	return nil
+}
+
+func (w *Workspace) Describe(c *model.SearchCriteria) error {
+	mo, err := w.Load()
+	if err != nil {
+		return err
+	}
+
+	results, err := mo.Search(c).Results()
+	if err != nil {
+		return err
+	}
+
+	var services []*model.Service
+	for item := range results {
+		switch it := item.(type) {
+		case *model.Service:
+			services = append(services, it)
+		default:
+			panic("not implemented")
+		}
+	}
+
+	// A spec names the items which are expected to exist, so when the other
+	// criteria filter them all out, this is an error rather than empty output
+	if len(services) == 0 && c.Spec != nil && len(*c.Spec) > 0 {
+		if len(c.IncludeTags) > 0 {
+			return fmt.Errorf("not found with tags %v: %q", c.IncludeTags, c.Spec.Path())
+		}
+		return fmt.Errorf("not found: %q", c.Spec.Path())
+	}
+
+	return displayService(&model.Model{
+		Services: services,
+	})
+}
+
+func displayService(m *model.Model) error {
+	data, _ := yaml.Marshal(model.ToConfig(m))
+	fmt.Println(string(data))
 	return nil
 }
 
