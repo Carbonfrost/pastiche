@@ -109,8 +109,8 @@ var _ = Describe("Config", func() {
 				"preprocessed.yml",
 				haveService(
 					PointTo(MatchFields(IgnoreExtras, Fields{"Servers": ConsistOf(config.Server{
-						Name:     "s",
-						Metadata: config.Metadata{Title: "t"},
+						Name:  "s",
+						Title: "t",
 					})})),
 				),
 			),
@@ -119,14 +119,12 @@ var _ = Describe("Config", func() {
 				"output.yml",
 				haveResource(
 					MatchFields(IgnoreExtras, Fields{"Output": ConsistOf(config.Output{
-						Name: "template",
-						Metadata: config.Metadata{
-							Title:       "Go Template",
-							Description: "Description",
-							Comment:     "Comment",
-							Links: []config.Link{
-								{Rel: "example", HRef: "https://example.com/go"},
-							},
+						Name:        "template",
+						Title:       "Go Template",
+						Description: "Description",
+						Comment:     "Comment",
+						Links: []config.Link{
+							{Rel: "example", HRef: "https://example.com/go"},
 						},
 						IncludeMetadata: true,
 						Template: &config.TemplateOutput{
@@ -151,14 +149,12 @@ var _ = Describe("Config", func() {
 				"vars",
 				"vars.ymlvars",
 				PointTo(MatchFields(IgnoreExtras, Fields{"VarSets": ConsistOf(config.VarSet{
-					Name: "@example/customers",
-					Metadata: config.Metadata{
-						Title:       "Customers",
-						Description: "Description",
-						Comment:     "Comment",
-						Links: []config.Link{
-							{Rel: "example", HRef: "https://example.com/go"},
-						},
+					Name:        "@example/customers",
+					Title:       "Customers",
+					Description: "Description",
+					Comment:     "Comment",
+					Links: []config.Link{
+						{Rel: "example", HRef: "https://example.com/go"},
 					},
 					Vars: map[string]map[string]any{
 						"one": map[string]any{

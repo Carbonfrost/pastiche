@@ -36,8 +36,9 @@ func NewInitServiceCommand() *InitServiceCommand {
 
 func (c *InitServiceCommand) toService() *config.Service {
 	return &config.Service{
-		Name:     c.Name,
-		Metadata: config.Metadata{Title: c.Title, Description: c.Description},
+		Name:        c.Name,
+		Title:       c.Title,
+		Description: c.Description,
 		Servers: []config.Server{
 			{
 				Name:    "default",
