@@ -10,13 +10,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/url"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/pastiche/pkg/internal/log"
+	modelhistory "github.com/Carbonfrost/pastiche/pkg/model/history"
 	"github.com/Carbonfrost/pastiche/pkg/workspace"
 )
 
@@ -131,12 +131,25 @@ func (h historyResponseBody) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func sprintURL(u *url.URL) *string {
-	if u == nil {
-		return nil
+func newHistoryFromEntry(e *modelhistory.LogEntry) *history {
+	return &history{
+		Timestamp: e.Timestamp,
+		Spec:      e.Spec,
+		URL:       e.URL,
+		Server:    e.Server,
+		Response: historyResponse{
+			Headers:    e.Response.Headers,
+			Status:     e.Response.Status,
+			StatusCode: e.Response.StatusCode,
+			Body:       &historyResponseBody{e.Response.Body},
+		},
+		Request: historyRequest{
+			Method:  e.Request.Method,
+			Headers: e.Request.Headers,
+		},
+		Vars:    e.Vars,
+		BaseURL: e.BaseURL,
 	}
-	s := u.String()
-	return &s
 }
 
 var _ json.Marshaler = (*historyResponseBody)(nil)

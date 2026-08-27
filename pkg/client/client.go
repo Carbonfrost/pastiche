@@ -5,12 +5,10 @@
 package client
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"os"
-	"time"
 
 	cli "github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
@@ -20,6 +18,7 @@ import (
 	"github.com/Carbonfrost/pastiche/pkg/grpcclient"
 	"github.com/Carbonfrost/pastiche/pkg/internal/build"
 	"github.com/Carbonfrost/pastiche/pkg/model"
+	modelhistory "github.com/Carbonfrost/pastiche/pkg/model/history"
 )
 
 //go:generate go tool counterfeiter -generate
@@ -187,29 +186,14 @@ func VarFromEnv(v *uritemplates.Var) *uritemplates.Var {
 func (c *Client) historyLog(ctx context.Context, r *httpclient.Response) (*history, io.Writer) {
 	resolver := c.locationResolver.(*serviceResolver)
 	req, _ := resolver.resolveRequest(ctx)
-	var vars map[string]any
-	if req != nil {
-		vars = req.Vars // TODO Would be better to separate input vars from compiled
-	}
-	var responseBody bytes.Buffer
-	return &history{
-		Timestamp: time.Now(), // TODO To be persnickety, should be the exact request timing
-		URL:       fmt.Sprint(r.Request.URL),
-		Spec:      *resolver.root(ctx),
-		Server:    resolver.server(ctx),
-		Response: historyResponse{
-			Headers:    r.Header,
-			Status:     r.Status,
-			StatusCode: r.StatusCode,
-			Body:       &historyResponseBody{&responseBody},
-		},
-		Request: historyRequest{
-			Headers: r.Request.Header,
-			Method:  r.Request.Method,
-		},
-		Vars:    vars,
-		BaseURL: sprintURL(resolver.base),
-	}, &responseBody
+	entry, bodyWriter := modelhistory.NewLogEntry( // TODO Would be better to separate input vars from compiled
+		*resolver.root(ctx), // TODO To be persnickety, should be the exact request timing
+		resolver.server(ctx),
+		resolver.base,
+		req,
+		r,
+	)
+	return newHistoryFromEntry(entry), bodyWriter
 }
 
 func (o Option) Execute(c context.Context) error {
