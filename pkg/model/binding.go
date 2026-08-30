@@ -55,8 +55,8 @@ func server(s config.Server) *Server {
 		Description: s.Description,
 		Tags:        s.Tags,
 		Title:       s.Title,
-		Headers:     s.Headers,
-		Query:       s.Query,
+		Headers:     valuesFromHeader(s.Headers),
+		Query:       valuesFromHeader(s.Query),
 		Links:       links(s.Links),
 		Vars:        s.Vars,
 		Auth:        auth(s.Auth),
@@ -73,13 +73,13 @@ func resource(r config.Resource) *Resource {
 		Description: r.Description,
 		Tags:        r.Tags,
 		URITemplate: uri,
-		Headers:     r.Headers,
-		Query:       r.Query,
+		Headers:     valuesFromHeader(r.Headers),
+		Query:       valuesFromHeader(r.Query),
 		Links:       links(r.Links),
 		Body:        r.Body,
 		RawBody:     r.RawBody,
 		Vars:        r.Vars,
-		Form:        r.Form,
+		Form:        valuesFromHeader(r.Form),
 		Auth:        auth(r.Auth),
 		Output:      outputs(r.Output),
 	}
@@ -132,13 +132,13 @@ func endpoint(method string, r *config.Endpoint) *Endpoint {
 		Description: r.Description,
 		Tags:        r.Tags,
 		Method:      method,
-		Headers:     r.Headers,
-		Query:       r.Query,
+		Headers:     valuesFromHeader(r.Headers),
+		Query:       valuesFromHeader(r.Query),
 		Links:       links(r.Links),
 		Body:        r.Body,
 		RawBody:     r.RawBody,
 		Vars:        r.Vars,
-		Form:        r.Form,
+		Form:        valuesFromHeader(r.Form),
 		Auth:        auth(r.Auth),
 		Output:      outputs(r.Output),
 	}
@@ -155,6 +155,41 @@ func links(links []config.Link) []Link {
 			Title:      l.Title,
 			Type:       l.Type,
 			IsTemplate: l.IsTemplate,
+		}
+	}
+	return res
+}
+
+func valuesFromHeader(h config.Values) Values {
+	if h == nil {
+		return nil
+	}
+
+	res := make(Values, len(h))
+	for i, value := range h {
+		res[i] = Value{
+			Name:     value.Name,
+			Values:   value.Values,
+			Value:    value.Value,
+			Optional: value.Optional,
+			Merge:    MergeMode(value.Merge), // Allowed because these underlying values are the same
+		}
+	}
+	return res
+}
+
+func values(v config.Values) Values {
+	if v == nil {
+		return nil
+	}
+	res := make(Values, len(v))
+	for i, e := range v {
+		res[i] = Value{
+			Name:     e.Name,
+			Value:    e.Value,
+			Values:   e.Values,
+			Optional: e.Optional,
+			Merge:    MergeMode(e.Merge),
 		}
 	}
 	return res
@@ -293,8 +328,8 @@ func step(s config.Step) *Step {
 		Tags:        s.Tags,
 		Links:       links(s.Links),
 		Method:      s.Method,
-		Headers:     s.Headers,
-		Form:        s.Form,
+		Headers:     valuesFromHeader(s.Headers),
+		Form:        valuesFromHeader(s.Form),
 		Body:        s.Body,
 		RawBody:     s.RawBody,
 		Vars:        s.Vars,

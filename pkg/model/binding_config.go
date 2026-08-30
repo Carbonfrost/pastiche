@@ -80,8 +80,8 @@ func configServer(s *Server) config.Server {
 		Description: s.Description,
 		Links:       configLinks(s.Links),
 		BaseURL:     s.BaseURL,
-		Headers:     s.Headers,
-		Query:       s.Query,
+		Headers:     headerFromValues(s.Headers),
+		Query:       headerFromValues(s.Query),
 		Vars:        s.Vars,
 	}
 }
@@ -98,12 +98,12 @@ func configResource(r *Resource) *config.Resource {
 		Description: r.Description,
 		Links:       configLinks(r.Links),
 		URI:         uri,
-		Headers:     r.Headers,
-		Query:       r.Query,
+		Headers:     headerFromValues(r.Headers),
+		Query:       headerFromValues(r.Query),
 		Body:        r.Body,
 		RawBody:     r.RawBody,
 		Vars:        r.Vars,
-		Form:        r.Form,
+		Form:        headerFromValues(r.Form),
 	}
 
 	for _, e := range r.Endpoints {
@@ -158,13 +158,47 @@ func configEndpoint(r *Endpoint) *config.Endpoint {
 		Title:       r.Title,
 		Description: r.Description,
 		Links:       configLinks(r.Links),
-		Headers:     r.Headers,
-		Query:       r.Query,
+		Headers:     headerFromValues(r.Headers),
+		Query:       headerFromValues(r.Query),
 		Body:        r.Body,
 		RawBody:     r.RawBody,
 		Vars:        r.Vars,
-		Form:        r.Form,
+		Form:        headerFromValues(r.Form),
 	}
+}
+
+func headerFromValues(v Values) config.Values {
+	if v == nil {
+		return nil
+	}
+	h := make(config.Values, len(v))
+	for i, e := range v {
+		h[i] = config.Value{
+			Values:   e.Values,
+			Name:     e.Name,
+			Value:    e.Value,
+			Optional: e.Optional,
+			Merge:    config.MergeMode(e.Merge), // Allowed because these underlying values are the same
+		}
+	}
+	return h
+}
+
+func configValues(v Values) config.Values {
+	if v == nil {
+		return nil
+	}
+	res := make(config.Values, len(v))
+	for i, e := range v {
+		res[i] = config.Value{
+			Name:     e.Name,
+			Value:    e.Value,
+			Values:   e.Values,
+			Optional: e.Optional,
+			Merge:    config.MergeMode(e.Merge),
+		}
+	}
+	return res
 }
 
 func configLinks(links []Link) []config.Link {

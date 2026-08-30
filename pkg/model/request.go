@@ -125,7 +125,7 @@ func (b *requestBuilder) build(r ResolvedResource) (*Request, error) {
 
 func bodyContent(r ResolvedResource, vars map[string]any) httpclient.Content {
 	if r.Endpoint().Form != nil {
-		return newFormContent(r.Endpoint().Form, vars)
+		return newFormContent(r.Endpoint().Form.toMap(), vars)
 	}
 	if r.Endpoint().Body != "" {
 		return newTemplateContent(r.Endpoint().Body, vars)
@@ -134,7 +134,7 @@ func bodyContent(r ResolvedResource, vars map[string]any) httpclient.Content {
 		return newRawContent(r.Endpoint().RawBody)
 	}
 	if r.Resource().Form != nil {
-		return newFormContent(r.Resource().Form, vars)
+		return newFormContent(r.Resource().Form.toMap(), vars)
 	}
 	if r.Resource().Body != "" {
 		return newTemplateContent(r.Resource().Body, vars)

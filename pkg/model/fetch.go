@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -35,14 +36,24 @@ func (f FetchCall) ToEndpoint() *Endpoint {
 	var decoded any
 
 	body = f.Options.Body
-	headers := http.Header{}
 
 	// Try interpreting body as JSON.
 	if err := json.Unmarshal([]byte(f.Options.Body), &decoded); err == nil {
 		body = decoded
 	}
-	for k, v := range f.Options.Headers {
-		headers.Set(k, v)
+
+	keys := make([]string, 0, len(f.Options.Headers))
+	for k := range f.Options.Headers {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	headers := make(Values, 0, len(keys))
+	for _, k := range keys {
+		headers = append(headers, Value{
+			Name:  http.CanonicalHeaderKey(k),
+			Value: f.Options.Headers[k],
+		})
 	}
 
 	return &Endpoint{

@@ -5,8 +5,6 @@
 package model
 
 import (
-	"net/http"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -55,40 +53,34 @@ var _ = Describe("reduceAuth", func() {
 	)
 })
 
-var _ = Describe("reduceHeader", func() {
+var _ = Describe("reduceValues", func() {
 
-	DescribeTable("examples", func(x, y, expected http.Header) {
-		Expect(reduceHeader(x, y)).To(Equal(expected))
+	DescribeTable("examples", func(x, y, expected Values) {
+		Expect(reduceValues(x, y)).To(Equal(expected))
 	},
 		Entry(
 			"empty",
-			http.Header{},
-			http.Header{"A": {"A"}},
-			http.Header{"A": {"A"}},
+			Values{},
+			Values{{Name: "A", Value: "A"}},
+			Values{{Name: "A", Value: "A"}},
 		),
 		Entry(
 			"nominal",
-			http.Header{"A": {"A"}},
-			http.Header{"B": {"B"}},
-			http.Header{"A": {"A"}, "B": {"B"}},
+			Values{{Name: "A", Value: "A"}},
+			Values{{Name: "B", Value: "B"}},
+			Values{{Name: "A", Value: "A"}, {Name: "B", Value: "B"}},
 		),
 		Entry(
-			"overwrite",
-			http.Header{"A": {"1"}},
-			http.Header{"A": {"2"}},
-			http.Header{"A": {"2"}},
+			"overwrite (replace is the default)",
+			Values{{Name: "A", Value: "1"}},
+			Values{{Name: "A", Value: "2"}},
+			Values{{Name: "A", Value: "2"}},
 		),
 		Entry(
-			"merge",
-			http.Header{"A": {"1"}},
-			http.Header{"+A": {"2"}},
-			http.Header{"A": {"1", "2"}},
-		),
-		Entry(
-			"delete",
-			http.Header{"A": {"1", "2", "3"}},
-			http.Header{"-A": {"2"}},
-			http.Header{"A": {"1", "3"}},
+			"append",
+			Values{{Name: "A", Value: "1"}},
+			Values{{Name: "A", Value: "2", Merge: MergeAppend}},
+			Values{{Name: "A", Values: []string{"1", "2"}, Merge: MergeAppend}},
 		),
 	)
 })

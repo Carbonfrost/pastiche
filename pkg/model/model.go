@@ -57,9 +57,9 @@ type Server struct {
 	Tags        []string
 	Title       string
 	BaseURL     string
-	Headers     map[string][]string
-	Query       map[string][]string
-	Form        map[string][]string
+	Headers     Values
+	Query       Values
+	Form        Values
 	Links       []Link
 	Vars        map[string]any
 	Auth        Auth
@@ -75,9 +75,9 @@ type Resource struct {
 	Resources   []*Resource
 	Endpoints   []*Endpoint
 	URITemplate *uritemplates.URITemplate
-	Headers     map[string][]string
-	Query       map[string][]string
-	Form        map[string][]string
+	Headers     Values
+	Query       Values
+	Form        Values
 	Links       []Link
 	Command     []string
 	Body        any
@@ -94,9 +94,9 @@ type Endpoint struct {
 	Description string
 	Tags        []string
 	Method      string
-	Headers     map[string][]string
-	Query       map[string][]string
-	Form        map[string][]string
+	Headers     Values
+	Query       Values
+	Form        Values
 	Links       []Link
 	Body        any
 	RawBody     any
@@ -154,8 +154,8 @@ type Step struct {
 	Tags        []string
 	Links       []Link
 	Method      string
-	Headers     map[string][]string
-	Form        map[string][]string
+	Headers     Values
+	Form        Values
 	Body        any
 	RawBody     any
 	Vars        map[string]any
@@ -554,25 +554,25 @@ func (r *resolvedResource) Output() []*OutputConfig {
 func resolveHeaders(r ResolvedResource) http.Header {
 	return locate(
 		r,
-		reduceHeader,
-		http.Header{},
-		func(d *Endpoint) http.Header { return d.Headers },
-		func(r *Resource) http.Header { return r.Headers },
-		func(s *Server) http.Header { return s.Headers },
+		reduceValues,
+		Values{},
+		func(d *Endpoint) Values { return d.Headers },
+		func(r *Resource) Values { return r.Headers },
+		func(s *Server) Values { return s.Headers },
 		nil,
-	)
+	).ToHeader()
 }
 
 func resolveQuery(r ResolvedResource) url.Values {
 	return locate(
 		r,
-		reduceHeader,
-		url.Values{},
-		func(d *Endpoint) url.Values { return d.Query },
-		func(r *Resource) url.Values { return r.Query },
-		func(s *Server) url.Values { return s.Query },
+		reduceValues,
+		Values{},
+		func(d *Endpoint) Values { return d.Query },
+		func(r *Resource) Values { return r.Query },
+		func(s *Server) Values { return s.Query },
 		nil,
-	)
+	).ToURLValues()
 }
 
 func resolveVars(r ResolvedResource) map[string]any {
@@ -650,7 +650,7 @@ func locate[T any](
 
 func (r *resolvedResource) bodyContent(vars map[string]any) httpclient.Content {
 	if r.Endpoint().Form != nil {
-		return newFormContent(r.Endpoint().Form, vars)
+		return newFormContent(r.Endpoint().Form.toMap(), vars)
 	}
 	if r.Endpoint().Body != "" {
 		return newTemplateContent(r.Endpoint().Body, vars)
@@ -659,7 +659,7 @@ func (r *resolvedResource) bodyContent(vars map[string]any) httpclient.Content {
 		return newRawContent(r.Endpoint().RawBody)
 	}
 	if r.Resource().Form != nil {
-		return newFormContent(r.Resource().Form, vars)
+		return newFormContent(r.Resource().Form.toMap(), vars)
 	}
 	if r.Resource().Body != "" {
 		return newTemplateContent(r.Resource().Body, vars)
@@ -717,25 +717,6 @@ func reduceAuth(x, y Auth) Auth {
 		}
 	}
 	return y
-}
-
-func reduceHeader[H ~map[string][]string](x, y H) H {
-	for k, v := range y {
-		if name, ok := strings.CutPrefix(k, "+"); ok {
-			x[name] = append(x[name], v...)
-
-		} else if name, ok := strings.CutPrefix(k, "-"); ok {
-			x[name] = slices.DeleteFunc(
-				x[name],
-				func(m string) bool {
-					return slices.Contains(v, m)
-				},
-			)
-		} else {
-			x[k] = v
-		}
-	}
-	return x
 }
 
 func reduceVars(x, y map[string]any) map[string]any {

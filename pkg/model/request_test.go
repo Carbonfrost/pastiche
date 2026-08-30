@@ -6,7 +6,6 @@ package model_test
 
 import (
 	"fmt"
-	"net/http"
 	"net/url"
 	"slices"
 
@@ -126,17 +125,16 @@ var _ = Describe("NewRequest", func() {
 	})
 })
 
-func newHeader(namevalues ...string) http.Header {
+func newHeader(namevalues ...string) model.Values {
 	if len(namevalues)%2 != 0 {
 		panic(fmt.Errorf("requires even number of arguments, got %d", len(namevalues)))
 	}
-	m := make(map[string][]string, len(namevalues)/2)
+	v := make(model.Values, 0, len(namevalues)/2)
 	for kvp := range slices.Chunk(namevalues, 2) {
-		key := kvp[0]
-		m[key] = []string{kvp[1]}
+		v = append(v, model.Value{Name: kvp[0], Value: kvp[1]})
 	}
 
-	return m
+	return v
 }
 
 func mustParseURL(t string) *url.URL {

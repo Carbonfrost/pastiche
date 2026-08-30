@@ -175,19 +175,19 @@ var _ = Describe("Header", func() {
 					Servers: []config.Server{
 						{
 							Name:    "default",
-							Headers: config.Header{"X-From-Server": []string{"server"}},
+							Headers: config.ValuesFromMap(map[string][]string{"X-From-Server": []string{"server"}}),
 						},
 					},
 					Resources: []config.Resource{
 						{
 							Name:    "b",
-							Headers: config.Header{"X-Nested": []string{"b"}},
+							Headers: config.ValuesFromMap(map[string][]string{"X-Nested": []string{"b"}}),
 							Resources: []config.Resource{
 								{
 									Name:    "c",
-									Headers: config.Header{"X-From-Resource": []string{"resource"}},
+									Headers: config.ValuesFromMap(map[string][]string{"X-From-Resource": []string{"resource"}}),
 									Get: &config.Endpoint{
-										Headers: config.Header{"X-From-Endpoint": []string{"endpoint"}},
+										Headers: config.ValuesFromMap(map[string][]string{"X-From-Endpoint": []string{"endpoint"}}),
 									},
 								},
 							},
@@ -216,11 +216,11 @@ var _ = Describe("Header", func() {
 					Servers: []config.Server{
 						{
 							Name: "default",
-							Headers: config.Header{
+							Headers: config.ValuesFromMap(map[string][]string{
 								"Test": []string{"${var}"},
 								"S":    []string{"${varServer}"},
 								"R":    []string{"${varResource}"},
-							},
+							}),
 							Vars: map[string]any{
 								"varServer": "endpoint value from S var set",
 							},

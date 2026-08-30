@@ -216,10 +216,10 @@ var _ = Describe("Config", func() {
 				haveResources(ContainElement(
 					config.Resource{
 						Name: "r",
-						Query: map[string][]string{
+						Query: config.ValuesFromMap(map[string][]string{
 							"p": []string{"a"},
 							"q": []string{"a", "r"},
-						},
+						}),
 					},
 				)),
 			),

@@ -38,6 +38,9 @@ type Service struct {
 	Output    []Output       `json:"output,omitempty"`
 }
 
+type Header = Values
+type Form = Values
+
 type Server struct {
 	Schema string `json:"$schema,omitempty"`
 	Name   string `json:"name"`
