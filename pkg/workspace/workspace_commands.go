@@ -45,11 +45,7 @@ var httpMethods = []string{
 
 // Init provides the action for initializing a new service definition
 func Init(paramsopt ...*InitParams) Action {
-	if len(paramsopt) == 1 {
-		panic("not implemented")
-	}
-
-	params := useInitParams()
+	params := exactOrUse(useInitParams, paramsopt)
 	return cli.Pipeline(
 		cli.Prototype{
 			Name:     "init",
@@ -199,16 +195,14 @@ func SetDisableValidation() Action {
 
 // Describe provides the action for describing a resource
 func Describe(paramsopt ...*DescribeParams) cli.Action {
-	if len(paramsopt) == 1 {
-		panic("not implemented")
-	}
+	params := exactOrUse(useDescribeParams, paramsopt)
 	return cli.Pipeline(
 		cli.Prototype{
 			Name:     "describe",
 			HelpText: "Describe resources within Pastiche workspace",
 		},
 		cli.HandleCommandNotFound(nil),
-		bind.Call2(describeSpec, bind.Context(), useDescribeParams()),
+		bind.Call2(describeSpec, bind.Context(), params),
 	)
 }
 
@@ -342,4 +336,14 @@ func setDescription(c *cli.Context) error {
 	return c.SetDescription(
 		c.Template("PasticheServices").BindFunc(servicesData),
 	)
+}
+
+func exactOrUse[T any](useFactory func() bind.ActionBinder[T], paramsopt []T) bind.Binder[T] {
+	switch len(paramsopt) {
+	case 1:
+		return bind.Exact(paramsopt[0])
+	case 0:
+		return useFactory()
+	}
+	panic("expected 0 or 1 arg")
 }
