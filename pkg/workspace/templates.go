@@ -74,6 +74,7 @@ func applyInitTemplate(cmd *InitServiceCommand) cli.Action {
 				"ServiceName": cmd.Name,
 			},
 			template.File("{{ .ServiceName }}.yml", yamlContents(cmd.toService())),
+			template.File(".gitignore", template.ContentsString("/logs")),
 		),
 	)
 }
