@@ -19,6 +19,7 @@ import (
 	"github.com/Carbonfrost/pastiche/pkg/internal/build"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 	modelhistory "github.com/Carbonfrost/pastiche/pkg/model/history"
+	"github.com/Carbonfrost/pastiche/pkg/workspace/logs"
 )
 
 //go:generate go tool counterfeiter -generate
@@ -183,7 +184,7 @@ func VarFromEnv(v *uritemplates.Var) *uritemplates.Var {
 	}
 }
 
-func (c *Client) historyLog(ctx context.Context, r *httpclient.Response) (*history, io.Writer) {
+func (c *Client) historyLog(ctx context.Context, r *httpclient.Response) (*logs.Entry, io.Writer) {
 	resolver := c.locationResolver.(*serviceResolver)
 	req, _ := resolver.resolveRequest(ctx)
 	entry, bodyWriter := modelhistory.NewLogEntry( // TODO Would be better to separate input vars from compiled
@@ -193,7 +194,7 @@ func (c *Client) historyLog(ctx context.Context, r *httpclient.Response) (*histo
 		req,
 		r,
 	)
-	return newHistoryFromEntry(entry), bodyWriter
+	return logs.NewEntry(entry), bodyWriter
 }
 
 func (o Option) Execute(c context.Context) error {

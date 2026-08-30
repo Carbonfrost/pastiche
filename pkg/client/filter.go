@@ -24,6 +24,7 @@ import (
 	"github.com/Carbonfrost/joe-cli/extensions/provider"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 	"github.com/Carbonfrost/pastiche/pkg/template/funcs"
+	"github.com/Carbonfrost/pastiche/pkg/workspace/logs"
 	"github.com/antchfx/xmlquery"
 	"github.com/antchfx/xpath"
 	"github.com/jmespath/go-jmespath"
@@ -140,7 +141,7 @@ type filteredWriter struct {
 
 	output  io.Writer
 	filter  Filter
-	history *history
+	history *logs.Entry
 
 	contentType string
 	ctx         context.Context
@@ -154,9 +155,9 @@ type namedOutputFilter struct {
 type rawFilter struct{}
 
 type metaResponse struct {
-	Schema string   `json:"$schema"`
-	Meta   *history `json:"$meta"`
-	Result any      `json:"result"`
+	Schema string      `json:"$schema"`
+	Meta   *logs.Entry `json:"$meta"`
+	Result any         `json:"result"`
 }
 
 var (
@@ -394,7 +395,7 @@ func NewNamedOutputFilter(name string) Filter {
 	}
 }
 
-func newFilteredWriter(output io.Writer, f Filter, h *history, ct string, ctx context.Context) *filteredWriter {
+func newFilteredWriter(output io.Writer, f Filter, h *logs.Entry, ct string, ctx context.Context) *filteredWriter {
 	return &filteredWriter{
 		Buffer:      new(bytes.Buffer),
 		output:      output,
@@ -410,7 +411,7 @@ func (f *filteredDownload) OpenDownload(ctx context.Context, r *joehttpclient.Re
 	if err != nil {
 		return nil, err
 	}
-	var h *history
+	var h *logs.Entry
 	if f.history != nil {
 		h, _ = f.history(ctx, r)
 	}

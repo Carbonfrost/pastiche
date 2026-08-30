@@ -5,48 +5,12 @@
 package client
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
 	"io"
-	"os"
-	"path/filepath"
-	"time"
 
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/pastiche/pkg/internal/log"
-	modelhistory "github.com/Carbonfrost/pastiche/pkg/model/history"
-	"github.com/Carbonfrost/pastiche/pkg/workspace"
-)
-
-type (
-	history struct {
-		Timestamp time.Time       `json:"ts"`
-		Spec      []string        `json:"spec"`
-		URL       string          `json:"url"`
-		Server    string          `json:"server,omitempty"`
-		Response  historyResponse `json:"response"`
-		Request   historyRequest  `json:"request"`
-		Vars      map[string]any  `json:"vars,omitempty"`
-		BaseURL   *string         `json:"baseUrl"`
-	}
-
-	historyResponse struct {
-		Headers    map[string][]string  `json:"headers,omitempty"`
-		Status     string               `json:"status"`
-		StatusCode int                  `json:"statusCode"`
-		Body       *historyResponseBody `json:"body"`
-	}
-
-	historyResponseBody struct {
-		buffer *bytes.Buffer
-	}
-
-	historyRequest struct {
-		Method  string              `json:"method"`
-		Headers map[string][]string `json:"headers,omitempty"`
-	}
+	"github.com/Carbonfrost/pastiche/pkg/workspace/logs"
 )
 
 type historyDownloader struct {
@@ -57,12 +21,12 @@ type historyDownloader struct {
 
 type historyWriter struct {
 	io.Writer
-	logDir  string
+	log     *logs.Log
 	output  io.Closer
-	history *history
+	history *logs.Entry
 }
 
-type historyGenerator func(context.Context, *httpclient.Response) (history *history, responseBody io.Writer)
+type historyGenerator func(context.Context, *httpclient.Response) (history *logs.Entry, responseBody io.Writer)
 
 func newHistoryDownloader(d httpclient.Downloader, factory historyGenerator) httpclient.Downloader {
 	return historyDownloader{
@@ -83,9 +47,8 @@ func (h historyDownloader) OpenDownload(ctx context.Context, r *httpclient.Respo
 		c = io.NopCloser(nil)
 	}
 
-	ws := workspace.FromContext(ctx)
 	return &historyWriter{
-		logDir:  ws.LogDir(),
+		log:     logs.FromContext(ctx),
 		Writer:  io.MultiWriter(output, responseBody),
 		output:  c,
 		history: history,
@@ -93,63 +56,11 @@ func (h historyDownloader) OpenDownload(ctx context.Context, r *httpclient.Respo
 }
 
 func (w *historyWriter) Close() error {
-	fileName := filepath.Join(w.logDir, fmt.Sprintf("requests.%s.json", time.Now().Format("2006-01-02")))
-
 	// TODO Improve handling of errors
-	f, err := os.OpenFile(fileName, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		return nil
-	}
-
-	defer f.Close()
-
-	logLines, err := json.Marshal(w.history)
-	if err != nil {
+	if err := w.log.Append(w.history); err != nil {
 		log.Warn(err)
 		return nil
 	}
-	_, err = f.Write(logLines)
-	if err != nil {
-		log.Warn(err)
-		return nil
-	}
-
-	_, _ = f.Write([]byte("\n"))
 
 	return w.output.Close()
 }
-
-func (h historyResponseBody) MarshalJSON() ([]byte, error) {
-	if json.Valid(h.buffer.Bytes()) {
-		return json.Marshal(map[string]any{
-			"json": json.RawMessage(h.buffer.Bytes()),
-		})
-	}
-
-	return json.Marshal(map[string]any{
-		"text": h.buffer.String(),
-	})
-}
-
-func newHistoryFromEntry(e *modelhistory.LogEntry) *history {
-	return &history{
-		Timestamp: e.Timestamp,
-		Spec:      e.Spec,
-		URL:       e.URL,
-		Server:    e.Server,
-		Response: historyResponse{
-			Headers:    e.Response.Headers,
-			Status:     e.Response.Status,
-			StatusCode: e.Response.StatusCode,
-			Body:       &historyResponseBody{e.Response.Body},
-		},
-		Request: historyRequest{
-			Method:  e.Request.Method,
-			Headers: e.Request.Headers,
-		},
-		Vars:    e.Vars,
-		BaseURL: e.BaseURL,
-	}
-}
-
-var _ json.Marshaler = (*historyResponseBody)(nil)

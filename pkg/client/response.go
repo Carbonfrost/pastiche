@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/Carbonfrost/pastiche/pkg/workspace/logs"
 	"github.com/antchfx/xmlquery"
 )
 
@@ -23,7 +24,7 @@ type Response interface {
 
 type jsonResponse struct {
 	data    []byte
-	history *history
+	history *logs.Entry
 }
 
 type xmlResponse struct {
