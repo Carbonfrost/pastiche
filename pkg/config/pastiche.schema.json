@@ -1,0 +1,912 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Carbonfrost/pastiche/docs/pastiche.schema.json",
+  "title": "Pastiche configuration file",
+  "description": "A Pastiche configuration file. The file either defines a single service inline, in which case the fields of that service appear at the top level, or defines a list of services, but not both. Flows and variable sets may accompany either form.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Identifies the schema of this document."
+    },
+    "name": {
+      "type": "string",
+      "description": "Name of the service, conventionally @org/name."
+    },
+    "source": {
+      "type": "string",
+      "description": "Path of another file, relative to this one, whose contents define this service."
+    },
+    "comment": {
+      "type": "string",
+      "description": "Internal comment; not intended for display."
+    },
+    "title": {
+      "type": "string",
+      "description": "Short display name."
+    },
+    "description": {
+      "type": "string",
+      "description": "Longer description."
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/link"
+      }
+    },
+    "servers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/server"
+      }
+    },
+    "resources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/resource"
+      }
+    },
+    "vars": {
+      "$ref": "#/$defs/vars"
+    },
+    "client": {
+      "$ref": "#/$defs/client"
+    },
+    "auth": {
+      "$ref": "#/$defs/auth"
+    },
+    "output": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/output"
+      }
+    },
+    "services": {
+      "type": "array",
+      "description": "Services defined by this file. Mutually exclusive with an inline service definition.",
+      "items": {
+        "$ref": "#/$defs/service"
+      }
+    },
+    "varSets": {
+      "type": "array",
+      "description": "Named sets of variables that can be applied to requests.",
+      "items": {
+        "$ref": "#/$defs/varSet"
+      }
+    },
+    "flows": {
+      "type": "array",
+      "description": "Flows, which are ordered sequences of requests.",
+      "items": {
+        "$ref": "#/$defs/flow"
+      }
+    }
+  },
+  "patternProperties": {
+    "^\\.": {
+      "description": "Root-level keys beginning with a period are removed before the file is read, and so may be used to hold YAML anchors."
+    }
+  },
+  "additionalProperties": false,
+  "dependentSchemas": {
+    "services": {
+      "description": "A file contains either a service definition or a services list, but not both.",
+      "not": {
+        "anyOf": [
+          {
+            "required": [
+              "name"
+            ]
+          },
+          {
+            "required": [
+              "source"
+            ]
+          },
+          {
+            "required": [
+              "comment"
+            ]
+          },
+          {
+            "required": [
+              "title"
+            ]
+          },
+          {
+            "required": [
+              "description"
+            ]
+          },
+          {
+            "required": [
+              "tags"
+            ]
+          },
+          {
+            "required": [
+              "links"
+            ]
+          },
+          {
+            "required": [
+              "servers"
+            ]
+          },
+          {
+            "required": [
+              "resources"
+            ]
+          },
+          {
+            "required": [
+              "vars"
+            ]
+          },
+          {
+            "required": [
+              "client"
+            ]
+          },
+          {
+            "required": [
+              "auth"
+            ]
+          },
+          {
+            "required": [
+              "output"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "link": {
+      "type": "object",
+      "properties": {
+        "href": {
+          "type": "string",
+          "description": "Target of the link."
+        },
+        "hrefLang": {
+          "type": "string",
+          "description": "Language of the linked resource."
+        },
+        "audience": {
+          "type": "string",
+          "description": "Intended audience of the linked resource."
+        },
+        "rel": {
+          "type": "string",
+          "description": "Relationship of the linked resource to the current one."
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "description": "Media type of the linked resource."
+        },
+        "isTemplate": {
+          "type": "boolean",
+          "description": "Whether href is a URI template."
+        }
+      },
+      "additionalProperties": false
+    },
+    "header": {
+      "type": "object",
+      "description": "Key-value pairs. A value is either a single string or a list of strings.",
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "vars": {
+      "type": "object",
+      "description": "Variables available to the enclosing element and everything within it.",
+      "additionalProperties": true
+    },
+    "service": {
+      "type": "object",
+      "anyOf": [
+        {
+          "required": [
+            "name"
+          ]
+        },
+        {
+          "required": [
+            "source"
+          ]
+        }
+      ],
+      "properties": {
+        "$schema": {
+          "type": "string",
+          "description": "Identifies the schema of this element."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the service, conventionally @org/name."
+        },
+        "source": {
+          "type": "string",
+          "description": "Path of another file, relative to this one, whose contents define this service."
+        },
+        "comment": {
+          "type": "string",
+          "description": "Internal comment; not intended for display."
+        },
+        "title": {
+          "type": "string",
+          "description": "Short display name."
+        },
+        "description": {
+          "type": "string",
+          "description": "Longer description."
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/link"
+          }
+        },
+        "servers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/server"
+          }
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/resource"
+          }
+        },
+        "vars": {
+          "$ref": "#/$defs/vars"
+        },
+        "client": {
+          "$ref": "#/$defs/client"
+        },
+        "auth": {
+          "$ref": "#/$defs/auth"
+        },
+        "output": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/output"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "server": {
+      "type": "object",
+      "anyOf": [
+        {
+          "required": [
+            "name"
+          ]
+        },
+        {
+          "required": [
+            "source"
+          ]
+        }
+      ],
+      "properties": {
+        "$schema": {
+          "type": "string",
+          "description": "Identifies the schema of this element."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the server, such as production or local."
+        },
+        "source": {
+          "type": "string",
+          "description": "Path of another file, relative to this one, whose contents define this server."
+        },
+        "comment": {
+          "type": "string",
+          "description": "Internal comment; not intended for display."
+        },
+        "title": {
+          "type": "string",
+          "description": "Short display name."
+        },
+        "description": {
+          "type": "string",
+          "description": "Longer description."
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/link"
+          }
+        },
+        "baseUrl": {
+          "type": "string",
+          "description": "Base URL to which resource URIs are resolved."
+        },
+        "headers": {
+          "$ref": "#/$defs/header"
+        },
+        "query": {
+          "$ref": "#/$defs/header"
+        },
+        "vars": {
+          "$ref": "#/$defs/vars"
+        },
+        "auth": {
+          "$ref": "#/$defs/auth"
+        },
+        "output": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/output"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "resource": {
+      "type": "object",
+      "anyOf": [
+        {
+          "required": [
+            "name"
+          ]
+        },
+        {
+          "required": [
+            "source"
+          ]
+        }
+      ],
+      "properties": {
+        "$schema": {
+          "type": "string",
+          "description": "Identifies the schema of this element."
+        },
+        "name": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string",
+          "description": "Path of another file, relative to this one, whose contents define this resource."
+        },
+        "comment": {
+          "type": "string",
+          "description": "Internal comment; not intended for display."
+        },
+        "title": {
+          "type": "string",
+          "description": "Short display name."
+        },
+        "description": {
+          "type": "string",
+          "description": "Longer description."
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/link"
+          }
+        },
+        "resources": {
+          "type": "array",
+          "description": "Nested resources, addressed relative to this one.",
+          "items": {
+            "$ref": "#/$defs/resource"
+          }
+        },
+        "uri": {
+          "type": "string",
+          "description": "URI of the resource, which may contain {name} placeholders."
+        },
+        "headers": {
+          "$ref": "#/$defs/header"
+        },
+        "query": {
+          "$ref": "#/$defs/header"
+        },
+        "form": {
+          "$ref": "#/$defs/header"
+        },
+        "get": {
+          "$ref": "#/$defs/endpoint"
+        },
+        "put": {
+          "$ref": "#/$defs/endpoint"
+        },
+        "post": {
+          "$ref": "#/$defs/endpoint"
+        },
+        "delete": {
+          "$ref": "#/$defs/endpoint"
+        },
+        "options": {
+          "$ref": "#/$defs/endpoint"
+        },
+        "head": {
+          "$ref": "#/$defs/endpoint"
+        },
+        "trace": {
+          "$ref": "#/$defs/endpoint"
+        },
+        "patch": {
+          "$ref": "#/$defs/endpoint"
+        },
+        "body": {
+          "description": "Request body, which is templated before it is sent."
+        },
+        "rawBody": {
+          "description": "Request body, which is sent without templating."
+        },
+        "vars": {
+          "$ref": "#/$defs/vars"
+        },
+        "auth": {
+          "$ref": "#/$defs/auth"
+        },
+        "output": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/output"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "endpoint": {
+      "type": "object",
+      "description": "Overrides that apply to one HTTP method of the enclosing resource.",
+      "properties": {
+        "$schema": {
+          "type": "string",
+          "description": "Identifies the schema of this element."
+        },
+        "name": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string",
+          "description": "Path of another file, relative to this one, whose contents define this endpoint."
+        },
+        "comment": {
+          "type": "string",
+          "description": "Internal comment; not intended for display."
+        },
+        "title": {
+          "type": "string",
+          "description": "Short display name."
+        },
+        "description": {
+          "type": "string",
+          "description": "Longer description."
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/link"
+          }
+        },
+        "headers": {
+          "$ref": "#/$defs/header"
+        },
+        "query": {
+          "$ref": "#/$defs/header"
+        },
+        "form": {
+          "$ref": "#/$defs/header"
+        },
+        "body": {
+          "description": "Request body, which is templated before it is sent."
+        },
+        "rawBody": {
+          "description": "Request body, which is sent without templating."
+        },
+        "vars": {
+          "$ref": "#/$defs/vars"
+        },
+        "auth": {
+          "$ref": "#/$defs/auth"
+        },
+        "output": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/output"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "varSet": {
+      "type": "object",
+      "anyOf": [
+        {
+          "required": [
+            "name"
+          ]
+        },
+        {
+          "required": [
+            "source"
+          ]
+        }
+      ],
+      "properties": {
+        "$schema": {
+          "type": "string",
+          "description": "Identifies the schema of this element."
+        },
+        "name": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string",
+          "description": "Path of another file, relative to this one, whose contents define this variable set."
+        },
+        "comment": {
+          "type": "string",
+          "description": "Internal comment; not intended for display."
+        },
+        "title": {
+          "type": "string",
+          "description": "Short display name."
+        },
+        "description": {
+          "type": "string",
+          "description": "Longer description."
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/link"
+          }
+        },
+        "vars": {
+          "type": "object",
+          "description": "Variables, keyed by the name of the variant that provides them.",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "client": {
+      "type": "object",
+      "description": "Transport-specific client settings.",
+      "properties": {
+        "http": {
+          "type": "object",
+          "description": "HTTP client settings.",
+          "properties": {},
+          "additionalProperties": false
+        },
+        "grpc": {
+          "type": "object",
+          "description": "gRPC client settings.",
+          "properties": {
+            "disableReflection": {
+              "type": "boolean",
+              "description": "Do not use server reflection to discover the service definition."
+            },
+            "protoset": {
+              "type": "string",
+              "description": "Path of a compiled protoset file describing the service, resolved relative to the file that declares it."
+            },
+            "plaintext": {
+              "type": "boolean",
+              "description": "Connect without TLS."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "auth": {
+      "type": "object",
+      "properties": {
+        "basic": {
+          "type": "object",
+          "description": "HTTP basic authentication.",
+          "properties": {
+            "user": {
+              "type": "string"
+            },
+            "password": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "output": {
+      "type": "object",
+      "description": "How to render the response. One renderer should be specified.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "comment": {
+          "type": "string",
+          "description": "Internal comment; not intended for display."
+        },
+        "title": {
+          "type": "string",
+          "description": "Short display name."
+        },
+        "description": {
+          "type": "string",
+          "description": "Longer description."
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/link"
+          }
+        },
+        "includeMetadata": {
+          "type": "boolean",
+          "description": "Include response metadata, such as status and headers, in the rendered output."
+        },
+        "template": {
+          "type": "object",
+          "description": "Render using a Go template.",
+          "properties": {
+            "text": {
+              "type": "string",
+              "description": "Template text, given inline."
+            },
+            "file": {
+              "type": "string",
+              "description": "Path of a template file, resolved relative to the file that declares it."
+            }
+          },
+          "additionalProperties": false
+        },
+        "jmespath": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "JMESPath expression applied to the response."
+            }
+          },
+          "additionalProperties": false
+        },
+        "xpath": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "XPath expression applied to the response."
+            }
+          },
+          "additionalProperties": false
+        },
+        "dig": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Dig expression applied to the response."
+            }
+          },
+          "additionalProperties": false
+        },
+        "json": {
+          "type": "object",
+          "properties": {
+            "pretty": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "xml": {
+          "type": "object",
+          "properties": {
+            "pretty": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "yaml": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "flow": {
+      "type": "object",
+      "anyOf": [
+        {
+          "required": [
+            "name"
+          ]
+        },
+        {
+          "required": [
+            "source"
+          ]
+        }
+      ],
+      "properties": {
+        "$schema": {
+          "type": "string",
+          "description": "Identifies the schema of this element."
+        },
+        "name": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string",
+          "description": "Path of another file, relative to this one, whose contents define this flow."
+        },
+        "comment": {
+          "type": "string",
+          "description": "Internal comment; not intended for display."
+        },
+        "title": {
+          "type": "string",
+          "description": "Short display name."
+        },
+        "description": {
+          "type": "string",
+          "description": "Longer description."
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/link"
+          }
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/step"
+          }
+        },
+        "vars": {
+          "$ref": "#/$defs/vars"
+        }
+      },
+      "additionalProperties": false
+    },
+    "step": {
+      "type": "object",
+      "description": "One request in a flow, addressed either by spec or by url.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "comment": {
+          "type": "string",
+          "description": "Internal comment; not intended for display."
+        },
+        "title": {
+          "type": "string",
+          "description": "Short display name."
+        },
+        "description": {
+          "type": "string",
+          "description": "Longer description."
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/link"
+          }
+        },
+        "method": {
+          "type": "string",
+          "description": "HTTP method to use for the request."
+        },
+        "headers": {
+          "$ref": "#/$defs/header"
+        },
+        "form": {
+          "$ref": "#/$defs/header"
+        },
+        "body": {
+          "description": "Request body, which is templated before it is sent."
+        },
+        "rawBody": {
+          "description": "Request body, which is sent without templating."
+        },
+        "vars": {
+          "$ref": "#/$defs/vars"
+        },
+        "spec": {
+          "type": "string",
+          "description": "Service resource spec to invoke, such as @org/service.resource."
+        },
+        "url": {
+          "type": "string",
+          "description": "URL to invoke, as an alternative to spec."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
