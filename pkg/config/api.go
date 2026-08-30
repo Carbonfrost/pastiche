@@ -202,6 +202,14 @@ type Step struct {
 	URL     string         `json:"url,omitempty"`
 }
 
+const (
+	SchemaFile     = "pastiche:file"
+	SchemaService  = "pastiche:service"
+	SchemaServer   = "pastiche:server"
+	SchemaResource = "pastiche:resource"
+	SchemaEndpoint = "pastiche:endpoint"
+)
+
 func (f *File) Name() string {
 	return f.name
 }

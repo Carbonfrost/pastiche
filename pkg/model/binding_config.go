@@ -5,20 +5,54 @@
 package model
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/Carbonfrost/pastiche/pkg/config"
 )
 
-func ToConfig(m *Model) *config.File {
+func ToConfigFile(m *Model) *config.File {
 	var services []config.Service
 	for _, s := range m.Services {
 		services = append(services, configService(s))
 	}
 	return &config.File{
+		Schema:   config.SchemaFile,
 		Services: services,
 	}
 }
+
+// ToConfig converts a model value into the corresponding configuration value.
+func ToConfig(v value) any {
+	switch value := v.(type) {
+	case *Model:
+		return ToConfigFile(value)
+	case *Service:
+		return configService(value)
+	case *Server:
+		return configServer(value)
+	case *Resource:
+		return configResource(value)
+	case *Endpoint:
+		return configEndpoint(value)
+	case Link:
+		return configLink(value)
+	case Client:
+		return configClient(value)
+	}
+	panic(fmt.Errorf("unexpected type %T", v))
+}
+
+type value interface {
+	valueSigil()
+}
+
+func (*Service) valueSigil()  {}
+func (*Server) valueSigil()   {}
+func (*Resource) valueSigil() {}
+func (*Endpoint) valueSigil() {}
+func (Link) valueSigil()      {}
+func (*Model) valueSigil()    {}
 
 func configService(v *Service) config.Service {
 	servers := make([]config.Server, len(v.Servers))
@@ -26,6 +60,7 @@ func configService(v *Service) config.Service {
 		servers[i] = configServer(s)
 	}
 	return config.Service{
+		Schema:      config.SchemaService,
 		Name:        v.Name,
 		Title:       v.Title,
 		Description: v.Description,
@@ -39,6 +74,7 @@ func configService(v *Service) config.Service {
 
 func configServer(s *Server) config.Server {
 	return config.Server{
+		Schema:      config.SchemaServer,
 		Name:        s.Name,
 		Title:       s.Title,
 		Description: s.Description,
@@ -56,6 +92,7 @@ func configResource(r *Resource) *config.Resource {
 		uri = r.URITemplate.String()
 	}
 	res := &config.Resource{
+		Schema:      config.SchemaResource,
 		Name:        r.Name,
 		Title:       r.Title,
 		Description: r.Description,
@@ -116,6 +153,7 @@ func configResources(resources []*Resource) []config.Resource {
 
 func configEndpoint(r *Endpoint) *config.Endpoint {
 	return &config.Endpoint{
+		Schema:      config.SchemaEndpoint,
 		Name:        r.Name,
 		Title:       r.Title,
 		Description: r.Description,
@@ -132,15 +170,20 @@ func configEndpoint(r *Endpoint) *config.Endpoint {
 func configLinks(links []Link) []config.Link {
 	res := make([]config.Link, len(links))
 	for i, l := range links {
-		res[i] = config.Link{
-			HRef:     l.HRef,
-			HRefLang: l.HRefLang,
-			Audience: l.Audience,
-			Rel:      l.Rel,
-			Title:    l.Title,
-		}
+		res[i] = configLink(l)
 	}
 	return res
+}
+
+func configLink(l Link) config.Link {
+	return config.Link{
+		HRef:       l.HRef,
+		HRefLang:   l.HRefLang,
+		Audience:   l.Audience,
+		Rel:        l.Rel,
+		Title:      l.Title,
+		IsTemplate: l.IsTemplate,
+	}
 }
 
 func configClient(c Client) *config.Client {
