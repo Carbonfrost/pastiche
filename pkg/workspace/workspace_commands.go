@@ -6,10 +6,13 @@ package workspace
 
 import (
 	"cmp"
+	"encoding/json"
+	"io"
 	"slices"
 
 	cli "github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli/extensions/bind"
+	"github.com/Carbonfrost/joe-cli/extensions/config"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 )
 
@@ -61,9 +64,49 @@ func Env() Action {
 			HelpText: "Display information about the Pastiche environment",
 			Options:  cli.Exits,
 			Value:    new(bool),
+			Uses: cli.Pipeline(
+				cli.AddFlags([]*cli.Flag{
+					{
+						Name:     "json",
+						HelpText: "Print the env vars in json format",
+						Value:    new(bool),
+					},
+				}...),
+				cli.AddArgs([]*cli.Arg{
+					{
+						Name:  "vars",
+						Value: cli.List(),
+					},
+				}...),
+			),
+			Action: cli.IfMatch(
+				cli.ContextFilterFunc(seenOutputFlags),
+				bind.Call3(dumpEnv, bind.FromContext(FromContext), bind.Stdout(), bind.List("vars")),
+				config.PrintEnv(),
+			),
 		},
-		bind.Call(nilError((*Workspace).PrintEnv), bind.FromContext(FromContext)),
 	)
+}
+
+func seenOutputFlags(c *cli.Context) bool {
+	return c.Seen("json")
+}
+
+func dumpEnv(w *Workspace, out io.Writer, vars []string) error {
+	env := w.environ()
+
+	if len(vars) > 0 {
+		env = filterMap(env, vars)
+	}
+	return json.NewEncoder(out).Encode(env)
+}
+
+func filterMap(in map[string]string, vars []string) map[string]string {
+	result := map[string]string{}
+	for _, v := range vars {
+		result[v] = in[v]
+	}
+	return result
 }
 
 // Log provides the action to access logs
@@ -250,11 +293,4 @@ func setDescription(c *cli.Context) error {
 	return c.SetDescription(
 		c.Template("PasticheServices").BindFunc(servicesData),
 	)
-}
-
-func nilError(fn func(*Workspace)) func(*Workspace) error {
-	return func(w *Workspace) error {
-		fn(w)
-		return nil
-	}
 }

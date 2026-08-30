@@ -66,9 +66,11 @@ var (
 
 // New creates a new workspace
 func New(opts ...Option) *Workspace {
-	ws := &Workspace{
-		ws: joeconfig.NewWorkspace(),
-	}
+	ws := &Workspace{}
+	ws.ws = joeconfig.NewWorkspace(
+		joeconfig.WithEnvProvider(&envProvider{ws: ws}),
+	)
+
 	for _, o := range append(defaultOptions, opts...) {
 		o.apply(ws)
 	}
@@ -212,31 +214,29 @@ func (w *Workspace) Dir() string {
 }
 
 func (w *Workspace) ConfigDir() string {
-	return w.ws.Dir()
+	return w.ws.ConfigDir()
 }
 
-func (w *Workspace) Env() iter.Seq2[string, string] {
-	m := map[string]string{
+func (w *Workspace) environ() map[string]string {
+	return map[string]string{
 		"PASTICHE_DIR":        w.Dir(),
 		"PASTICHE_LOG_DIR":    w.LogDir(),
 		"PASTICHE_CONFIG_DIR": w.ConfigDir(),
 	}
+}
 
+type envProvider struct {
+	ws *Workspace
+}
+
+func (e *envProvider) Environ() iter.Seq2[string, string] {
+	m := e.ws.environ()
 	return func(yield func(string, string) bool) {
 		for _, key := range slices.Sorted(maps.Keys(m)) {
 			if !yield(key, m[key]) {
 				return
 			}
 		}
-	}
-}
-
-// PrintEnv prints the environment to stdout
-func (w *Workspace) PrintEnv() {
-	for k, v := range w.Env() {
-		fmt.Fprint(os.Stdout, k)
-		fmt.Fprint(os.Stdout, "=")
-		fmt.Fprintln(os.Stdout, v)
 	}
 }
 
@@ -303,3 +303,5 @@ func DisableValidation() Option {
 		w.disableValidation = true
 	})
 }
+
+var _ joeconfig.EnvProvider = (*envProvider)(nil)
