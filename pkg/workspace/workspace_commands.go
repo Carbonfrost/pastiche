@@ -8,11 +8,14 @@ import (
 	"cmp"
 	"encoding/json"
 	"io"
+	"os"
+	"path/filepath"
 	"slices"
 
 	cli "github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli/extensions/bind"
 	"github.com/Carbonfrost/joe-cli/extensions/config"
+	"github.com/Carbonfrost/joe-cli/extensions/template"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 )
 
@@ -26,6 +29,12 @@ type DescribeParams struct {
 	Method string
 }
 
+type InitParams struct {
+	Name        string
+	Title       string
+	Description string
+}
+
 func newParams[T any](action cli.Action, binder bind.Func[T]) bind.ActionBinder[T] {
 	return bind.NewActionBinder(action, binder)
 }
@@ -34,10 +43,28 @@ var httpMethods = []string{
 	"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "CONNECT", "OPTIONS", "TRACE",
 }
 
-func Init() Action {
+// Init provides the action for initializing a new service definition
+func Init(paramsopt ...*InitParams) Action {
+	if len(paramsopt) == 1 {
+		panic("not implemented")
+	}
+
+	params := useInitParams()
 	return cli.Pipeline(
 		cli.Prototype{
+			Name:     "init",
 			HelpText: "Initialize the current directory with a new service definition",
+		},
+		template.New(
+			&generator{params: params},
+		),
+		params,
+	)
+}
+
+func useInitParams() bind.ActionBinder[*InitParams] {
+	return newParams(cli.Pipeline(
+		cli.Setup{
 			Uses: cli.AddFlags([]*cli.Flag{
 				{
 					Name:     "name",
@@ -53,8 +80,30 @@ func Init() Action {
 				},
 			}...),
 		},
-		cli.At(cli.ActionTiming, NewInitServiceCommand()),
+	),
+		func(c *cli.Context) (*InitParams, error) {
+			name, err := fallbackServiceName(c)
+			return &InitParams{
+				Name:        name,
+				Title:       c.String("title"),
+				Description: c.String("description"),
+			}, err
+		},
 	)
+}
+
+// fallbackServiceName obtains the name of the service, which is the name of the
+// current directory when the flag was not specified
+func fallbackServiceName(c *cli.Context) (string, error) {
+	name := c.String("name")
+	if name == "" {
+		name = "service"
+		wd, err := os.Getwd()
+		if err == nil {
+			return filepath.Base(wd), nil
+		}
+	}
+	return name, nil
 }
 
 func Env() Action {

@@ -5,40 +5,19 @@
 package workspace
 
 import (
-	"os"
-	"path/filepath"
+	"context"
 
-	cli "github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli/extensions/bind"
 	"github.com/Carbonfrost/joe-cli/extensions/template"
 	"github.com/Carbonfrost/pastiche/pkg/config"
 	"sigs.k8s.io/yaml"
 )
 
-type InitServiceCommand struct {
-	Title       string
-	Name        string
-	Description string
-
-	cli.Action
-}
-
-func NewInitServiceCommand() *InitServiceCommand {
-	req := &InitServiceCommand{}
-	req.Action = cli.Pipeline(
-		bind.SetPointer(&req.Title, bind.String("title")),
-		bind.SetPointer(&req.Name, bind.Func[string](fallbackServiceName)),
-		bind.SetPointer(&req.Description, bind.String("description")),
-		bind.Action(applyInitTemplate, bind.Exact(req)),
-	)
-	return req
-}
-
-func (c *InitServiceCommand) toService() *config.Service {
+func (p *InitParams) toService() *config.Service {
 	return &config.Service{
-		Name:        c.Name,
-		Title:       c.Title,
-		Description: c.Description,
+		Name:        p.Name,
+		Title:       p.Title,
+		Description: p.Description,
 		Servers: []config.Server{
 			{
 				Name:    "default",
@@ -55,31 +34,31 @@ func (c *InitServiceCommand) toService() *config.Service {
 	}
 }
 
-func fallbackServiceName(c *cli.Context) (string, error) {
-	name := c.String("name")
-	if name == "" {
-		name = "service"
-		wd, err := os.Getwd()
-		if err == nil {
-			return filepath.Base(wd), nil
-		}
-	}
-	return name, nil
+func (p *InitParams) newGenerator() template.Generator {
+	return template.Dir(".pastiche",
+		template.Vars{
+			"ServiceName": p.Name,
+		},
+		template.File("{{ .ServiceName }}.yml", yamlContents(p.toService())),
+		template.File(".gitignore", template.ContentsString("/logs")),
+	)
 }
 
-func applyInitTemplate(cmd *InitServiceCommand) cli.Action {
-	return template.New(
-		template.Dir(".pastiche",
-			template.Vars{
-				"ServiceName": cmd.Name,
-			},
-			template.File("{{ .ServiceName }}.yml", yamlContents(cmd.toService())),
-			template.File(".gitignore", template.ContentsString("/logs")),
-		),
-	)
+type generator struct {
+	params bind.Binder[*InitParams]
+}
+
+func (g *generator) Generate(ctx context.Context, c *template.OutputContext) error {
+	params, err := g.params.Bind(ctx)
+	if err != nil {
+		return err
+	}
+	return params.newGenerator().Generate(ctx, c)
 }
 
 func yamlContents(v any) template.FileGenerator {
 	data, _ := yaml.Marshal(v)
 	return template.Contents(data)
 }
+
+var _ template.Generator = (*generator)(nil)
