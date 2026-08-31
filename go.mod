@@ -14,7 +14,7 @@ require (
 	github.com/jhump/protoreflect v1.17.0
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/onsi/ginkgo/v2 v2.32.0
-	github.com/onsi/gomega v1.42.1
+	github.com/onsi/gomega v1.43.0
 	golang.org/x/term v0.45.0
 	google.golang.org/grpc v1.80.0
 	sigs.k8s.io/yaml v1.6.0
