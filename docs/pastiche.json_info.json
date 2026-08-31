@@ -5,38 +5,140 @@
             "name": "init",
             "flags": [
                 {
+                    "name": "dry-run",
+                    "helpText": "Display what commands will be run without actually executing them",
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
+                    }
+                },
+                {
+                    "name": "overwrite",
+                    "helpText": "Overwrite files",
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
+                    }
+                },
+                {
                     "name": "name",
-                    "helpText": "Name of the service"
+                    "helpText": "Name of the service",
+                    "value": {
+                        "type": "string"
+                    }
                 },
                 {
                     "name": "title",
-                    "helpText": "Title of the service"
+                    "helpText": "Title of the service",
+                    "value": {
+                        "type": "string"
+                    }
                 },
                 {
                     "name": "description",
-                    "helpText": "Short description of the service"
+                    "helpText": "Short description of the service",
+                    "value": {
+                        "type": "string"
+                    }
                 }
             ],
             "helpText": "Initialize the current directory with a new service definition"
         },
         {
-            "name": "describe",
+            "name": "env",
             "flags": [
                 {
-                    "name": "server",
-                    "aliases": [
-                        "S"
-                    ],
-                    "helpText": "Use the specified server for the request"
+                    "name": "json",
+                    "helpText": "Print the env vars in json format",
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
+                    }
                 }
             ],
             "args": [
                 {
-                    "name": "service"
+                    "name": "vars",
+                    "value": {
+                        "type": "list",
+                        "string": "[]"
+                    }
+                }
+            ],
+            "helpText": "Display information about the Pastiche environment",
+            "options": "EXITS"
+        },
+        {
+            "name": "describe",
+            "flags": [
+                {
+                    "name": "tags",
+                    "aliases": [
+                        "t"
+                    ],
+                    "helpText": "Filter items by tags",
+                    "value": {
+                        "type": "list",
+                        "string": "[]"
+                    }
                 },
                 {
-                    "name": "args",
-                    "options": "EACH_OCCURRENCE"
+                    "name": "method",
+                    "aliases": [
+                        "X"
+                    ],
+                    "helpText": "Search for endpoints which use the request method {NAME}",
+                    "usageText": "NAME",
+                    "value": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "name": "endpoint",
+                    "helpText": "Search for endpoints",
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
+                    }
+                },
+                {
+                    "name": "varset",
+                    "aliases": [
+                        "V"
+                    ],
+                    "helpText": "Search for variable sets",
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
+                    }
+                },
+                {
+                    "name": "flow",
+                    "aliases": [
+                        "F"
+                    ],
+                    "helpText": "Search for flows",
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
+                    }
+                },
+                {
+                    "name": "all",
+                    "aliases": [
+                        "A"
+                    ],
+                    "helpText": "Search for all items",
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
+                    }
+                }
+            ],
+            "args": [
+                {
+                    "name": "spec",
+                    "value": {}
                 }
             ],
             "helpText": "Describe resources within Pastiche workspace"
@@ -49,10 +151,16 @@
             "flags": [
                 {
                     "name": "host",
+                    "aliases": [
+                        "h"
+                    ],
                     "helpText": "Sets the server {HOST} name to use",
                     "category": "Listener options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpserver"
+                    },
+                    "value": {
+                        "type": "string"
                     }
                 },
                 {
@@ -61,6 +169,9 @@
                     "category": "Listener options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpserver"
+                    },
+                    "value": {
+                        "type": "string"
                     }
                 },
                 {
@@ -72,6 +183,10 @@
                     "category": "Listener options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpserver"
+                    },
+                    "value": {
+                        "type": "int",
+                        "string": "0"
                     }
                 },
                 {
@@ -80,6 +195,10 @@
                     "category": "Advanced options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpserver"
+                    },
+                    "value": {
+                        "type": "duration",
+                        "string": "0s"
                     }
                 },
                 {
@@ -88,6 +207,10 @@
                     "category": "Advanced options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpserver"
+                    },
+                    "value": {
+                        "type": "duration",
+                        "string": "0s"
                     }
                 },
                 {
@@ -96,6 +219,10 @@
                     "category": "Advanced options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpserver"
+                    },
+                    "value": {
+                        "type": "duration",
+                        "string": "0s"
                     }
                 },
                 {
@@ -104,6 +231,10 @@
                     "category": "Advanced options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpserver"
+                    },
+                    "value": {
+                        "type": "duration",
+                        "string": "0s"
                     }
                 },
                 {
@@ -112,6 +243,10 @@
                     "category": "Advanced options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpserver"
+                    },
+                    "value": {
+                        "type": "int",
+                        "string": "0"
                     }
                 },
                 {
@@ -124,14 +259,20 @@
                     "options": "MUST_EXIST",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpserver"
+                    },
+                    "value": {
+                        "type": "file"
                     }
                 },
                 {
-                    "name": "no-directory-listings",
+                    "name": "hide-directory-listings",
                     "helpText": "When set, don't display directory listings",
                     "category": "Server options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpserver"
+                    },
+                    "value": {
+                        "type": "string"
                     }
                 },
                 {
@@ -140,6 +281,10 @@
                     "category": "Server options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpserver"
+                    },
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
                     }
                 },
                 {
@@ -149,16 +294,12 @@
                     ],
                     "helpText": "Set access log format",
                     "category": "Advanced options",
+                    "options": "NO",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpserver"
-                    }
-                },
-                {
-                    "name": "no-access-log",
-                    "helpText": "Disable the access log",
-                    "category": "Advanced options",
-                    "data": {
-                        "Source": "github.com/Carbonfrost/joe-cli-http/httpserver"
+                    },
+                    "value": {
+                        "type": "string"
                     }
                 },
                 {
@@ -170,6 +311,9 @@
                     "category": "Advanced options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpserver"
+                    },
+                    "value": {
+                        "type": "string"
                     }
                 },
                 {
@@ -179,6 +323,9 @@
                     "options": "MUST_EXIST",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpserver"
+                    },
+                    "value": {
+                        "type": "file"
                     }
                 },
                 {
@@ -188,6 +335,19 @@
                     "options": "MUST_EXIST",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpserver"
+                    },
+                    "value": {
+                        "type": "file"
+                    }
+                },
+                {
+                    "name": "no-access-log",
+                    "helpText": "Set access log format",
+                    "category": "Advanced options",
+                    "options": "HIDDEN",
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
                     }
                 }
             ],
@@ -202,7 +362,11 @@
                 {
                     "name": "clear",
                     "helpText": "Remove all request logs in the workspace",
-                    "options": "EXITS"
+                    "options": "EXITS",
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
+                    }
                 }
             ],
             "helpText": "Access request logs for the workspace"
@@ -210,6 +374,16 @@
         {
             "name": "fetch",
             "flags": [
+                {
+                    "name": "param-env",
+                    "aliases": [
+                        "E"
+                    ],
+                    "helpText": "Specify a value used to fill URI templates and variable expansion using an environment variable",
+                    "category": "Request options",
+                    "options": "EACH_OCCURRENCE",
+                    "value": {}
+                },
                 {
                     "name": "method",
                     "aliases": [
@@ -222,6 +396,9 @@
                     "options": "IMPLIED_ACTION",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "string"
                     }
                 },
                 {
@@ -234,7 +411,8 @@
                     "options": "EACH_OCCURRENCE",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
-                    }
+                    },
+                    "value": {}
                 },
                 {
                     "name": "body",
@@ -247,6 +425,9 @@
                     "options": "ALLOW_FILE_REFERENCE",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "string"
                     }
                 },
                 {
@@ -258,7 +439,8 @@
                     "category": "Request options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
-                    }
+                    },
+                    "value": {}
                 },
                 {
                     "name": "param",
@@ -270,7 +452,8 @@
                     "options": "EACH_OCCURRENCE",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
-                    }
+                    },
+                    "value": {}
                 },
                 {
                     "name": "params",
@@ -282,7 +465,8 @@
                     "options": "EACH_OCCURRENCE, ALLOW_FILE_REFERENCE",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
-                    }
+                    },
+                    "value": {}
                 },
                 {
                     "name": "body-content",
@@ -291,7 +475,8 @@
                     "options": "IMPLIED_ACTION",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
-                    }
+                    },
+                    "value": {}
                 },
                 {
                     "name": "fill",
@@ -303,6 +488,10 @@
                     "options": "EACH_OCCURRENCE",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "namevalue",
+                        "string": "="
                     }
                 },
                 {
@@ -311,6 +500,10 @@
                     "category": "Request options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
                     }
                 },
                 {
@@ -320,6 +513,10 @@
                     "options": "IMPLIED_ACTION",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
                     }
                 },
                 {
@@ -333,6 +530,10 @@
                     "options": "NO",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
                     }
                 },
                 {
@@ -344,6 +545,9 @@
                     "category": "Request options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "string"
                     }
                 },
                 {
@@ -352,6 +556,10 @@
                     "category": "Request options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "duration",
+                        "string": "0s"
                     }
                 },
                 {
@@ -363,6 +571,10 @@
                     "category": "Response options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
                     }
                 },
                 {
@@ -374,6 +586,9 @@
                     "category": "Response options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "string"
                     }
                 },
                 {
@@ -382,6 +597,10 @@
                     "category": "Response options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
                     }
                 },
                 {
@@ -391,6 +610,20 @@
                     "usageText": "hash:digest",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {}
+                },
+                {
+                    "name": "list-integrity-algorithms",
+                    "helpText": "List hash algorithms that can be used with integrity checker",
+                    "category": "Response options",
+                    "options": "EXITS",
+                    "data": {
+                        "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
                     }
                 },
                 {
@@ -403,6 +636,10 @@
                     "category": "Response options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
                     }
                 },
                 {
@@ -411,6 +648,9 @@
                     "category": "DNS options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "string"
                     }
                 },
                 {
@@ -419,6 +659,9 @@
                     "category": "DNS options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "string"
                     }
                 },
                 {
@@ -427,6 +670,9 @@
                     "category": "DNS options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "string"
                     }
                 },
                 {
@@ -435,6 +681,10 @@
                     "category": "DNS options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "duration",
+                        "string": "0s"
                     }
                 },
                 {
@@ -443,6 +693,9 @@
                     "category": "DNS options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "string"
                     }
                 },
                 {
@@ -452,6 +705,9 @@
                     "usageText": "HOSTNAME|IP",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "string"
                     }
                 },
                 {
@@ -460,6 +716,9 @@
                     "category": "Network interface options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "string"
                     }
                 },
                 {
@@ -469,6 +728,10 @@
                     "options": "EXITS",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
                     }
                 },
                 {
@@ -479,6 +742,10 @@
                     "helpText": "Display verbose output; can be used multiple times to increase detail",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
                     }
                 },
                 {
@@ -490,15 +757,18 @@
                     "usageText": "LEVEL",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
-                    }
+                    },
+                    "value": {}
                 },
                 {
                     "name": "request-id",
                     "helpText": "Sets or generates X-Request-ID header with optional {VALUE}",
                     "category": "Request options",
-                    "options": "OPTIONAL",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "string"
                     }
                 },
                 {
@@ -511,6 +781,10 @@
                     "options": "EACH_OCCURRENCE",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "namevalue",
+                        "string": "="
                     }
                 },
                 {
@@ -522,7 +796,8 @@
                     "category": "Request options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
-                    }
+                    },
+                    "value": {}
                 },
                 {
                     "name": "write-err",
@@ -533,7 +808,8 @@
                     "category": "Request options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
-                    }
+                    },
+                    "value": {}
                 },
                 {
                     "name": "strip-components",
@@ -541,6 +817,10 @@
                     "category": "Response options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "int",
+                        "string": "0"
                     }
                 },
                 {
@@ -553,6 +833,10 @@
                     "options": "NO",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
                     }
                 },
                 {
@@ -562,6 +846,10 @@
                     "options": "EXITS",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
                     }
                 },
                 {
@@ -573,7 +861,8 @@
                     "category": "Request options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
-                    }
+                    },
+                    "value": {}
                 },
                 {
                     "name": "auth",
@@ -583,7 +872,8 @@
                     "options": "IMPLIED_ACTION",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
-                    }
+                    },
+                    "value": {}
                 },
                 {
                     "name": "basic",
@@ -591,6 +881,10 @@
                     "category": "Request options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
                     }
                 },
                 {
@@ -600,6 +894,10 @@
                     "options": "EXITS",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/tls"
+                    },
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
                     }
                 },
                 {
@@ -609,6 +907,10 @@
                     "options": "EXITS",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/tls"
+                    },
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
                     }
                 },
                 {
@@ -619,6 +921,9 @@
                     "options": "EACH_OCCURRENCE",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/tls"
+                    },
+                    "value": {
+                        "type": "string"
                     }
                 },
                 {
@@ -629,6 +934,9 @@
                     "options": "EACH_OCCURRENCE",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/tls"
+                    },
+                    "value": {
+                        "type": "string"
                     }
                 },
                 {
@@ -637,18 +945,19 @@
                     "category": "TLS options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/tls"
-                    }
+                    },
+                    "value": {}
                 },
                 {
                     "name": "cert",
-                    "aliases": [
-                        "E"
-                    ],
                     "helpText": "Client certificate file (PEM format)",
                     "category": "TLS options",
                     "usageText": "PATH",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/tls"
+                    },
+                    "value": {
+                        "type": "file"
                     }
                 },
                 {
@@ -657,6 +966,19 @@
                     "category": "TLS options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/tls"
+                    },
+                    "value": {}
+                },
+                {
+                    "name": "insecure-key-log-file",
+                    "helpText": "Log TLS keys to {FILE} for debugging (insecure)",
+                    "category": "TLS options",
+                    "usageText": "PATH",
+                    "data": {
+                        "Source": "github.com/Carbonfrost/joe-cli-http/tls"
+                    },
+                    "value": {
+                        "type": "file"
                     }
                 },
                 {
@@ -673,6 +995,10 @@
                     "options": "IMPLIED_ACTION",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/tls"
+                    },
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
                     }
                 },
                 {
@@ -682,6 +1008,9 @@
                     "usageText": "PATH",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/tls"
+                    },
+                    "value": {
+                        "type": "file"
                     }
                 },
                 {
@@ -690,6 +1019,22 @@
                     "category": "TLS options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/tls"
+                    },
+                    "value": {
+                        "type": "list",
+                        "string": "[]"
+                    }
+                },
+                {
+                    "name": "random",
+                    "helpText": "Specifies a {FILE} to use as a source of random data for TLS",
+                    "category": "TLS options",
+                    "usageText": "PATH",
+                    "data": {
+                        "Source": "github.com/Carbonfrost/joe-cli-http/tls"
+                    },
+                    "value": {
+                        "type": "file"
                     }
                 },
                 {
@@ -698,6 +1043,9 @@
                     "category": "TLS options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/tls"
+                    },
+                    "value": {
+                        "type": "string"
                     }
                 },
                 {
@@ -707,6 +1055,9 @@
                     "usageText": "PATH",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/tls"
+                    },
+                    "value": {
+                        "type": "file"
                     }
                 },
                 {
@@ -715,6 +1066,10 @@
                     "category": "TLS options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/tls"
+                    },
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
                     }
                 },
                 {
@@ -723,6 +1078,10 @@
                     "category": "TLS options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/tls"
+                    },
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
                     }
                 },
                 {
@@ -731,6 +1090,10 @@
                     "category": "TLS options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/tls"
+                    },
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
                     }
                 },
                 {
@@ -739,6 +1102,10 @@
                     "category": "TLS options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/tls"
+                    },
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
                     }
                 },
                 {
@@ -747,6 +1114,10 @@
                     "category": "TLS options",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/tls"
+                    },
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
                     }
                 },
                 {
@@ -755,6 +1126,10 @@
                     "category": "Request options",
                     "data": {
                         "Source": "github.com/Carbonfrost/pastiche/pkg/grpcclient"
+                    },
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
                     }
                 },
                 {
@@ -763,6 +1138,10 @@
                     "category": "Request options",
                     "data": {
                         "Source": "github.com/Carbonfrost/pastiche/pkg/grpcclient"
+                    },
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
                     }
                 },
                 {
@@ -772,49 +1151,73 @@
                     "options": "MUST_EXIST, EACH_OCCURRENCE",
                     "data": {
                         "Source": "github.com/Carbonfrost/pastiche/pkg/grpcclient"
+                    },
+                    "value": {
+                        "type": "string"
                     }
                 },
                 {
                     "name": "list-filters",
                     "helpText": "List available output filters then exit",
-                    "options": "EXITS"
+                    "options": "EXITS",
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
+                    }
                 },
                 {
                     "name": "filter",
                     "aliases": [
                         "l"
                     ],
-                    "helpText": "Apply a filter query to the response data using a supported format"
+                    "helpText": "Apply a filter query to the response data using a supported format",
+                    "value": {}
                 },
                 {
                     "name": "client",
                     "aliases": [
                         "g"
                     ],
-                    "helpText": "Specify the client that will be used"
+                    "helpText": "Specify the client that will be used",
+                    "value": {}
                 },
                 {
                     "name": "include-meta",
-                    "helpText": "Include metadata in the output"
+                    "helpText": "Include metadata in the output",
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
+                    }
                 },
                 {
                     "name": "server",
                     "aliases": [
                         "S"
                     ],
-                    "helpText": "Use the specified server for the request"
+                    "helpText": "Use the specified server for the request",
+                    "value": {
+                        "type": "string"
+                    }
                 },
                 {
                     "name": "no-follow-redirects",
                     "helpText": "Follow redirects in the Location header",
                     "category": "Request options",
-                    "options": "HIDDEN"
+                    "options": "HIDDEN",
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
+                    }
                 },
                 {
                     "name": "no-fail",
                     "helpText": "Fail fast with no output on HTTP errors",
                     "category": "Response options",
-                    "options": "HIDDEN"
+                    "options": "HIDDEN",
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
+                    }
                 },
                 {
                     "name": "auth-arg",
@@ -823,6 +1226,9 @@
                     "data": {
                         "DependentFlag": "auth",
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
+                    },
+                    "value": {
+                        "type": "string"
                     }
                 },
                 {
@@ -830,16 +1236,24 @@
                     "helpText": "Sets an argument for filter",
                     "data": {
                         "DependentFlag": "filter"
+                    },
+                    "value": {
+                        "type": "string"
                     }
                 }
             ],
             "args": [
                 {
-                    "name": "service"
+                    "name": "service",
+                    "value": {}
                 },
                 {
                     "name": "args",
-                    "options": "EACH_OCCURRENCE"
+                    "options": "EACH_OCCURRENCE",
+                    "value": {
+                        "type": "namevalue",
+                        "string": "="
+                    }
                 }
             ],
             "helpText": "Make a request using the given service"
@@ -848,38 +1262,65 @@
             "name": "import",
             "flags": [
                 {
-                    "name": "name",
-                    "helpText": "Set the name of the resource"
-                },
-                {
-                    "name": "title",
-                    "helpText": "Set the title of the resource"
-                },
-                {
-                    "name": "description",
-                    "helpText": "Set the description of the resource"
-                },
-                {
                     "name": "server",
                     "aliases": [
                         "S"
                     ],
-                    "helpText": "Use the specified server for the request"
+                    "helpText": "Use the specified server for the request",
+                    "value": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "name": "name",
+                    "helpText": "Set the name of the resource",
+                    "value": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "name": "title",
+                    "helpText": "Set the title of the resource",
+                    "value": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "name": "description",
+                    "helpText": "Set the description of the resource",
+                    "value": {
+                        "type": "string"
+                    }
                 }
             ],
             "args": [
                 {
-                    "name": "service"
+                    "name": "service",
+                    "value": {}
                 },
                 {
                     "name": "args",
-                    "options": "EACH_OCCURRENCE"
+                    "options": "EACH_OCCURRENCE",
+                    "value": {
+                        "type": "namevalue",
+                        "string": "="
+                    }
                 }
             ]
         },
         {
             "name": "open",
             "flags": [
+                {
+                    "name": "rel",
+                    "aliases": [
+                        "r"
+                    ],
+                    "helpText": "Follow the given link by RELATIONSHIP",
+                    "value": {
+                        "type": "string"
+                    }
+                },
                 {
                     "name": "param",
                     "aliases": [
@@ -890,7 +1331,8 @@
                     "options": "EACH_OCCURRENCE",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
-                    }
+                    },
+                    "value": {}
                 },
                 {
                     "name": "params",
@@ -902,30 +1344,32 @@
                     "options": "EACH_OCCURRENCE, ALLOW_FILE_REFERENCE",
                     "data": {
                         "Source": "github.com/Carbonfrost/joe-cli-http/httpclient"
-                    }
-                },
-                {
-                    "name": "rel",
-                    "aliases": [
-                        "r"
-                    ],
-                    "helpText": "Follow the given link by RELATIONSHIP"
+                    },
+                    "value": {}
                 },
                 {
                     "name": "server",
                     "aliases": [
                         "S"
                     ],
-                    "helpText": "Use the specified server for the request"
+                    "helpText": "Use the specified server for the request",
+                    "value": {
+                        "type": "string"
+                    }
                 }
             ],
             "args": [
                 {
-                    "name": "service"
+                    "name": "service",
+                    "value": {}
                 },
                 {
                     "name": "args",
-                    "options": "EACH_OCCURRENCE"
+                    "options": "EACH_OCCURRENCE",
+                    "value": {
+                        "type": "namevalue",
+                        "string": "="
+                    }
                 }
             ]
         },
@@ -936,7 +1380,11 @@
             ],
             "args": [
                 {
-                    "name": "command"
+                    "name": "command",
+                    "value": {
+                        "type": "list",
+                        "string": "[]"
+                    }
                 }
             ],
             "helpText": "Display help for a command",
@@ -956,32 +1404,46 @@
     ],
     "flags": [
         {
-            "name": "all",
-            "helpText": "Facilitates displaying help text that is suppressed by default (used with --help)",
-            "options": "NON_PERSISTENT"
-        },
-        {
             "name": "color",
             "helpText": "Controls whether terminal color and styles are used",
             "data": {
                 "Source": "github.com/Carbonfrost/joe-cli/extensions/color"
-            }
+            },
+            "value": {}
         },
         {
             "name": "no-color",
             "helpText": "Disable terminal color and styles",
             "data": {
                 "Source": "github.com/Carbonfrost/joe-cli/extensions/color"
+            },
+            "value": {
+                "type": "bool",
+                "string": "false"
             }
         },
         {
             "name": "chdir",
             "helpText": "Run the command as if started in a working DIRECTORY",
-            "options": "MUST_EXIST"
+            "options": "MUST_EXIST",
+            "value": {
+                "type": "string"
+            }
         },
         {
             "name": "pastiche-dir",
-            "helpText": "Set the path to the configuration DIRECTORY"
+            "helpText": "Set the path to the configuration DIRECTORY",
+            "value": {
+                "type": "string"
+            }
+        },
+        {
+            "name": "disable-validation",
+            "helpText": "Disable validation of configuration files",
+            "value": {
+                "type": "bool",
+                "string": "false"
+            }
         },
         {
             "name": "help",
@@ -992,6 +1454,10 @@
             "options": "EXITS",
             "data": {
                 "Source": "github.com/Carbonfrost/joe-cli"
+            },
+            "value": {
+                "type": "bool",
+                "string": "false"
             }
         },
         {
@@ -1000,6 +1466,10 @@
             "options": "EXITS",
             "data": {
                 "Source": "github.com/Carbonfrost/joe-cli"
+            },
+            "value": {
+                "type": "bool",
+                "string": "false"
             }
         },
         {
@@ -1007,6 +1477,10 @@
             "options": "HIDDEN, EXITS",
             "data": {
                 "Source": "github.com/Carbonfrost/joe-cli"
+            },
+            "value": {
+                "type": "bool",
+                "string": "false"
             }
         }
     ],
@@ -1014,12 +1488,19 @@
         {
             "name": "command",
             "usageText": "\u003ccommand\u003e [\u003cargs\u003e]",
-            "options": "DISABLE_SPLITTING"
+            "options": "DISABLE_SPLITTING",
+            "data": {
+                "Source": "github.com/Carbonfrost/joe-cli"
+            },
+            "value": {
+                "type": "list",
+                "string": "[]"
+            }
         }
     ],
     "helpText": "Make requests to HTTP APIs using their OpenAPI schemas and definitions.",
     "version": "(devel)",
-    "buildDate": "2026-04-02T17:59:25.142514826-07:00",
+    "buildDate": "2026-08-30T23:00:38.847064323-07:00",
     "comment": "Smart OpenAPI client",
     "options": "SORTED_FLAGS, SORTED_COMMANDS, SORTED_EXPRS"
 }
