@@ -46,14 +46,24 @@ var httpMethods = []string{
 // Init provides the action for initializing a new service definition
 func Init(paramsopt ...*InitParams) Action {
 	params := exactOrUse(useInitParams, paramsopt)
+
+	root := template.New(&generator{params: params})
+
+	// TODO A bug in joe-cli@v0.21.0 requires this custom action
+	root.Action = cli.Pipeline(
+		cli.AddFlags([]*cli.Flag{
+			{Uses: root.DryRunFlag()},
+			{Uses: root.OverwriteFlag()},
+		}...),
+		cli.At(cli.ActionTiming, cli.ActionOf(root.Generate)),
+	)
+
 	return cli.Pipeline(
 		cli.Prototype{
 			Name:     "init",
 			HelpText: "Initialize the current directory with a new service definition",
 		},
-		template.New(
-			&generator{params: params},
-		),
+		root,
 		params,
 	)
 }
