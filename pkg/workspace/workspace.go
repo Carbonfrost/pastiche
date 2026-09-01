@@ -268,32 +268,84 @@ func (w *Workspace) Describe(c *model.SearchCriteria) error {
 		return err
 	}
 
-	var services []*model.Service
+	var items describeResults
 	for item := range results {
-		switch it := item.(type) {
-		case *model.Service:
-			services = append(services, it)
-		default:
-			panic("not implemented")
+		if err := items.add(item); err != nil {
+			return err
 		}
 	}
 
 	// A spec names the items which are expected to exist, so when the other
 	// criteria filter them all out, this is an error rather than empty output
-	if len(services) == 0 && c.Spec != nil && len(*c.Spec) > 0 {
+	if items.empty() && c.Spec != nil && len(*c.Spec) > 0 {
 		if len(c.IncludeTags) > 0 {
 			return fmt.Errorf("not found with tags %v: %q", c.IncludeTags, c.Spec.Path())
 		}
 		return fmt.Errorf("not found: %q", c.Spec.Path())
 	}
 
-	return displayService(&model.Model{
-		Services: services,
-	})
+	return displayItems(&items)
 }
 
-func displayService(m *model.Model) error {
-	data, _ := yaml.Marshal(model.ToConfig(m))
+type describeResults struct {
+	Schema    string             `json:"$schema,omitempty"`
+	Services  []config.Service   `json:"services,omitempty"`
+	VarSets   []config.VarSet    `json:"varSets,omitempty"`
+	Flows     []config.Flow      `json:"flows,omitempty"`
+	Resources []config.Resource  `json:"resources,omitempty"`
+	Endpoints []describeEndpoint `json:"endpoints,omitempty"`
+}
+
+type describeEndpoint struct {
+	Method string `json:"method,omitempty"`
+	config.Endpoint
+}
+
+func (d *describeResults) add(item model.Item) error {
+	switch it := item.(type) {
+	case *model.Service:
+		d.Services = append(d.Services, toConfig[config.Service](it))
+	case *model.VarSet:
+		d.VarSets = append(d.VarSets, toConfig[config.VarSet](it))
+	case *model.Flow:
+		d.Flows = append(d.Flows, toConfig[config.Flow](it))
+	case *model.Resource:
+		d.Resources = append(d.Resources, *toConfig[*config.Resource](it))
+	case *model.Endpoint:
+		d.Endpoints = append(d.Endpoints, describeEndpoint{
+			Method:   it.Method,
+			Endpoint: *toConfig[*config.Endpoint](it),
+		})
+	default:
+		return fmt.Errorf("cannot describe %T", item)
+	}
+	return nil
+}
+
+func (d *describeResults) empty() bool {
+	return len(d.Services)+len(d.VarSets)+len(d.Flows)+len(d.Resources)+len(d.Endpoints) == 0
+}
+
+// fileSchema identifies the results as a configuration file, which is only
+// accurate when every item within it can be written as one
+func (d *describeResults) fileSchema() string {
+	if len(d.Resources) > 0 || len(d.Endpoints) > 0 {
+		return ""
+	}
+	return config.SchemaFile
+}
+
+func toConfig[V any](item model.Item) V {
+	return model.ToConfig(item).(V)
+}
+
+func displayItems(d *describeResults) error {
+	d.Schema = d.fileSchema()
+
+	data, err := yaml.Marshal(d)
+	if err != nil {
+		return err
+	}
 	fmt.Println(string(data))
 	return nil
 }

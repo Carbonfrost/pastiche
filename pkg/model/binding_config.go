@@ -16,14 +16,24 @@ func ToConfigFile(m *Model) *config.File {
 	for _, s := range m.Services {
 		services = append(services, configService(s))
 	}
+	var varSets []config.VarSet
+	for _, v := range m.VarSets {
+		varSets = append(varSets, configVarSet(v))
+	}
+	var flows []config.Flow
+	for _, f := range m.Flows {
+		flows = append(flows, configFlow(f))
+	}
 	return &config.File{
 		Schema:   config.SchemaFile,
 		Services: services,
+		VarSets:  varSets,
+		Flows:    flows,
 	}
 }
 
 // ToConfig converts a model value into the corresponding configuration value.
-func ToConfig(v value) any {
+func ToConfig(v Item) any {
 	switch value := v.(type) {
 	case *Model:
 		return ToConfigFile(value)
@@ -35,6 +45,12 @@ func ToConfig(v value) any {
 		return configResource(value)
 	case *Endpoint:
 		return configEndpoint(value)
+	case *VarSet:
+		return configVarSet(value)
+	case *Flow:
+		return configFlow(value)
+	case *Step:
+		return configStep(value)
 	case Link:
 		return configLink(value)
 	case Client:
@@ -43,16 +59,20 @@ func ToConfig(v value) any {
 	panic(fmt.Errorf("unexpected type %T", v))
 }
 
-type value interface {
-	valueSigil()
+// Item is a value within the model.
+type Item interface {
+	itemSigil()
 }
 
-func (*Service) valueSigil()  {}
-func (*Server) valueSigil()   {}
-func (*Resource) valueSigil() {}
-func (*Endpoint) valueSigil() {}
-func (Link) valueSigil()      {}
-func (*Model) valueSigil()    {}
+func (*Service) itemSigil()  {}
+func (*Server) itemSigil()   {}
+func (*Resource) itemSigil() {}
+func (*Endpoint) itemSigil() {}
+func (*VarSet) itemSigil()   {}
+func (*Flow) itemSigil()     {}
+func (*Step) itemSigil()     {}
+func (Link) itemSigil()      {}
+func (*Model) itemSigil()    {}
 
 func configService(v *Service) config.Service {
 	servers := make([]config.Server, len(v.Servers))
@@ -165,6 +185,60 @@ func configEndpoint(r *Endpoint) *config.Endpoint {
 		Vars:        r.Vars,
 		Form:        headerFromValues(r.Form),
 	}
+}
+
+func configVarSet(v *VarSet) config.VarSet {
+	return config.VarSet{
+		Schema:      config.SchemaVarSet,
+		Name:        v.Name,
+		Title:       v.Title,
+		Description: v.Description,
+		Links:       configLinks(v.Links),
+		Vars:        v.Vars,
+	}
+}
+
+func configFlow(f *Flow) config.Flow {
+	return config.Flow{
+		Schema:      config.SchemaFlow,
+		Name:        f.Name,
+		Title:       f.Title,
+		Description: f.Description,
+		Links:       configLinks(f.Links),
+		Steps:       configSteps(f.Steps),
+		Vars:        f.Vars,
+	}
+}
+
+func configSteps(steps []*Step) []config.Step {
+	res := make([]config.Step, len(steps))
+	for i, s := range steps {
+		res[i] = configStep(s)
+	}
+	return res
+}
+
+func configStep(s *Step) config.Step {
+	step := config.Step{
+		Name:        s.Name,
+		Title:       s.Title,
+		Description: s.Description,
+		Links:       configLinks(s.Links),
+		Method:      s.Method,
+		Headers:     headerFromValues(s.Headers),
+		Form:        headerFromValues(s.Form),
+		Body:        s.Body,
+		RawBody:     s.RawBody,
+		Vars:        s.Vars,
+	}
+
+	switch t := s.StepType.(type) {
+	case *SpecStep:
+		step.Spec = t.Spec
+	case *URLStep:
+		step.URL = t.URL
+	}
+	return step
 }
 
 func headerFromValues(v Values) config.Values {

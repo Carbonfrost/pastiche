@@ -37,7 +37,7 @@ const (
 
 // Searcher enumerates the items within a model which match a search criteria.
 type Searcher interface {
-	Results() (iter.Seq[any], error)
+	Results() (iter.Seq[Item], error)
 }
 
 // SearchCriteria is the union of all of the criteria which are relevant to
@@ -112,7 +112,7 @@ func (m *Model) Search(criteria *SearchCriteria) Searcher {
 	return errSearcher{fmt.Errorf("unknown item kind: %v", int(criteria.Kind))}
 }
 
-func (s *serviceSearcher) Results() (iter.Seq[any], error) {
+func (s *serviceSearcher) Results() (iter.Seq[Item], error) {
 	name, err := s.simpleName("service")
 	if err != nil {
 		return nil, err
@@ -127,7 +127,7 @@ func (s *serviceSearcher) Results() (iter.Seq[any], error) {
 		items = []*Service{svc}
 	}
 
-	return func(yield func(any) bool) {
+	return func(yield func(Item) bool) {
 		for _, svc := range items {
 			if !s.matchesTags(svc.Tags) {
 				continue
@@ -139,7 +139,7 @@ func (s *serviceSearcher) Results() (iter.Seq[any], error) {
 	}, nil
 }
 
-func (s *varSetSearcher) Results() (iter.Seq[any], error) {
+func (s *varSetSearcher) Results() (iter.Seq[Item], error) {
 	name, err := s.simpleName("var set")
 	if err != nil {
 		return nil, err
@@ -154,7 +154,7 @@ func (s *varSetSearcher) Results() (iter.Seq[any], error) {
 		items = []*VarSet{vs}
 	}
 
-	return func(yield func(any) bool) {
+	return func(yield func(Item) bool) {
 		for _, vs := range items {
 			if !s.matchesTags(vs.Tags) {
 				continue
@@ -166,7 +166,7 @@ func (s *varSetSearcher) Results() (iter.Seq[any], error) {
 	}, nil
 }
 
-func (s *flowSearcher) Results() (iter.Seq[any], error) {
+func (s *flowSearcher) Results() (iter.Seq[Item], error) {
 	name, err := s.simpleName("flow")
 	if err != nil {
 		return nil, err
@@ -181,7 +181,7 @@ func (s *flowSearcher) Results() (iter.Seq[any], error) {
 		items = []*Flow{f}
 	}
 
-	return func(yield func(any) bool) {
+	return func(yield func(Item) bool) {
 		for _, f := range items {
 			if !s.matchesTags(f.Tags) {
 				continue
@@ -193,13 +193,13 @@ func (s *flowSearcher) Results() (iter.Seq[any], error) {
 	}, nil
 }
 
-func (s *resourceSearcher) Results() (iter.Seq[any], error) {
+func (s *resourceSearcher) Results() (iter.Seq[Item], error) {
 	resources, err := s.resources(false)
 	if err != nil {
 		return nil, err
 	}
 
-	return func(yield func(any) bool) {
+	return func(yield func(Item) bool) {
 		for res := range resources {
 			if !s.matchesTags(res.Tags) {
 				continue
@@ -211,7 +211,7 @@ func (s *resourceSearcher) Results() (iter.Seq[any], error) {
 	}, nil
 }
 
-func (s *endpointSearcher) Results() (iter.Seq[any], error) {
+func (s *endpointSearcher) Results() (iter.Seq[Item], error) {
 	// The scope itself is included because the unnamed root resource of a
 	// service can also define endpoints
 	resources, err := s.resources(true)
@@ -219,7 +219,7 @@ func (s *endpointSearcher) Results() (iter.Seq[any], error) {
 		return nil, err
 	}
 
-	return func(yield func(any) bool) {
+	return func(yield func(Item) bool) {
 		for res := range resources {
 			for _, ep := range res.Endpoints {
 				if !s.matchesMethod(ep.Method) || !s.matchesTags(ep.Tags) {
@@ -233,9 +233,9 @@ func (s *endpointSearcher) Results() (iter.Seq[any], error) {
 	}, nil
 }
 
-func (a *allSearcher) Results() (iter.Seq[any], error) {
+func (a *allSearcher) Results() (iter.Seq[Item], error) {
 	var (
-		seqs     []iter.Seq[any]
+		seqs     []iter.Seq[Item]
 		firstErr error
 	)
 
@@ -256,7 +256,7 @@ func (a *allSearcher) Results() (iter.Seq[any], error) {
 		return nil, firstErr
 	}
 
-	return func(yield func(any) bool) {
+	return func(yield func(Item) bool) {
 		for _, seq := range seqs {
 			for item := range seq {
 				if !yield(item) {
@@ -271,7 +271,7 @@ type errSearcher struct {
 	err error
 }
 
-func (e errSearcher) Results() (iter.Seq[any], error) {
+func (e errSearcher) Results() (iter.Seq[Item], error) {
 	return nil, e.err
 }
 

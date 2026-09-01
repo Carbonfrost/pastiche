@@ -10,6 +10,8 @@ const (
 	SchemaServer   = "pastiche:server"
 	SchemaResource = "pastiche:resource"
 	SchemaEndpoint = "pastiche:endpoint"
+	SchemaVarSet   = "pastiche:varSet"
+	SchemaFlow     = "pastiche:flow"
 )
 
 //go:embed pastiche.schema.json

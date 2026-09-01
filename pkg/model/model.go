@@ -230,7 +230,7 @@ type TableOutput struct {
 }
 
 type Client interface {
-	value
+	Item
 	clientSigil()
 }
 
@@ -760,8 +760,8 @@ func sameType(x, y any) bool {
 func (*GRPCClient) clientSigil() {}
 func (*HTTPClient) clientSigil() {}
 
-func (*GRPCClient) valueSigil() {}
-func (*HTTPClient) valueSigil() {}
+func (*GRPCClient) itemSigil() {}
+func (*HTTPClient) itemSigil() {}
 
 func (*BasicAuth) authSigil() {}
 
