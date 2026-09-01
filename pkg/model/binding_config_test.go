@@ -105,6 +105,34 @@ var _ = Describe("ToConfig", func() {
 					{Name: "limit", Value: "10"},
 				},
 			}),
+		Entry("links (via endpoint)",
+			&model.Endpoint{
+				Links: []model.Link{
+					{
+						HRef:       "https://example.com",
+						HRefLang:   "en-au",
+						Audience:   "developer",
+						Rel:        "docs",
+						Title:      "Documentation",
+						Type:       "text/html",
+						IsTemplate: true,
+					},
+				},
+			},
+			&config.Endpoint{
+				Schema: config.SchemaEndpoint,
+				Links: []config.Link{
+					{
+						HRef:       "https://example.com",
+						HRefLang:   "en-au",
+						Audience:   "developer",
+						Rel:        "docs",
+						Title:      "Documentation",
+						Type:       "text/html",
+						IsTemplate: true,
+					},
+				},
+			}),
 	)
 
 	It("converts var sets and flows within a model", func() {

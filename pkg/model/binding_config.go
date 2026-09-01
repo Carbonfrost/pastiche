@@ -305,6 +305,7 @@ func configLink(l Link) config.Link {
 		Rel:        l.Rel,
 		Title:      l.Title,
 		IsTemplate: l.IsTemplate,
+		Type:       l.Type,
 	}
 }
 
