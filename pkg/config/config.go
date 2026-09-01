@@ -28,6 +28,7 @@ type unmarshaler func([]byte, any) error
 
 var unmarshalers = map[string]unmarshaler{
 	".json":     json.Unmarshal,
+	".jsonvars": unmarshalJSONVarSet,
 	".yaml":     unmarshalYaml,
 	".yamlvars": unmarshalYamlVarSet,
 	".yml":      unmarshalYaml,
@@ -188,6 +189,10 @@ func unmarshalYaml(data []byte, v any) error {
 
 func unmarshalYamlVarSet(data []byte, v any) error {
 	return unmarshalYaml(data, &v.(*File).VarSets)
+}
+
+func unmarshalJSONVarSet(data []byte, v any) error {
+	return json.Unmarshal(data, &v.(*File).VarSets)
 }
 
 func sources[V any](s sourcer, basefilename string, values []V) error {

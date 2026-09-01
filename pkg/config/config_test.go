@@ -168,6 +168,30 @@ var _ = Describe("Config", func() {
 				)})),
 			),
 			Entry(
+				"vars (JSON)",
+				"vars.jsonvars",
+				PointTo(MatchFields(IgnoreExtras, Fields{"VarSets": ConsistOf(config.VarSet{
+					Name: "@example/customers",
+					Metadata: config.Metadata{
+						Title:       "Customers",
+						Description: "Description",
+						Comment:     "Comment",
+						Links: []config.Link{
+							{Rel: "example", HRef: "https://example.com/go"},
+						},
+					},
+					Vars: map[string]map[string]any{
+						"one": map[string]any{
+							"id": float64(11),
+						},
+						"two": map[string]any{
+							"id": float64(12),
+						},
+					},
+				},
+				)})),
+			),
+			Entry(
 				"flows",
 				"flows.yml",
 				haveFlows(ContainElement(
