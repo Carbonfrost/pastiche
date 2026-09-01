@@ -158,12 +158,80 @@ var _ = Describe("Values", func() {
 		})
 	})
 
-	Describe("MarshalJSON round trip", func() {
-		It("marshals to the canonical list form", func() {
-			v := config.Values{{Name: "scope", Values: []string{"read", "write"}, Merge: config.MergeAppend}}
-			data, err := json.Marshal(v)
-			Expect(err).NotTo(HaveOccurred())
-			Expect(string(data)).To(Equal(`[{"name":"scope","values":["read","write"],"merge":"APPEND"}]`))
-		})
+	Describe("MarshalJSON", func() {
+		DescribeTable("examples",
+			func(v config.Values, expected string) {
+				data, err := json.Marshal(v)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(string(data)).To(Equal(expected))
+			},
+
+			Entry(
+				"canonical list form when merge rules are non-default",
+				config.Values{{Name: "scope", Values: []string{"read", "write"}, Merge: config.MergeAppend}},
+				`[{"name":"scope","values":["read","write"],"merge":"APPEND"}]`),
+
+			Entry(
+				"canonical list form when a value is optional",
+				config.Values{{Name: "scope", Value: "read", Optional: true}},
+				`[{"name":"scope","value":"read","optional":true}]`),
+
+			Entry(
+				"canonical list form when a name is duplicated",
+				config.Values{{Name: "scope", Value: "read"}, {Name: "scope", Value: "write"}},
+				`[{"name":"scope","value":"read"},{"name":"scope","value":"write"}]`),
+
+			Entry(
+				"canonical list form when a name is missing",
+				config.Values{{Value: "read"}},
+				`[{"value":"read"}]`),
+
+			Entry(
+				"canonical list form when both value and values are set",
+				config.Values{{Name: "scope", Value: "read", Values: []string{"write"}}},
+				`[{"name":"scope","value":"read","values":["write"]}]`),
+
+			Entry(
+				"abbreviated map of strings when every value is singular",
+				config.Values{{Name: "user_id", Value: "1"}, {Name: "scope", Value: "read"}},
+				`{"scope":"read","user_id":"1"}`),
+
+			Entry(
+				"abbreviated map of lists when any value has several values",
+				config.Values{{Name: "user_id", Value: "1"}, {Name: "scope", Values: []string{"read", "write"}}},
+				`{"scope":["read","write"],"user_id":["1"]}`),
+
+			Entry(
+				"abbreviated empty map",
+				config.Values{},
+				`{}`),
+		)
+
+		DescribeTable("round trips",
+			func(v config.Values) {
+				data, err := json.Marshal(v)
+				Expect(err).NotTo(HaveOccurred())
+
+				var actual config.Values
+				Expect(json.Unmarshal(data, &actual)).To(Succeed())
+				Expect(actual.ToURLValues()).To(Equal(v.ToURLValues()))
+			},
+
+			Entry(
+				"singular values",
+				config.Values{{Name: "user_id", Value: "1"}, {Name: "scope", Value: "read"}}),
+
+			Entry(
+				"mixed values",
+				config.Values{{Name: "user_id", Value: "1"}, {Name: "scope", Values: []string{"read", "write"}}}),
+
+			Entry(
+				"non-default merge rules",
+				config.Values{{Name: "scope", Values: []string{"read"}, Merge: config.MergeAppend}}),
+
+			Entry(
+				"optional values",
+				config.Values{{Name: "scope", Optional: true}}),
+		)
 	})
 })

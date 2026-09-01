@@ -150,6 +150,56 @@ func (v *Value) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON writes the respresentation of Values. The method optimizes for
+// the best abbreviated representation where possible; otherwise, it uses
+// the full representation.
+func (v Values) MarshalJSON() ([]byte, error) {
+	if !v.canAbbreviate() {
+		type values Values // prevent recursion into this method
+		return json.Marshal(values(v))
+	}
+
+	if v.hasMultiValues() {
+		m := make(map[string][]string, len(v))
+		for _, e := range v {
+			m[e.Name] = e.actualValues()
+		}
+		return json.Marshal(m)
+	}
+
+	m := make(map[string]string, len(v))
+	for _, e := range v {
+		m[e.Name] = e.Value
+	}
+	return json.Marshal(m)
+}
+
+func (v Values) canAbbreviate() bool {
+	seen := make(map[string]struct{}, len(v))
+	for _, e := range v {
+		if e.Name == "" || e.Optional || e.Merge != MergeReplace {
+			return false
+		}
+		if e.Value != "" && len(e.Values) > 0 {
+			return false
+		}
+		if _, dup := seen[e.Name]; dup {
+			return false
+		}
+		seen[e.Name] = struct{}{}
+	}
+	return true
+}
+
+func (v Values) hasMultiValues() bool {
+	for _, e := range v {
+		if len(e.Values) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
 func (v *Values) UnmarshalJSON(data []byte) error {
 	trimmed := bytes.TrimSpace(data)
 
@@ -288,5 +338,6 @@ var (
 	_ json.Unmarshaler = (*Values)(nil)
 	_ json.Unmarshaler = (*Value)(nil)
 	_ json.Unmarshaler = (*MergeMode)(nil)
+	_ json.Marshaler   = Values(nil)
 	_ json.Marshaler   = MergeMode(0)
 )
