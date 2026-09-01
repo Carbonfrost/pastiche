@@ -82,8 +82,10 @@ func configService(v *Service) config.Service {
 	return config.Service{
 		Schema:      config.SchemaService,
 		Name:        v.Name,
+		Comment:     v.Comment,
 		Title:       v.Title,
 		Description: v.Description,
+		Tags:        v.Tags,
 		Links:       configLinks(v.Links),
 		Servers:     servers,
 		Resources:   singleton(configResource(v.Resource)),
@@ -96,8 +98,10 @@ func configServer(s *Server) config.Server {
 	return config.Server{
 		Schema:      config.SchemaServer,
 		Name:        s.Name,
+		Comment:     s.Comment,
 		Title:       s.Title,
 		Description: s.Description,
+		Tags:        s.Tags,
 		Links:       configLinks(s.Links),
 		BaseURL:     s.BaseURL,
 		Headers:     headerFromValues(s.Headers),
@@ -114,8 +118,10 @@ func configResource(r *Resource) *config.Resource {
 	res := &config.Resource{
 		Schema:      config.SchemaResource,
 		Name:        r.Name,
+		Comment:     r.Comment,
 		Title:       r.Title,
 		Description: r.Description,
+		Tags:        r.Tags,
 		Links:       configLinks(r.Links),
 		URI:         uri,
 		Headers:     headerFromValues(r.Headers),
@@ -175,8 +181,10 @@ func configEndpoint(r *Endpoint) *config.Endpoint {
 	return &config.Endpoint{
 		Schema:      config.SchemaEndpoint,
 		Name:        r.Name,
+		Comment:     r.Comment,
 		Title:       r.Title,
 		Description: r.Description,
+		Tags:        r.Tags,
 		Links:       configLinks(r.Links),
 		Headers:     headerFromValues(r.Headers),
 		Query:       headerFromValues(r.Query),
@@ -191,8 +199,10 @@ func configVarSet(v *VarSet) config.VarSet {
 	return config.VarSet{
 		Schema:      config.SchemaVarSet,
 		Name:        v.Name,
+		Comment:     v.Comment,
 		Title:       v.Title,
 		Description: v.Description,
+		Tags:        v.Tags,
 		Links:       configLinks(v.Links),
 		Vars:        v.Vars,
 	}
@@ -202,8 +212,10 @@ func configFlow(f *Flow) config.Flow {
 	return config.Flow{
 		Schema:      config.SchemaFlow,
 		Name:        f.Name,
+		Comment:     f.Comment,
 		Title:       f.Title,
 		Description: f.Description,
+		Tags:        f.Tags,
 		Links:       configLinks(f.Links),
 		Steps:       configSteps(f.Steps),
 		Vars:        f.Vars,
@@ -221,8 +233,10 @@ func configSteps(steps []*Step) []config.Step {
 func configStep(s *Step) config.Step {
 	step := config.Step{
 		Name:        s.Name,
+		Comment:     s.Comment,
 		Title:       s.Title,
 		Description: s.Description,
+		Tags:        s.Tags,
 		Links:       configLinks(s.Links),
 		Method:      s.Method,
 		Headers:     headerFromValues(s.Headers),

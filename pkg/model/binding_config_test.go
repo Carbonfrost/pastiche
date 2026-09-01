@@ -30,8 +30,10 @@ var _ = Describe("ToConfig", func() {
 		Entry("var set",
 			&model.VarSet{
 				Name:        "creds",
+				Comment:     "TODO Move these out of the workspace",
 				Title:       "Credentials",
 				Description: "Credentials used by the demo",
+				Tags:        []string{"private"},
 				Vars: map[string]map[string]any{
 					"default": {"token": "abc"},
 				},
@@ -39,8 +41,10 @@ var _ = Describe("ToConfig", func() {
 			config.VarSet{
 				Schema:      config.SchemaVarSet,
 				Name:        "creds",
+				Comment:     "TODO Move these out of the workspace",
 				Title:       "Credentials",
 				Description: "Credentials used by the demo",
+				Tags:        []string{"private"},
 				Links:       []config.Link{},
 				Vars: map[string]map[string]any{
 					"default": {"token": "abc"},
@@ -87,6 +91,7 @@ var _ = Describe("ToConfig", func() {
 			&model.Endpoint{
 				Name:   "listWidgets",
 				Method: "GET",
+				Tags:   []string{"public"},
 				Query: model.Values{
 					{Name: "limit", Value: "10"},
 				},
@@ -94,6 +99,7 @@ var _ = Describe("ToConfig", func() {
 			&config.Endpoint{
 				Schema: config.SchemaEndpoint,
 				Name:   "listWidgets",
+				Tags:   []string{"public"},
 				Links:  []config.Link{},
 				Query: config.Values{
 					{Name: "limit", Value: "10"},
