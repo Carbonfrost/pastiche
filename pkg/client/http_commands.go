@@ -13,6 +13,7 @@ import (
 
 	"github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
+	"github.com/Carbonfrost/joe-cli-http/tls"
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
 	"github.com/Carbonfrost/joe-cli/extensions/bind"
 	"github.com/Carbonfrost/joe-cli/extensions/exec"
@@ -67,6 +68,14 @@ func Do() cli.Action {
 			WithDefaultLocationResolver(),
 		),
 		useRequest(),
+		cli.Hook(
+			cli.InitialTiming,
+			cli.IfMatch(cli.HasData(httpclient.SourceAnnotation()), cli.SynopsisCategory("http-client")),
+		),
+		cli.Hook(
+			cli.InitialTiming,
+			cli.IfMatch(cli.HasData(tls.SourceAnnotation()), cli.SynopsisCategory("tls")),
+		),
 		cli.Setup{
 			Action: cli.Pipeline(
 				FetchAndPrint(),
