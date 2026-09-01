@@ -17,6 +17,7 @@ import (
 	"github.com/Carbonfrost/joe-cli/extensions/config"
 	"github.com/Carbonfrost/joe-cli/extensions/template"
 	"github.com/Carbonfrost/pastiche/pkg/model"
+	"github.com/Carbonfrost/pastiche/pkg/workspace/logs"
 )
 
 // Action provides a workspace action
@@ -172,23 +173,17 @@ func Log() Action {
 			Aliases:  []string{"logs"},
 			HelpText: "Access request logs for the workspace",
 			Uses: cli.AddFlags([]*cli.Flag{
-				{Uses: ClearLogs()},
+				{Uses: logDelegate(logs.Clear)},
 			}...),
+			Action: cli.DisplayHelpScreen(),
 		},
 	)
 }
 
-// ClearLogs removes logs from the workspace
-func ClearLogs() Action {
-	return cli.Pipeline(
-		&cli.Prototype{
-			Name:     "clear",
-			HelpText: "Remove all request logs in the workspace",
-			Options:  cli.Exits,
-			Value:    new(bool),
-		},
-		bind.Call((*Workspace).ClearLogDir, bind.FromContext(FromContext)),
-	)
+func logDelegate(fn func(*logs.Log) Action) cli.ActionFunc {
+	return func(c *cli.Context) error {
+		return cli.Do(c, fn(FromContext(c).Log()))
+	}
 }
 
 // SetDisableValidation disables validattion of configuration in the workspace

@@ -253,16 +253,6 @@ func (w *Workspace) LogDir() string {
 	return logDir
 }
 
-func (w *Workspace) ClearLogDir() error {
-	err := os.RemoveAll(w.LogDir())
-	if err != nil {
-		return err
-	}
-
-	_ = w.LogDir() // Recreate the directory
-	return nil
-}
-
 func (w *Workspace) Describe(c *model.SearchCriteria) error {
 	mo, err := w.Load()
 	if err != nil {

@@ -171,6 +171,19 @@ func (e Entry) toEntry() *history.LogEntry {
 	}
 }
 
+// Clear clears the logs
+func (l *Log) Clear() error {
+	stat, err := os.Stat(l.dir)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if stat.IsDir() {
+		return os.RemoveAll(l.dir)
+	}
+
+	return os.MkdirAll(l.dir, 0o755)
+}
+
 // Read returns an iterator over history log entries in reverse chronological order.
 // Within each day's log file, entries are yielded most-recent first.
 func (l *Log) Read() iter.Seq2[*history.LogEntry, error] {
