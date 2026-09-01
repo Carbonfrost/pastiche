@@ -8,8 +8,8 @@ go 1.27.0
 require (
 	github.com/Carbonfrost/joe-cli v0.21.0
 	github.com/Carbonfrost/joe-cli-http v0.12.0
-	github.com/antchfx/xmlquery v1.5.0
-	github.com/antchfx/xpath v1.3.5
+	github.com/antchfx/xmlquery v1.5.1
+	github.com/antchfx/xpath v1.3.6
 	github.com/fullstorydev/grpcurl v1.9.3
 	github.com/jhump/protoreflect v1.17.0
 	github.com/jmespath/go-jmespath v0.4.0
