@@ -7,16 +7,19 @@
 package logs
 
 import (
+	"bufio"
 	"bytes"
-	"context"
+	"cmp"
 	"encoding/json"
 	"fmt"
+	"iter"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/Carbonfrost/pastiche/pkg/model/history"
-	"github.com/Carbonfrost/pastiche/pkg/workspace"
 )
 
 type (
@@ -63,12 +66,6 @@ type Log struct {
 // New creates a log which writes its entries to the given directory.
 func New(dir string) *Log {
 	return &Log{dir: dir}
-}
-
-// FromContext creates a log which writes its entries to the log directory
-// of the workspace in the context.
-func FromContext(ctx context.Context) *Log {
-	return New(workspace.FromContext(ctx).LogDir())
 }
 
 // NewEntry creates the JSON representation of the given history log entry.
@@ -131,6 +128,107 @@ func (b ResponseBody) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{
 		"text": b.buffer.String(),
 	})
+}
+
+func (b *ResponseBody) UnmarshalJSON(data []byte) error {
+	var wrapper map[string]json.RawMessage
+	if err := json.Unmarshal(data, &wrapper); err != nil {
+		return err
+	}
+	if raw, ok := wrapper["json"]; ok {
+		b.buffer = bytes.NewBuffer(raw)
+		return nil
+	}
+	if text, ok := wrapper["text"]; ok {
+		var s string
+		if err := json.Unmarshal(text, &s); err != nil {
+			return err
+		}
+		b.buffer = bytes.NewBufferString(s)
+		return nil
+	}
+	return nil
+}
+
+func (e Entry) toEntry() *history.LogEntry {
+	return &history.LogEntry{
+		Timestamp: e.Timestamp,
+		Spec:      e.Spec,
+		URL:       e.URL,
+		Server:    e.Server,
+		BaseURL:   e.BaseURL,
+		Vars:      e.Vars,
+		Request: history.Request{
+			Method:  e.Request.Method,
+			Headers: e.Request.Headers,
+		},
+		Response: history.Response{
+			Headers:    e.Response.Headers,
+			Status:     e.Response.Status,
+			StatusCode: e.Response.StatusCode,
+			Body:       e.Response.Body.buffer,
+		},
+	}
+}
+
+// Read returns an iterator over history log entries in reverse chronological order.
+// Within each day's log file, entries are yielded most-recent first.
+func (l *Log) Read() iter.Seq2[*history.LogEntry, error] {
+	return func(yield func(*history.LogEntry, error) bool) {
+		matches, err := filepath.Glob(filepath.Join(l.dir, "requests.*.json"))
+		if err != nil {
+			yield(nil, err)
+			return
+		}
+
+		// Reverse chronological (and lexicographical - one and the same) order
+		slices.SortFunc(matches, func(a, b string) int {
+			return cmp.Compare(filepath.Base(b), filepath.Base(a))
+		})
+
+		for _, path := range matches {
+			if !readLogFile(path, yield) {
+				return
+			}
+		}
+	}
+}
+
+func readLogFile(path string, yield func(*history.LogEntry, error) bool) bool {
+	f, err := os.Open(path)
+	if err != nil {
+		return yield(nil, err)
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	scanner.Buffer(make([]byte, 64*1024), 10*1024*1024)
+
+	var lines [][]byte
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		if len(strings.TrimSpace(string(line))) == 0 {
+			continue
+		}
+		lines = append(lines, append([]byte(nil), line...))
+	}
+	if err := scanner.Err(); err != nil {
+		return yield(nil, err)
+	}
+
+	for i := len(lines) - 1; i >= 0; i-- {
+		var rec Entry
+		if err := json.Unmarshal(lines[i], &rec); err != nil {
+			if !yield(nil, err) {
+				return false
+			}
+			continue
+		}
+		if !yield(rec.toEntry(), nil) {
+			return false
+		}
+	}
+	return true
 }
 
 var _ json.Marshaler = (*ResponseBody)(nil)

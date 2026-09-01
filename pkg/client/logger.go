@@ -10,6 +10,7 @@ import (
 
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/pastiche/pkg/internal/log"
+	"github.com/Carbonfrost/pastiche/pkg/workspace"
 	"github.com/Carbonfrost/pastiche/pkg/workspace/logs"
 )
 
@@ -48,7 +49,7 @@ func (h historyDownloader) OpenDownload(ctx context.Context, r *httpclient.Respo
 	}
 
 	return &historyWriter{
-		log:     logs.FromContext(ctx),
+		log:     workspace.FromContext(ctx).Log(),
 		Writer:  io.MultiWriter(output, responseBody),
 		output:  c,
 		history: history,

@@ -23,6 +23,7 @@ import (
 	"github.com/Carbonfrost/pastiche/pkg/internal/contextkey"
 	"github.com/Carbonfrost/pastiche/pkg/internal/log"
 	"github.com/Carbonfrost/pastiche/pkg/model"
+	"github.com/Carbonfrost/pastiche/pkg/workspace/logs"
 	"sigs.k8s.io/yaml"
 )
 
@@ -238,6 +239,11 @@ func (e *envProvider) Environ() iter.Seq2[string, string] {
 			}
 		}
 	}
+}
+
+// Log retrieves the workspace request log.
+func (w *Workspace) Log() *logs.Log {
+	return logs.New(w.LogDir())
 }
 
 func (w *Workspace) LogDir() string {
