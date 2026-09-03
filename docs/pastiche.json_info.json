@@ -40,6 +40,36 @@
                     "value": {
                         "type": "string"
                     }
+                },
+                {
+                    "name": "comment",
+                    "helpText": "Short comment for the service",
+                    "value": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "name": "tags",
+                    "aliases": [
+                        "T"
+                    ],
+                    "helpText": "Short comment for the service",
+                    "value": {
+                        "type": "list",
+                        "string": "[]"
+                    }
+                },
+                {
+                    "name": "set",
+                    "aliases": [
+                        "S"
+                    ],
+                    "helpText": "Set a {0:PROPERTY} to {1:VALUE} on the service",
+                    "options": "EACH_OCCURRENCE",
+                    "value": {
+                        "type": "namevalue",
+                        "string": "="
+                    }
                 }
             ],
             "helpText": "Initialize the current directory with a new service definition"
@@ -107,6 +137,17 @@
                         "V"
                     ],
                     "helpText": "Search for variable sets",
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
+                    }
+                },
+                {
+                    "name": "mixin",
+                    "aliases": [
+                        "M"
+                    ],
+                    "helpText": "Search for mixins",
                     "value": {
                         "type": "bool",
                         "string": "false"
@@ -1200,6 +1241,19 @@
                     }
                 },
                 {
+                    "name": "mixin",
+                    "aliases": [
+                        "m"
+                    ],
+                    "helpText": "Apply the mixin {NAME} as the last layer of the request",
+                    "category": "Request options",
+                    "usageText": "NAME",
+                    "value": {
+                        "type": "list",
+                        "string": "[]"
+                    }
+                },
+                {
                     "name": "no-follow-redirects",
                     "helpText": "Follow redirects in the Location header",
                     "category": "Request options",
@@ -1269,6 +1323,19 @@
                     "helpText": "Use the specified server for the request",
                     "value": {
                         "type": "string"
+                    }
+                },
+                {
+                    "name": "mixin",
+                    "aliases": [
+                        "m"
+                    ],
+                    "helpText": "Apply the mixin {NAME} as the last layer of the request",
+                    "category": "Request options",
+                    "usageText": "NAME",
+                    "value": {
+                        "type": "list",
+                        "string": "[]"
                     }
                 },
                 {
@@ -1355,6 +1422,19 @@
                     "helpText": "Use the specified server for the request",
                     "value": {
                         "type": "string"
+                    }
+                },
+                {
+                    "name": "mixin",
+                    "aliases": [
+                        "m"
+                    ],
+                    "helpText": "Apply the mixin {NAME} as the last layer of the request",
+                    "category": "Request options",
+                    "usageText": "NAME",
+                    "value": {
+                        "type": "list",
+                        "string": "[]"
                     }
                 }
             ],
@@ -1500,7 +1580,7 @@
     ],
     "helpText": "Make requests to HTTP APIs using their OpenAPI schemas and definitions.",
     "version": "(devel)",
-    "buildDate": "2026-08-30T23:00:38.847064323-07:00",
+    "buildDate": "2026-09-03T12:27:21.311289533-07:00",
     "comment": "Smart OpenAPI client",
     "options": "SORTED_FLAGS, SORTED_COMMANDS, SORTED_EXPRS"
 }
