@@ -34,6 +34,8 @@ type InitParams struct {
 	Name        string
 	Title       string
 	Description string
+	Comment     string
+	Tags        []string
 }
 
 func newParams[T any](action cli.Action, binder bind.Func[T]) bind.ActionBinder[T] {
@@ -85,6 +87,29 @@ func useInitParams() bind.ActionBinder[*InitParams] {
 					Name:     "description",
 					HelpText: "Short description of the service",
 				},
+				{
+					Name:     "comment",
+					HelpText: "Short comment for the service",
+				},
+				{
+					Name:     "tags",
+					Aliases:  []string{"T"},
+					Value:    cli.List(),
+					HelpText: "Short comment for the service",
+				},
+				{
+					Name:     "set",
+					Aliases:  []string{"S"},
+					HelpText: "Set a {0:PROPERTY} to {1:VALUE} on the service",
+					Options:  cli.EachOccurrence,
+					Uses: bind.Action2(
+						func(name, value string) Action {
+							return bind.Redirect(name, value)
+						},
+						bind.NameValue().Name(),
+						bind.NameValue().Value(),
+					),
+				},
 			}...),
 		},
 	),
@@ -94,6 +119,8 @@ func useInitParams() bind.ActionBinder[*InitParams] {
 				Name:        name,
 				Title:       c.String("title"),
 				Description: c.String("description"),
+				Comment:     c.String("comment"),
+				Tags:        c.List("tags"),
 			}, err
 		},
 	)

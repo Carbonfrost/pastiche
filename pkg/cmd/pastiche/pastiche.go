@@ -12,6 +12,7 @@ import (
 	"github.com/Carbonfrost/joe-cli/extensions/table"
 	"github.com/Carbonfrost/pastiche/pkg/client"
 	"github.com/Carbonfrost/pastiche/pkg/internal/build"
+	_ "github.com/Carbonfrost/pastiche/pkg/internal/codec" // ensure codecs are registered
 	"github.com/Carbonfrost/pastiche/pkg/server"
 	"github.com/Carbonfrost/pastiche/pkg/workspace"
 )
