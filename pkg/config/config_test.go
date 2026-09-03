@@ -146,6 +146,43 @@ var _ = Describe("Config", func() {
 				),
 			),
 			Entry(
+				"secrets",
+				"secrets.yml",
+				And(
+					haveService(
+						PointTo(MatchFields(IgnoreExtras, Fields{"Secrets": ConsistOf(
+							config.Secret{
+								Name:        "token",
+								Title:       "API Token",
+								Description: "Description",
+								Comment:     "Comment",
+								Links: []config.Link{
+									{Rel: "example", HRef: "https://example.com/go"},
+								},
+								Exec: &config.ExecSecret{
+									Command: "op read op://vault/api/token",
+								},
+							},
+							config.Secret{
+								Name: "apiKey",
+								File: &config.FileSecret{
+									Path:                       "/etc/pastiche/api.key",
+									PreserveTrailingWhitespace: true,
+								},
+							},
+						)})),
+					),
+					haveServers(ContainElement(
+						MatchFields(IgnoreExtras, Fields{"Secrets": ConsistOf(config.Secret{
+							Name: "password",
+							File: &config.FileSecret{
+								Path: "/etc/pastiche/password",
+							},
+						})}),
+					)),
+				),
+			),
+			Entry(
 				"vars",
 				"vars.ymlvars",
 				PointTo(MatchFields(IgnoreExtras, Fields{"VarSets": ConsistOf(config.VarSet{
@@ -171,14 +208,12 @@ var _ = Describe("Config", func() {
 				"vars (JSON)",
 				"vars.jsonvars",
 				PointTo(MatchFields(IgnoreExtras, Fields{"VarSets": ConsistOf(config.VarSet{
-					Name: "@example/customers",
-					Metadata: config.Metadata{
-						Title:       "Customers",
-						Description: "Description",
-						Comment:     "Comment",
-						Links: []config.Link{
-							{Rel: "example", HRef: "https://example.com/go"},
-						},
+					Name:        "@example/customers",
+					Title:       "Customers",
+					Description: "Description",
+					Comment:     "Comment",
+					Links: []config.Link{
+						{Rel: "example", HRef: "https://example.com/go"},
 					},
 					Vars: map[string]map[string]any{
 						"one": map[string]any{

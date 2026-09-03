@@ -355,3 +355,61 @@ var _ = Describe("New", func() {
 		),
 	)
 })
+
+var _ = Describe("Secrets", func() {
+
+	var resolve = func(svc config.Service) model.ResolvedResource {
+		subject := model.New(&config.File{Services: []config.Service{svc}})
+		rr, err := subject.Resolve(strings.Fields("s"), "default", "")
+		Expect(err).NotTo(HaveOccurred())
+		return rr
+	}
+
+	It("discriminates secret sources by type", func() {
+		rr := resolve(config.Service{
+			Name:    "s",
+			Servers: []config.Server{{Name: "default"}},
+			Secrets: []config.Secret{
+				{Name: "token", Exec: &config.ExecSecret{Command: "echo hi"}},
+				{Name: "key", File: &config.FileSecret{Path: "/k", PreserveTrailingWhitespace: true}},
+			},
+		})
+
+		Expect(rr.Secrets()).To(ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Name":     Equal("token"),
+				"Provider": Equal(&model.ExecSecret{Command: "echo hi"}),
+			})),
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Name":     Equal("key"),
+				"Provider": Equal(&model.FileSecret{Path: "/k", PreserveTrailingWhitespace: true}),
+			})),
+		))
+	})
+
+	It("combines service and server secrets, server overriding by name", func() {
+		rr := resolve(config.Service{
+			Name: "s",
+			Secrets: []config.Secret{
+				{Name: "token", File: &config.FileSecret{Path: "/service"}},
+				{Name: "shared", File: &config.FileSecret{Path: "/service"}},
+			},
+			Servers: []config.Server{
+				{
+					Name: "default",
+					Secrets: []config.Secret{
+						{Name: "shared", File: &config.FileSecret{Path: "/server"}},
+					},
+				},
+			},
+		})
+
+		Expect(rr.Secrets()).To(ConsistOf(
+			PointTo(MatchFields(IgnoreExtras, Fields{"Name": Equal("token")})),
+			PointTo(MatchFields(IgnoreExtras, Fields{
+				"Name":     Equal("shared"),
+				"Provider": Equal(&model.FileSecret{Path: "/server"}),
+			})),
+		))
+	})
+})

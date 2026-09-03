@@ -7,6 +7,8 @@ package model_test
 import (
 	"fmt"
 	"net/url"
+	"os"
+	"path/filepath"
 	"slices"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -122,6 +124,65 @@ var _ = Describe("NewRequest", func() {
 				HaveKeyWithValue("T", []string{"server"}),
 			),
 		)
+	})
+
+	Context("Secrets", func() {
+
+		var newResource = func(secrets []*model.Secret) *modelfakes.FakeResolvedResource {
+			resource := new(modelfakes.FakeResolvedResource)
+			resource.ServiceReturns(&model.Service{})
+			resource.SecretsReturns(secrets)
+			resource.EndpointReturns(&model.Endpoint{
+				Headers: newHeader("Authorization", "Bearer ${secret.token}"),
+			})
+			return resource
+		}
+
+		It("expands file secrets and trims trailing whitespace by default", func() {
+			file := filepath.Join(GinkgoT().TempDir(), "token")
+			Expect(os.WriteFile(file, []byte("s3cret\n"), 0600)).To(Succeed())
+
+			resource := newResource([]*model.Secret{
+				{Name: "token", Provider: &model.FileSecret{Path: file}},
+			})
+
+			req, err := model.NewRequest(resource, model.WithBaseURL(mustParseURL("https://example.com")))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(req.Headers).To(HaveKeyWithValue("Authorization", []string{"Bearer s3cret"}))
+		})
+
+		It("preserves trailing whitespace when requested", func() {
+			file := filepath.Join(GinkgoT().TempDir(), "token")
+			Expect(os.WriteFile(file, []byte("s3cret\n"), 0600)).To(Succeed())
+
+			resource := newResource([]*model.Secret{
+				{Name: "token", Provider: &model.FileSecret{Path: file, PreserveTrailingWhitespace: true}},
+			})
+
+			req, err := model.NewRequest(resource, model.WithBaseURL(mustParseURL("https://example.com")))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(req.Headers).To(HaveKeyWithValue("Authorization", []string{"Bearer s3cret\n"}))
+		})
+
+		It("expands exec secrets from stdout", func() {
+			resource := newResource([]*model.Secret{
+				{Name: "token", Provider: &model.ExecSecret{Command: "printf s3cret"}},
+			})
+
+			req, err := model.NewRequest(resource, model.WithBaseURL(mustParseURL("https://example.com")))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(req.Headers).To(HaveKeyWithValue("Authorization", []string{"Bearer s3cret"}))
+		})
+
+		It("returns a placeholder when the secret fails to load", func() {
+			resource := newResource([]*model.Secret{
+				{Name: "token", Provider: &model.FileSecret{Path: "/does/not/exist"}},
+			})
+
+			req, err := model.NewRequest(resource, model.WithBaseURL(mustParseURL("https://example.com")))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(req.Headers).To(HaveKeyWithValue("Authorization", []string{"Bearer <missing secret token>"}))
+		})
 	})
 })
 

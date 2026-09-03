@@ -31,11 +31,12 @@ func service(v config.Service) *Service {
 				},
 			},
 		},
-		Links:  links(v.Links),
-		Vars:   v.Vars,
-		Client: client(v.Client),
-		Auth:   auth(v.Auth),
-		Output: outputs(v.Output),
+		Links:   links(v.Links),
+		Vars:    v.Vars,
+		Client:  client(v.Client),
+		Auth:    auth(v.Auth),
+		Output:  outputs(v.Output),
+		Secrets: secrets(v.Secrets),
 	}
 }
 
@@ -61,6 +62,7 @@ func server(s config.Server) *Server {
 		Vars:        s.Vars,
 		Auth:        auth(s.Auth),
 		Output:      outputs(s.Output),
+		Secrets:     secrets(s.Secrets),
 	}
 }
 
@@ -296,6 +298,48 @@ func outputFilter(o config.Output) OutputFilter {
 	}
 
 	return nil
+}
+
+func secrets(secs []config.Secret) []*Secret {
+	res := make([]*Secret, len(secs))
+	for i, s := range secs {
+		res[i] = secret(s)
+	}
+	return res
+}
+
+func secret(s config.Secret) *Secret {
+	return &Secret{
+		Name:        s.Name,
+		Comment:     s.Comment,
+		Title:       s.Title,
+		Description: s.Description,
+		Links:       links(s.Links),
+		Provider:    secretProvider(s),
+	}
+}
+
+func secretProvider(s config.Secret) SecretProvider {
+	if s.Exec != nil {
+		return &ExecSecret{
+			Command: s.Exec.Command,
+		}
+	}
+	if s.File != nil {
+		return &FileSecret{
+			Path:                       s.File.Path,
+			PreserveTrailingWhitespace: s.File.PreserveTrailingWhitespace,
+		}
+	}
+	return nil
+}
+
+func flows(fls []config.Flow) []*Flow {
+	res := make([]*Flow, len(fls))
+	for i, f := range fls {
+		res[i] = flow(f)
+	}
+	return res
 }
 
 func flow(f config.Flow) *Flow {

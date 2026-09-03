@@ -36,6 +36,8 @@ type Service struct {
 	Client    *Client        `json:"client,omitempty"`
 	Auth      *Auth          `json:"auth,omitempty"`
 	Output    []Output       `json:"output,omitempty"`
+	Secrets   []Secret       `json:"secrets,omitempty"`
+	VarSets   []VarSet       `json:"varSets,omitempty"`
 }
 
 type Header = Values
@@ -53,6 +55,8 @@ type Server struct {
 	Vars    map[string]any `json:"vars,omitempty"`
 	Auth    *Auth          `json:"auth,omitempty"`
 	Output  []Output       `json:"output,omitempty"`
+	Secrets []Secret       `json:"secrets,omitempty"`
+	VarSets []VarSet       `json:"varSets,omitempty"`
 }
 
 type Resource struct {
@@ -125,6 +129,23 @@ type Output struct {
 	JSON            *JSONOutput     `json:"json,omitempty"`
 	XML             *XMLOutput      `json:"xml,omitempty"`
 	YAML            *YAMLOutput     `json:"yaml,omitempty"`
+}
+
+type Secret struct {
+	Name string `json:"name,omitempty"`
+
+	Metadata
+	Exec *ExecSecret `json:"exec,omitempty"`
+	File *FileSecret `json:"file,omitempty"`
+}
+
+type ExecSecret struct {
+	Command string `json:"command,omitempty"`
+}
+
+type FileSecret struct {
+	Path                       string `json:"path,omitempty"`
+	PreserveTrailingWhitespace bool   `json:"preserveTrailingWhitespace,omitzero"`
 }
 
 type TemplateOutput struct {

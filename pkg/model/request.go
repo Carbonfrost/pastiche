@@ -85,6 +85,7 @@ func (b *requestBuilder) build(r ResolvedResource) (*Request, error) {
 
 	expander := e.Compose(
 		e.Prefix("env", e.Env()),
+		e.Prefix("secret", newSecretExpander(r.Secrets())),
 		e.Prefix("var", e.Map(combinedVars)),
 		e.Map(combinedVars),
 	)

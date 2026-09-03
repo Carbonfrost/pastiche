@@ -73,6 +73,16 @@ type FakeResolvedResource struct {
 	resourceReturnsOnCall map[int]struct {
 		result1 *model.Resource
 	}
+	SecretsStub        func() []*model.Secret
+	secretsMutex       sync.RWMutex
+	secretsArgsForCall []struct {
+	}
+	secretsReturns struct {
+		result1 []*model.Secret
+	}
+	secretsReturnsOnCall map[int]struct {
+		result1 []*model.Secret
+	}
 	ServerStub        func() *model.Server
 	serverMutex       sync.RWMutex
 	serverArgsForCall []struct {
@@ -424,6 +434,59 @@ func (fake *FakeResolvedResource) ResourceReturnsOnCall(i int, result1 *model.Re
 	}
 	fake.resourceReturnsOnCall[i] = struct {
 		result1 *model.Resource
+	}{result1}
+}
+
+func (fake *FakeResolvedResource) Secrets() []*model.Secret {
+	fake.secretsMutex.Lock()
+	ret, specificReturn := fake.secretsReturnsOnCall[len(fake.secretsArgsForCall)]
+	fake.secretsArgsForCall = append(fake.secretsArgsForCall, struct {
+	}{})
+	stub := fake.SecretsStub
+	fakeReturns := fake.secretsReturns
+	fake.recordInvocation("Secrets", []interface{}{})
+	fake.secretsMutex.Unlock()
+	if stub != nil {
+		return stub()
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeResolvedResource) SecretsCallCount() int {
+	fake.secretsMutex.RLock()
+	defer fake.secretsMutex.RUnlock()
+	return len(fake.secretsArgsForCall)
+}
+
+func (fake *FakeResolvedResource) SecretsCalls(stub func() []*model.Secret) {
+	fake.secretsMutex.Lock()
+	defer fake.secretsMutex.Unlock()
+	fake.SecretsStub = stub
+}
+
+func (fake *FakeResolvedResource) SecretsReturns(result1 []*model.Secret) {
+	fake.secretsMutex.Lock()
+	defer fake.secretsMutex.Unlock()
+	fake.SecretsStub = nil
+	fake.secretsReturns = struct {
+		result1 []*model.Secret
+	}{result1}
+}
+
+func (fake *FakeResolvedResource) SecretsReturnsOnCall(i int, result1 []*model.Secret) {
+	fake.secretsMutex.Lock()
+	defer fake.secretsMutex.Unlock()
+	fake.SecretsStub = nil
+	if fake.secretsReturnsOnCall == nil {
+		fake.secretsReturnsOnCall = make(map[int]struct {
+			result1 []*model.Secret
+		})
+	}
+	fake.secretsReturnsOnCall[i] = struct {
+		result1 []*model.Secret
 	}{result1}
 }
 

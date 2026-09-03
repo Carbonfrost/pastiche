@@ -48,6 +48,7 @@ type Service struct {
 	Client      Client
 	Auth        Auth
 	Output      []*OutputConfig
+	Secrets     []*Secret
 }
 
 type Server struct {
@@ -64,6 +65,7 @@ type Server struct {
 	Vars        map[string]any
 	Auth        Auth
 	Output      []*OutputConfig
+	Secrets     []*Secret
 }
 
 type Resource struct {
@@ -133,6 +135,28 @@ type OutputConfig struct {
 	Links           []Link
 	Filter          OutputFilter
 	IncludeMetadata bool
+}
+
+type Secret struct {
+	Name        string
+	Comment     string
+	Title       string
+	Description string
+	Links       []Link
+	Provider    SecretProvider
+}
+
+type SecretProvider interface {
+	secretProviderSigil()
+}
+
+type ExecSecret struct {
+	Command string
+}
+
+type FileSecret struct {
+	Path                       string
+	PreserveTrailingWhitespace bool
 }
 
 type Flow struct {
@@ -262,6 +286,7 @@ type ResolvedResource interface {
 
 	// TODO: These should probably be via request
 	Output() []*OutputConfig
+	Secrets() []*Secret
 	Client() Client
 
 	EvalRequest(baseURL *url.URL, vars map[string]any) (*Request, error)
@@ -551,6 +576,18 @@ func (r *resolvedResource) Output() []*OutputConfig {
 	)
 }
 
+func (r *resolvedResource) Secrets() []*Secret {
+	return locate(
+		r,
+		reduceSecrets,
+		[]*Secret{},
+		nil,
+		nil,
+		(*Server).secrets,
+		(*Service).secrets,
+	)
+}
+
 func resolveHeaders(r ResolvedResource) http.Header {
 	return locate(
 		r,
@@ -699,6 +736,9 @@ func (r *Resource) output() []*OutputConfig { return r.Output }
 func (s *Server) output() []*OutputConfig   { return s.Output }
 func (s *Service) output() []*OutputConfig  { return s.Output }
 
+func (s *Server) secrets() []*Secret  { return s.Secrets }
+func (s *Service) secrets() []*Secret { return s.Secrets }
+
 func reduceAuth(x, y Auth) Auth {
 	if y == nil {
 		return x
@@ -753,6 +793,28 @@ func reduceOutput(x, y []*OutputConfig) []*OutputConfig {
 	return x
 }
 
+func reduceSecrets(x, y []*Secret) []*Secret {
+	byName := make(map[string]int)
+	for i, s := range x {
+		if s.Name != "" {
+			byName[s.Name] = i
+		}
+	}
+
+	// Closer level (y) wins for secrets with the same name
+	for _, s := range y {
+		if idx, ok := byName[s.Name]; ok && s.Name != "" {
+			x[idx] = s
+		} else {
+			if s.Name != "" {
+				byName[s.Name] = len(x)
+			}
+			x = append(x, s)
+		}
+	}
+	return x
+}
+
 func sameType(x, y any) bool {
 	return reflect.TypeOf(x) == reflect.TypeOf(y)
 }
@@ -764,6 +826,9 @@ func (*GRPCClient) itemSigil() {}
 func (*HTTPClient) itemSigil() {}
 
 func (*BasicAuth) authSigil() {}
+
+func (*ExecSecret) secretProviderSigil() {}
+func (*FileSecret) secretProviderSigil() {}
 
 func (*TemplateOutput) outputFilterSigil() {}
 func (*JMESPathOutput) outputFilterSigil() {}
