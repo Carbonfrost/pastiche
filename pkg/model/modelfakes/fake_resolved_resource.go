@@ -53,6 +53,16 @@ type FakeResolvedResource struct {
 	lineageReturnsOnCall map[int]struct {
 		result1 []*model.Resource
 	}
+	MixinsStub        func() []*model.Mixin
+	mixinsMutex       sync.RWMutex
+	mixinsArgsForCall []struct {
+	}
+	mixinsReturns struct {
+		result1 []*model.Mixin
+	}
+	mixinsReturnsOnCall map[int]struct {
+		result1 []*model.Mixin
+	}
 	OutputStub        func() []*model.OutputConfig
 	outputMutex       sync.RWMutex
 	outputArgsForCall []struct {
@@ -328,6 +338,59 @@ func (fake *FakeResolvedResource) LineageReturnsOnCall(i int, result1 []*model.R
 	}
 	fake.lineageReturnsOnCall[i] = struct {
 		result1 []*model.Resource
+	}{result1}
+}
+
+func (fake *FakeResolvedResource) Mixins() []*model.Mixin {
+	fake.mixinsMutex.Lock()
+	ret, specificReturn := fake.mixinsReturnsOnCall[len(fake.mixinsArgsForCall)]
+	fake.mixinsArgsForCall = append(fake.mixinsArgsForCall, struct {
+	}{})
+	stub := fake.MixinsStub
+	fakeReturns := fake.mixinsReturns
+	fake.recordInvocation("Mixins", []interface{}{})
+	fake.mixinsMutex.Unlock()
+	if stub != nil {
+		return stub()
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeResolvedResource) MixinsCallCount() int {
+	fake.mixinsMutex.RLock()
+	defer fake.mixinsMutex.RUnlock()
+	return len(fake.mixinsArgsForCall)
+}
+
+func (fake *FakeResolvedResource) MixinsCalls(stub func() []*model.Mixin) {
+	fake.mixinsMutex.Lock()
+	defer fake.mixinsMutex.Unlock()
+	fake.MixinsStub = stub
+}
+
+func (fake *FakeResolvedResource) MixinsReturns(result1 []*model.Mixin) {
+	fake.mixinsMutex.Lock()
+	defer fake.mixinsMutex.Unlock()
+	fake.MixinsStub = nil
+	fake.mixinsReturns = struct {
+		result1 []*model.Mixin
+	}{result1}
+}
+
+func (fake *FakeResolvedResource) MixinsReturnsOnCall(i int, result1 []*model.Mixin) {
+	fake.mixinsMutex.Lock()
+	defer fake.mixinsMutex.Unlock()
+	fake.MixinsStub = nil
+	if fake.mixinsReturnsOnCall == nil {
+		fake.mixinsReturnsOnCall = make(map[int]struct {
+			result1 []*model.Mixin
+		})
+	}
+	fake.mixinsReturnsOnCall[i] = struct {
+		result1 []*model.Mixin
 	}{result1}
 }
 

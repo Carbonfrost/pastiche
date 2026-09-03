@@ -241,6 +241,25 @@ func varSet(s config.VarSet) *VarSet {
 	}
 }
 
+func mixin(m config.Mixin) *Mixin {
+	return &Mixin{
+		Name:        m.Name,
+		Comment:     m.Comment,
+		Title:       m.Title,
+		Description: m.Description,
+		Tags:        m.Tags,
+		Links:       links(m.Links),
+		Method:      m.Method,
+		Headers:     valuesFromHeader(m.Headers),
+		Query:       valuesFromHeader(m.Query),
+		Form:        valuesFromHeader(m.Form),
+		Body:        m.Body,
+		RawBody:     m.RawBody,
+		Vars:        m.Vars,
+		Auth:        auth(m.Auth),
+	}
+}
+
 func outputs(outs []config.Output) []*OutputConfig {
 	res := make([]*OutputConfig, len(outs))
 	for i, o := range outs {

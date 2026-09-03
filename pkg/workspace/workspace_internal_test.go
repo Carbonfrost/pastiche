@@ -42,6 +42,14 @@ varSets:
 - $schema: pastiche:varSet
   name: creds
 `),
+		g.Entry("mixin",
+			&model.Mixin{Name: "staging", Method: "POST"},
+			`$schema: pastiche:file
+mixins:
+- $schema: pastiche:mixin
+  method: POST
+  name: staging
+`),
 		g.Entry("flow",
 			&model.Flow{Name: "login"},
 			`$schema: pastiche:file

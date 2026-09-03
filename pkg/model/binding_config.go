@@ -24,11 +24,16 @@ func ToConfigFile(m *Model) *config.File {
 	for _, f := range m.Flows {
 		flows = append(flows, configFlow(f))
 	}
+	var mixins []config.Mixin
+	for _, x := range m.Mixins {
+		mixins = append(mixins, configMixin(x))
+	}
 	return &config.File{
 		Schema:   config.SchemaFile,
 		Services: services,
 		VarSets:  varSets,
 		Flows:    flows,
+		Mixins:   mixins,
 	}
 }
 
@@ -47,6 +52,8 @@ func ToConfig(v Item) any {
 		return configEndpoint(value)
 	case *VarSet:
 		return configVarSet(value)
+	case *Mixin:
+		return configMixin(value)
 	case *Flow:
 		return configFlow(value)
 	case *Step:
@@ -69,6 +76,7 @@ func (*Server) itemSigil()   {}
 func (*Resource) itemSigil() {}
 func (*Endpoint) itemSigil() {}
 func (*VarSet) itemSigil()   {}
+func (*Mixin) itemSigil()    {}
 func (*Flow) itemSigil()     {}
 func (*Step) itemSigil()     {}
 func (Link) itemSigil()      {}
@@ -208,6 +216,26 @@ func configVarSet(v *VarSet) config.VarSet {
 	}
 }
 
+func configMixin(m *Mixin) config.Mixin {
+	return config.Mixin{
+		Schema:      config.SchemaMixin,
+		Name:        m.Name,
+		Comment:     m.Comment,
+		Title:       m.Title,
+		Description: m.Description,
+		Tags:        m.Tags,
+		Links:       configLinks(m.Links),
+		Method:      m.Method,
+		Headers:     headerFromValues(m.Headers),
+		Query:       headerFromValues(m.Query),
+		Form:        headerFromValues(m.Form),
+		Body:        m.Body,
+		RawBody:     m.RawBody,
+		Vars:        m.Vars,
+		Auth:        configAuth(m.Auth),
+	}
+}
+
 func configFlow(f *Flow) config.Flow {
 	return config.Flow{
 		Schema:      config.SchemaFlow,
@@ -307,6 +335,19 @@ func configLink(l Link) config.Link {
 		IsTemplate: l.IsTemplate,
 		Type:       l.Type,
 	}
+}
+
+func configAuth(a Auth) *config.Auth {
+	switch auth := a.(type) {
+	case *BasicAuth:
+		return &config.Auth{
+			Basic: &config.BasicAuth{
+				User:     auth.User,
+				Password: auth.Password,
+			},
+		}
+	}
+	return nil
 }
 
 func configClient(c Client) *config.Client {

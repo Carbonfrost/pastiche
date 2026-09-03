@@ -6,6 +6,7 @@ import (
 	"maps"
 	"net/http"
 	"net/url"
+	"slices"
 
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
@@ -124,25 +125,37 @@ func (b *requestBuilder) build(r ResolvedResource) (*Request, error) {
 	}, nil
 }
 
+// bodyContent obtains the content of the request body from the most specific
+// layer which defines one.  A mixin, which the caller selected explicitly, is
+// more specific than the endpoint or the resource.
 func bodyContent(r ResolvedResource, vars map[string]any) httpclient.Content {
-	if r.Endpoint().Form != nil {
-		return newFormContent(r.Endpoint().Form.toMap(), vars)
+	for _, m := range slices.Backward(r.Mixins()) {
+		if content := newContent(m.Form, m.Body, m.RawBody, vars); content != nil {
+			return content
+		}
 	}
-	if r.Endpoint().Body != "" {
-		return newTemplateContent(r.Endpoint().Body, vars)
+	if ep := r.Endpoint(); ep != nil {
+		if content := newContent(ep.Form, ep.Body, ep.RawBody, vars); content != nil {
+			return content
+		}
 	}
-	if r.Endpoint().RawBody != "" {
-		return newRawContent(r.Endpoint().RawBody)
+	if res := r.Resource(); res != nil {
+		return newContent(res.Form, res.Body, res.RawBody, vars)
 	}
-	if r.Resource().Form != nil {
-		return newFormContent(r.Resource().Form.toMap(), vars)
-	}
-	if r.Resource().Body != "" {
-		return newTemplateContent(r.Resource().Body, vars)
-	}
-	if r.Resource().RawBody != "" {
-		return newRawContent(r.Resource().RawBody)
-	}
+	return nil
+}
 
+// newContent obtains the content which one layer defines, preferring the form
+// over the templated body over the raw body
+func newContent(form Values, body any, rawBody any, vars map[string]any) httpclient.Content {
+	if form != nil {
+		return newFormContent(form.toMap(), vars)
+	}
+	if body != "" {
+		return newTemplateContent(body, vars)
+	}
+	if rawBody != "" {
+		return newRawContent(rawBody)
+	}
 	return nil
 }

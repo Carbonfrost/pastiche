@@ -77,7 +77,10 @@ func (s sourcer) source(basefilename string, v any) error {
 			if err != nil {
 				return err
 			}
-			return sources(s, basefilename, a.Flows)
+			if err := sources(s, basefilename, a.Flows); err != nil {
+				return err
+			}
+			return sources(s, basefilename, a.Mixins)
 		}
 		return s.source(basefilename, a.Service)
 	case *Service:
@@ -110,6 +113,11 @@ func (s sourcer) source(basefilename string, v any) error {
 			return nil
 		}
 		// Steps don't have a source attribute
+	case *Mixin:
+		if a == nil {
+			return nil
+		}
+		file = a.Source
 	}
 
 	if file == "" {
@@ -169,6 +177,9 @@ func (s sourcer) source(basefilename string, v any) error {
 
 	case *Step:
 		// Nothing to do for steps
+
+	case *Mixin:
+		// Nothing to do for mixins
 	}
 	return nil
 }

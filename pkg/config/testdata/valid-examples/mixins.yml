@@ -1,0 +1,28 @@
+mixins:
+  - $schema: "pastiche:mixin"
+    name: "staging"
+    title: "Staging"
+    description: "Example mixin description"
+    comment: "Example mixin comment"
+    tags:
+      - example
+      - test
+    links:
+      - rel: documentation
+        href: https://example.com/docs
+    method: POST
+    headers:
+      X-Environment: staging
+    query:
+      trace: "1"
+    form:
+      grant_type: client_credentials
+    body: '{"from":"mixin"}'
+    vars:
+      tenant: acme
+    auth:
+      basic:
+        user: u
+        password: p
+  - name: "verbose"
+    source: "./_verbose.mixin.yml"

@@ -270,6 +270,39 @@ var _ = Describe("Config", func() {
 				)),
 			),
 			Entry(
+				"mixins",
+				"mixins.yml",
+				haveMixins(ContainElements(
+					MatchFields(IgnoreExtras, Fields{
+						"Name": Equal("staging"),
+						"Metadata": MatchFields(IgnoreExtras, Fields{
+							"Title":       Equal("Staging"),
+							"Description": Equal("Example mixin description"),
+							"Comment":     Equal("Example mixin comment"),
+							"Tags":        ConsistOf("example", "test"),
+							"Links": ConsistOf(config.Link{
+								Rel:  "documentation",
+								HRef: "https://example.com/docs",
+							}),
+						}),
+						"Method":  Equal("POST"),
+						"Headers": Equal(config.ValuesFromMap(map[string][]string{"X-Environment": {"staging"}})),
+						"Query":   Equal(config.ValuesFromMap(map[string][]string{"trace": {"1"}})),
+						"Form":    Equal(config.ValuesFromMap(map[string][]string{"grant_type": {"client_credentials"}})),
+						"Body":    Equal(`{"from":"mixin"}`),
+						"Vars":    Equal(map[string]any{"tenant": "acme"}),
+						"Auth": Equal(&config.Auth{
+							Basic: &config.BasicAuth{User: "u", Password: "p"},
+						}),
+					}),
+					// The definition of this mixin is sourced from another file
+					MatchFields(IgnoreExtras, Fields{
+						"Name":  Equal("verbose"),
+						"Query": Equal(config.ValuesFromMap(map[string][]string{"verbose": {"true"}})),
+					}),
+				)),
+			),
+			Entry(
 				"query",
 				"query.yml",
 				haveResources(ContainElement(
@@ -352,6 +385,12 @@ func haveResources(m OmegaMatcher) OmegaMatcher {
 func haveResource(m OmegaMatcher) OmegaMatcher {
 	return WithTransform(func(cfg any) any {
 		return cfg.(*config.File).Service.Resources[0]
+	}, m)
+}
+
+func haveMixins(m OmegaMatcher) OmegaMatcher {
+	return WithTransform(func(cfg any) any {
+		return cfg.(*config.File).Mixins
 	}, m)
 }
 

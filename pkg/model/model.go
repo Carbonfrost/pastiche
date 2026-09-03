@@ -30,9 +30,11 @@ type Model struct {
 	Services []*Service
 	VarSets  []*VarSet
 	Flows    []*Flow
+	Mixins   []*Mixin
 
 	cacheByName        map[string]*Service
 	cacheVarSetsByName map[string]*VarSet
+	cacheMixinsByName  map[string]*Mixin
 }
 
 type Service struct {
@@ -125,6 +127,23 @@ type VarSet struct {
 	Tags        []string
 	Links       []Link
 	Vars        map[string]map[string]any
+}
+
+type Mixin struct {
+	Name        string
+	Comment     string
+	Title       string
+	Description string
+	Tags        []string
+	Links       []Link
+	Method      string
+	Headers     Values
+	Query       Values
+	Form        Values
+	Body        any
+	RawBody     any
+	Vars        map[string]any
+	Auth        Auth
 }
 
 type OutputConfig struct {
@@ -284,6 +303,10 @@ type ResolvedResource interface {
 	Endpoint() *Endpoint
 	Server() *Server
 
+	// Mixins obtains the mixins which were selected for the request, in the
+	// order that they are applied.
+	Mixins() []*Mixin
+
 	// TODO: These should probably be via request
 	Output() []*OutputConfig
 	Secrets() []*Secret
@@ -297,6 +320,7 @@ type resolvedResource struct {
 	lineage  []*Resource
 	server   *Server
 	service  *Service
+	mixins   []*Mixin
 }
 
 var looksLikeURLPattern = regexp.MustCompile(`^(unix|https?)://`)
@@ -306,6 +330,7 @@ func New(files ...*config.File) *Model {
 	services := []*Service{}
 	varSets := make([]*VarSet, 0)
 	flows := make([]*Flow, 0)
+	mixins := make([]*Mixin, 0)
 
 	for _, file := range files {
 		if file.Service != nil {
@@ -320,6 +345,9 @@ func New(files ...*config.File) *Model {
 		for _, v := range file.Flows {
 			flows = append(flows, flow(v))
 		}
+		for _, v := range file.Mixins {
+			mixins = append(mixins, mixin(v))
+		}
 	}
 
 	slices.SortStableFunc(services, serviceByName2)
@@ -327,6 +355,7 @@ func New(files ...*config.File) *Model {
 		Services: services,
 		VarSets:  varSets,
 		Flows:    flows,
+		Mixins:   mixins,
 	}
 }
 
@@ -367,6 +396,12 @@ func (m *Model) VarSet(name string) (*VarSet, bool) {
 	return svc, ok
 }
 
+// Mixin obtains the mixin with the given name.
+func (m *Model) Mixin(name string) (*Mixin, bool) {
+	mx, ok := m.mixinsByName()[name]
+	return mx, ok
+}
+
 func (m *Model) Flow(name string) (*Flow, bool) {
 	for _, f := range m.Flows {
 		if f.Name == name {
@@ -400,7 +435,22 @@ func (m *Model) varSetsByName() map[string]*VarSet {
 	return m.cacheVarSetsByName
 }
 
-func (m *Model) Resolve(spec ServiceSpec, server string, method string) (ResolvedResource, error) {
+func (m *Model) mixinsByName() map[string]*Mixin {
+	if m.cacheMixinsByName == nil {
+		m.cacheMixinsByName = map[string]*Mixin{}
+		for _, v := range m.Mixins {
+			if v.Name != "" {
+				m.cacheMixinsByName[v.Name] = v
+			}
+		}
+	}
+	return m.cacheMixinsByName
+}
+
+// Resolve locates the resource named by the spec, optionally within the named
+// server and using the given request method.  Any mixins which are named are
+// applied as the last layer of the resolution.
+func (m *Model) Resolve(spec ServiceSpec, server string, method string, mixins ...string) (ResolvedResource, error) {
 	if len(spec) == 0 {
 		return nil, fmt.Errorf("no service specified")
 	}
@@ -420,6 +470,11 @@ func (m *Model) Resolve(spec ServiceSpec, server string, method string) (Resolve
 		}
 	}
 
+	selected, err := m.selectMixins(mixins)
+	if err != nil {
+		return nil, err
+	}
+
 	lineage := []*Resource{svc.Resource}
 	current := svc.Resource
 	for i, p := range spec[1:] {
@@ -431,7 +486,8 @@ func (m *Model) Resolve(spec ServiceSpec, server string, method string) (Resolve
 		lineage = append(lineage, current)
 	}
 
-	ep := findEndpointOrDefault(current, method, spec)
+	// A mixin can name the request method, though an explicit method wins
+	ep := findEndpointOrDefault(current, cmp.Or(method, mixinMethod(selected)), spec)
 	if ep == nil {
 		// TODO It may be the case that this implies GET
 		return nil, fmt.Errorf("no endpoint defined for %v", spec.Path())
@@ -442,7 +498,36 @@ func (m *Model) Resolve(spec ServiceSpec, server string, method string) (Resolve
 		lineage:  lineage,
 		endpoint: ep,
 		server:   svr,
+		mixins:   selected,
 	}, nil
+}
+
+// selectMixins looks up each mixin by name, preserving the order in which
+// they were named
+func (m *Model) selectMixins(names []string) ([]*Mixin, error) {
+	if len(names) == 0 {
+		return nil, nil
+	}
+
+	res := make([]*Mixin, len(names))
+	for i, name := range names {
+		mx, ok := m.Mixin(name)
+		if !ok {
+			return nil, fmt.Errorf("mixin not found: %q", name)
+		}
+		res[i] = mx
+	}
+	return res, nil
+}
+
+// mixinMethod obtains the request method which the mixins name, where the
+// last one to name it wins
+func mixinMethod(mixins []*Mixin) string {
+	var res string
+	for _, mx := range mixins {
+		res = cmp.Or(mx.Method, res)
+	}
+	return res
 }
 
 func (r *Resource) Resource(name string) (*Resource, bool) {
@@ -481,6 +566,10 @@ func (r *resolvedResource) Endpoint() *Endpoint {
 
 func (r *resolvedResource) Server() *Server {
 	return r.server
+}
+
+func (r *resolvedResource) Mixins() []*Mixin {
+	return r.mixins
 }
 
 func (r *resolvedResource) EvalRequest(baseURL *url.URL, vars map[string]any) (*Request, error) {
@@ -573,6 +662,7 @@ func (r *resolvedResource) Output() []*OutputConfig {
 		(*Resource).output,
 		(*Server).output,
 		(*Service).output,
+		nil,
 	)
 }
 
@@ -585,6 +675,7 @@ func (r *resolvedResource) Secrets() []*Secret {
 		nil,
 		(*Server).secrets,
 		(*Service).secrets,
+		nil,
 	)
 }
 
@@ -597,6 +688,7 @@ func resolveHeaders(r ResolvedResource) http.Header {
 		func(r *Resource) Values { return r.Headers },
 		func(s *Server) Values { return s.Headers },
 		nil,
+		func(m *Mixin) Values { return m.Headers },
 	).ToHeader()
 }
 
@@ -609,6 +701,7 @@ func resolveQuery(r ResolvedResource) url.Values {
 		func(r *Resource) Values { return r.Query },
 		func(s *Server) Values { return s.Query },
 		nil,
+		func(m *Mixin) Values { return m.Query },
 	).ToURLValues()
 }
 
@@ -621,6 +714,7 @@ func resolveVars(r ResolvedResource) map[string]any {
 		func(r *Resource) map[string]any { return r.Vars },
 		func(s *Server) map[string]any { return s.Vars },
 		func(s *Service) map[string]any { return s.Vars },
+		func(m *Mixin) map[string]any { return m.Vars },
 	)
 }
 
@@ -638,6 +732,9 @@ func resolveLinks2(r ResolvedResource) []Link {
 	if r.Endpoint() != nil {
 		result = append(result, r.Endpoint().Links...)
 	}
+	for _, m := range r.Mixins() {
+		result = append(result, m.Links...)
+	}
 	return result
 }
 
@@ -650,9 +747,13 @@ func resolveAuth(r ResolvedResource) Auth {
 		(*Resource).auth,
 		(*Server).auth,
 		(*Service).auth,
+		(*Mixin).auth,
 	)
 }
 
+// locate reduces a value across each layer of the resolved resource, from the
+// broadest to the most specific.  Mixins, which the caller selected explicitly,
+// are the last layer of all.
 func locate[T any](
 	r ResolvedResource,
 	reducer func(T, T) T,
@@ -660,7 +761,8 @@ func locate[T any](
 	onEndpoint func(*Endpoint) T,
 	onResource func(*Resource) T,
 	onServer func(*Server) T,
-	onService func(*Service) T) T {
+	onService func(*Service) T,
+	onMixin func(*Mixin) T) T {
 
 	res := initial
 
@@ -682,30 +784,13 @@ func locate[T any](
 		res = reducer(res, onServer(r.Server()))
 	}
 
+	if onMixin != nil {
+		for _, m := range r.Mixins() {
+			res = reducer(res, onMixin(m))
+		}
+	}
+
 	return res
-}
-
-func (r *resolvedResource) bodyContent(vars map[string]any) httpclient.Content {
-	if r.Endpoint().Form != nil {
-		return newFormContent(r.Endpoint().Form.toMap(), vars)
-	}
-	if r.Endpoint().Body != "" {
-		return newTemplateContent(r.Endpoint().Body, vars)
-	}
-	if r.Endpoint().RawBody != "" {
-		return newRawContent(r.Endpoint().RawBody)
-	}
-	if r.Resource().Form != nil {
-		return newFormContent(r.Resource().Form.toMap(), vars)
-	}
-	if r.Resource().Body != "" {
-		return newTemplateContent(r.Resource().Body, vars)
-	}
-	if r.Resource().RawBody != "" {
-		return newRawContent(r.Resource().RawBody)
-	}
-
-	return nil
 }
 
 func newRawContent(data any) httpclient.Content {
@@ -730,6 +815,7 @@ func (e *Endpoint) auth() Auth { return e.Auth }
 func (r *Resource) auth() Auth { return r.Auth }
 func (s *Server) auth() Auth   { return s.Auth }
 func (s *Service) auth() Auth  { return s.Auth }
+func (m *Mixin) auth() Auth    { return m.Auth }
 
 func (e *Endpoint) output() []*OutputConfig { return e.Output }
 func (r *Resource) output() []*OutputConfig { return r.Output }

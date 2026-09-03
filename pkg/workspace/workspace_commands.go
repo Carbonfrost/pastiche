@@ -283,28 +283,35 @@ func useDescribeParams() bind.ActionBinder[*DescribeParams] {
 						Name:     "endpoint",
 						HelpText: "Search for endpoints",
 						Value:    new(bool),
-						Uses:     cli.Mutex("varset", "flow", "all"),
+						Uses:     cli.Mutex("varset", "mixin", "flow", "all"),
 					},
 					{
 						Name:     "varset",
 						Aliases:  []string{"V"},
 						HelpText: "Search for variable sets",
 						Value:    new(bool),
-						Uses:     cli.Mutex("endpoint", "flow", "all"),
+						Uses:     cli.Mutex("endpoint", "mixin", "flow", "all"),
+					},
+					{
+						Name:     "mixin",
+						Aliases:  []string{"M"},
+						HelpText: "Search for mixins",
+						Value:    new(bool),
+						Uses:     cli.Mutex("endpoint", "varset", "flow", "all"),
 					},
 					{
 						Name:     "flow",
 						Aliases:  []string{"F"},
 						HelpText: "Search for flows",
 						Value:    new(bool),
-						Uses:     cli.Mutex("endpoint", "varset", "all"),
+						Uses:     cli.Mutex("endpoint", "varset", "mixin", "all"),
 					},
 					{
 						Name:     "all",
 						Aliases:  []string{"A"},
 						HelpText: "Search for all items",
 						Value:    new(bool),
-						Uses:     cli.Mutex("endpoint", "varset", "flow"),
+						Uses:     cli.Mutex("endpoint", "varset", "mixin", "flow"),
 					},
 				}...),
 			),
@@ -328,6 +335,8 @@ func describeItemKind(c *cli.Context, spec *model.ServiceSpec) model.ItemKind {
 		return model.ItemKindAll
 	case c.Bool("varset"):
 		return model.ItemKindVarSet
+	case c.Bool("mixin"):
+		return model.ItemKindMixin
 	case c.Bool("flow"):
 		return model.ItemKindFlow
 	case c.Bool("endpoint"), c.Seen("method"):

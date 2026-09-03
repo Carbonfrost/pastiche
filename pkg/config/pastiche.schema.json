@@ -88,6 +88,13 @@
       "items": {
         "$ref": "#/$defs/flow"
       }
+    },
+    "mixins": {
+      "type": "array",
+      "description": "Named bags of request values which can be applied to a request from the command line.",
+      "items": {
+        "$ref": "#/$defs/mixin"
+      }
     }
   },
   "patternProperties": {
@@ -624,6 +631,85 @@
             "type": "object",
             "additionalProperties": true
           }
+        }
+      },
+      "additionalProperties": false
+    },
+    "mixin": {
+      "type": "object",
+      "description": "A named bag of the values which propagate into a request. A mixin is applied as the last layer when a request is resolved, so its values are the most specific ones.",
+      "anyOf": [
+        {
+          "required": [
+            "name"
+          ]
+        },
+        {
+          "required": [
+            "source"
+          ]
+        }
+      ],
+      "properties": {
+        "$schema": {
+          "type": "string",
+          "description": "Identifies the schema of this element."
+        },
+        "name": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string",
+          "description": "Path of another file, relative to this one, whose contents define this mixin."
+        },
+        "comment": {
+          "type": "string",
+          "description": "Internal comment; not intended for display."
+        },
+        "title": {
+          "type": "string",
+          "description": "Short display name."
+        },
+        "description": {
+          "type": "string",
+          "description": "Longer description."
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/link"
+          }
+        },
+        "method": {
+          "type": "string",
+          "description": "Request method to use when none was given on the command line."
+        },
+        "headers": {
+          "$ref": "#/$defs/header"
+        },
+        "query": {
+          "$ref": "#/$defs/header"
+        },
+        "form": {
+          "$ref": "#/$defs/header"
+        },
+        "body": {
+          "description": "Request body, which is templated before it is sent."
+        },
+        "rawBody": {
+          "description": "Request body, which is sent without templating."
+        },
+        "vars": {
+          "$ref": "#/$defs/vars"
+        },
+        "auth": {
+          "$ref": "#/$defs/auth"
         }
       },
       "additionalProperties": false

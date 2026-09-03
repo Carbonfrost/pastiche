@@ -12,6 +12,7 @@ type File struct {
 	Services []Service `json:"services,omitempty"`
 	VarSets  []VarSet  `json:"varSets,omitempty"`
 	Flows    []Flow    `json:"flows,omitempty"`
+	Mixins   []Mixin   `json:"mixins,omitempty"`
 
 	name string
 }
@@ -92,6 +93,22 @@ type VarSet struct {
 
 	Metadata
 	Vars map[string]map[string]any `json:"vars,omitempty"`
+}
+
+type Mixin struct {
+	Schema string `json:"$schema,omitempty"`
+	Name   string `json:"name,omitempty"`
+	Source string `json:"source,omitempty"`
+
+	Metadata
+	Method  string         `json:"method,omitempty"`
+	Headers Header         `json:"headers,omitempty"`
+	Query   Header         `json:"query,omitempty"`
+	Form    Form           `json:"form,omitempty"`
+	Body    any            `json:"body,omitempty"`
+	RawBody any            `json:"rawBody,omitempty"`
+	Vars    map[string]any `json:"vars,omitempty"`
+	Auth    *Auth          `json:"auth,omitempty"`
 }
 
 type Client struct {

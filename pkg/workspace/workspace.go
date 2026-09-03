@@ -287,6 +287,7 @@ type describeResults struct {
 	Schema    string             `json:"$schema,omitempty"`
 	Services  []config.Service   `json:"services,omitempty"`
 	VarSets   []config.VarSet    `json:"varSets,omitempty"`
+	Mixins    []config.Mixin     `json:"mixins,omitempty"`
 	Flows     []config.Flow      `json:"flows,omitempty"`
 	Resources []config.Resource  `json:"resources,omitempty"`
 	Endpoints []describeEndpoint `json:"endpoints,omitempty"`
@@ -303,6 +304,8 @@ func (d *describeResults) add(item model.Item) error {
 		d.Services = append(d.Services, toConfig[config.Service](it))
 	case *model.VarSet:
 		d.VarSets = append(d.VarSets, toConfig[config.VarSet](it))
+	case *model.Mixin:
+		d.Mixins = append(d.Mixins, toConfig[config.Mixin](it))
 	case *model.Flow:
 		d.Flows = append(d.Flows, toConfig[config.Flow](it))
 	case *model.Resource:
@@ -319,7 +322,7 @@ func (d *describeResults) add(item model.Item) error {
 }
 
 func (d *describeResults) empty() bool {
-	return len(d.Services)+len(d.VarSets)+len(d.Flows)+len(d.Resources)+len(d.Endpoints) == 0
+	return len(d.Services)+len(d.VarSets)+len(d.Mixins)+len(d.Flows)+len(d.Resources)+len(d.Endpoints) == 0
 }
 
 // fileSchema identifies the results as a configuration file, which is only

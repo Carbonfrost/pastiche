@@ -14,24 +14,15 @@ import (
 // ItemKind enumerates the kinds of items within a model which can be searched.
 type ItemKind int
 
+// The kinds of items we can search for. Resources and endpoints have can qualified
+// names, but other types must have either simple name or only package qualified names
 const (
-	// ItemKindService searches for services, which are named by a simple name.
 	ItemKindService ItemKind = iota
-
-	// ItemKindVarSet searches for variable sets, which are named by a simple name.
 	ItemKindVarSet
-
-	// ItemKindFlow searches for flows, which are named by a simple name.
+	ItemKindMixin
 	ItemKindFlow
-
-	// ItemKindResource searches for resources, which are named by a qualified name.
 	ItemKindResource
-
-	// ItemKindEndpoint searches for endpoints, which belong to the resource
-	// named by a qualified name.
 	ItemKindEndpoint
-
-	// ItemKindAll searches for every kind of item.
 	ItemKindAll
 )
 
@@ -69,6 +60,7 @@ type searchSupport struct {
 type (
 	serviceSearcher  struct{ searchSupport }
 	varSetSearcher   struct{ searchSupport }
+	mixinSearcher    struct{ searchSupport }
 	flowSearcher     struct{ searchSupport }
 	resourceSearcher struct{ searchSupport }
 	endpointSearcher struct{ searchSupport }
@@ -92,6 +84,8 @@ func (m *Model) Search(criteria *SearchCriteria) Searcher {
 		return &serviceSearcher{support}
 	case ItemKindVarSet:
 		return &varSetSearcher{support}
+	case ItemKindMixin:
+		return &mixinSearcher{support}
 	case ItemKindFlow:
 		return &flowSearcher{support}
 	case ItemKindResource:
@@ -103,6 +97,7 @@ func (m *Model) Search(criteria *SearchCriteria) Searcher {
 			searchers: []Searcher{
 				&serviceSearcher{support},
 				&varSetSearcher{support},
+				&mixinSearcher{support},
 				&flowSearcher{support},
 				&resourceSearcher{support},
 				&endpointSearcher{support},
@@ -160,6 +155,33 @@ func (s *varSetSearcher) Results() (iter.Seq[Item], error) {
 				continue
 			}
 			if !yield(vs) {
+				return
+			}
+		}
+	}, nil
+}
+
+func (s *mixinSearcher) Results() (iter.Seq[Item], error) {
+	name, err := s.simpleName("mixin")
+	if err != nil {
+		return nil, err
+	}
+
+	items := s.model.Mixins
+	if name != "" {
+		mx, ok := s.model.Mixin(name)
+		if !ok {
+			return nil, fmt.Errorf("mixin not found: %q", name)
+		}
+		items = []*Mixin{mx}
+	}
+
+	return func(yield func(Item) bool) {
+		for _, mx := range items {
+			if !s.matchesTags(mx.Tags) {
+				continue
+			}
+			if !yield(mx) {
 				return
 			}
 		}

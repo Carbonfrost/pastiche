@@ -39,6 +39,7 @@ type serviceResolver struct {
 	root   func(context.Context) *model.ServiceSpec
 	server func(context.Context) string
 	method func(context.Context) string
+	mixins func(context.Context) []string
 	vars   map[string]any
 	base   *url.URL
 	config func(context.Context) *model.Model
@@ -61,14 +62,23 @@ func NewServiceResolver(
 	root func(context.Context) *model.ServiceSpec,
 	server func(context.Context) string,
 	method func(context.Context) string,
+	mixins func(context.Context) []string,
 ) LocationResolver {
 	return &serviceResolver{
 		root:   root,
 		server: server,
 		method: method,
+		mixins: mixins,
 		config: c,
 		vars:   map[string]any{},
 	}
+}
+
+func (s *serviceResolver) selectedMixins(c context.Context) []string {
+	if s.mixins == nil {
+		return nil
+	}
+	return s.mixins(c)
 }
 
 func (s *serviceResolver) Add(location string) error {
@@ -109,7 +119,7 @@ func (s *serviceResolver) Resolve(c context.Context) ([]httpclient.Location, err
 		return r.Resolve(c)
 	}
 
-	merged, err := s.config(c).Resolve(spec, s.server(c), s.method(c))
+	merged, err := s.config(c).Resolve(spec, s.server(c), s.method(c), s.selectedMixins(c)...)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +136,7 @@ func (s *serviceResolver) Resolve(c context.Context) ([]httpclient.Location, err
 
 func (s *serviceResolver) resolveRequest(c context.Context) (*model.Request, error) {
 	spec := *s.root(c)
-	merged, err := s.config(c).Resolve(spec, s.server(c), s.method(c))
+	merged, err := s.config(c).Resolve(spec, s.server(c), s.method(c), s.selectedMixins(c)...)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +146,7 @@ func (s *serviceResolver) resolveRequest(c context.Context) (*model.Request, err
 
 func (s *serviceResolver) resolveResource(c context.Context) (model.ResolvedResource, error) {
 	spec := *s.root(c)
-	return s.config(c).Resolve(spec, s.server(c), s.method(c))
+	return s.config(c).Resolve(spec, s.server(c), s.method(c), s.selectedMixins(c)...)
 }
 
 func newLocation(base *url.URL, vars map[string]any, resolved model.ResolvedResource) (*pasticheLocation, error) {

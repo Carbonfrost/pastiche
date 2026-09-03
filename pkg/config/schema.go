@@ -11,6 +11,7 @@ const (
 	SchemaResource = "pastiche:resource"
 	SchemaEndpoint = "pastiche:endpoint"
 	SchemaVarSet   = "pastiche:varSet"
+	SchemaMixin    = "pastiche:mixin"
 	SchemaFlow     = "pastiche:flow"
 )
 

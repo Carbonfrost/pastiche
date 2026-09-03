@@ -229,9 +229,9 @@ func readLogFile(path string, yield func(*history.LogEntry, error) bool) bool {
 		return yield(nil, err)
 	}
 
-	for i := len(lines) - 1; i >= 0; i-- {
+	for _, line := range slices.Backward(lines) {
 		var rec Entry
-		if err := json.Unmarshal(lines[i], &rec); err != nil {
+		if err := json.Unmarshal(line, &rec); err != nil {
 			if !yield(nil, err) {
 				return false
 			}

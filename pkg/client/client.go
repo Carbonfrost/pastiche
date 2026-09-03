@@ -211,7 +211,7 @@ func WithLocationResolver(value httpclient.LocationResolver) Option {
 
 // WithDefaultLocationResolver provides a client option which sets up the
 // default location resolver, which uses the CLI arguments and flags named
-// "service", "server", and "method"
+// "service", "server", "method", and "mixin"
 func WithDefaultLocationResolver() Option {
 	sr := NewServiceResolver(
 		func(ctx context.Context) *model.Model {
@@ -220,6 +220,7 @@ func WithDefaultLocationResolver() Option {
 		lateBinding[*model.ServiceSpec]("service"),
 		lateBinding[string]("server"),
 		lateBinding[string]("method"),
+		lateBinding[[]string]("mixin"),
 	)
 	return WithLocationResolver(sr)
 }

@@ -53,6 +53,10 @@ func searchModel() *model.Model {
 			{Name: "login", Metadata: public},
 			{Name: "logout"},
 		},
+		Mixins: []config.Mixin{
+			{Name: "staging", Metadata: public},
+			{Name: "verbose"},
+		},
 	})
 }
 
@@ -72,6 +76,8 @@ func itemNames(s model.Searcher) []string {
 			names = append(names, "service:"+it.Name)
 		case *model.VarSet:
 			names = append(names, "varSet:"+it.Name)
+		case *model.Mixin:
+			names = append(names, "mixin:"+it.Name)
 		case *model.Flow:
 			names = append(names, "flow:"+it.Name)
 		case *model.Resource:
@@ -128,6 +134,19 @@ var _ = Describe("Search", func() {
 			[]string{"varSet:creds"},
 		),
 
+		Entry("all mixins",
+			&model.SearchCriteria{Kind: model.ItemKindMixin},
+			[]string{"mixin:staging", "mixin:verbose"},
+		),
+		Entry("mixin by name",
+			&model.SearchCriteria{Kind: model.ItemKindMixin, Spec: spec("verbose")},
+			[]string{"mixin:verbose"},
+		),
+		Entry("mixins filtered by tag",
+			&model.SearchCriteria{Kind: model.ItemKindMixin, IncludeTags: []string{"public"}},
+			[]string{"mixin:staging"},
+		),
+
 		Entry("all flows",
 			&model.SearchCriteria{Kind: model.ItemKindFlow},
 			[]string{"flow:login", "flow:logout"},
@@ -180,6 +199,7 @@ var _ = Describe("Search", func() {
 			[]string{
 				"service:alpha", "service:beta",
 				"varSet:creds", "varSet:other",
+				"mixin:staging", "mixin:verbose",
 				"flow:login", "flow:logout",
 				"resource:widgets", "resource:parts", "resource:gadgets",
 				"endpoint:", "endpoint:getWidgets", "endpoint:postWidgets", "endpoint:getParts",
@@ -214,6 +234,14 @@ var _ = Describe("Search", func() {
 		Entry("qualified name for a var set",
 			&model.SearchCriteria{Kind: model.ItemKindVarSet, Spec: spec("creds", "extra")},
 			`var set cannot be named by a qualified name: "creds.extra"`,
+		),
+		Entry("unknown mixin",
+			&model.SearchCriteria{Kind: model.ItemKindMixin, Spec: spec("unknown")},
+			`mixin not found: "unknown"`,
+		),
+		Entry("qualified name for a mixin",
+			&model.SearchCriteria{Kind: model.ItemKindMixin, Spec: spec("staging", "extra")},
+			`mixin cannot be named by a qualified name: "staging.extra"`,
 		),
 		Entry("unknown flow",
 			&model.SearchCriteria{Kind: model.ItemKindFlow, Spec: spec("unknown")},

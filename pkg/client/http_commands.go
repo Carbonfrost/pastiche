@@ -31,6 +31,7 @@ type Request struct {
 	Spec   *model.ServiceSpec
 	Method string
 	Server string
+	Mixins []string
 }
 
 type ImportParams struct {
@@ -223,7 +224,7 @@ func resolveRequest(c context.Context, req *Request) (*model.Request, error) {
 	sr := httpclient.FromContext(c).LocationResolver.(LocationResolver)
 	mo := contextual.Workspace(c).Model()
 
-	merged, err := mo.Resolve(*req.Spec, req.Server, req.Method)
+	merged, err := mo.Resolve(*req.Spec, req.Server, req.Method, req.Mixins...)
 	if err != nil {
 		return nil, err
 	}
@@ -324,6 +325,15 @@ func useRequest() bind.ActionBinder[*Request] {
 						Value:      new(string),
 						Completion: completeServer(),
 					},
+					{
+						Name:       "mixin",
+						Aliases:    []string{"m"},
+						UsageText:  "NAME",
+						HelpText:   "Apply the mixin {NAME} to the request",
+						Value:      new([]string),
+						Category:   requestOptions,
+						Completion: completeMixins(),
+					},
 				}...),
 			),
 		},
@@ -333,6 +343,7 @@ func useRequest() bind.ActionBinder[*Request] {
 				Spec:   c.Value("service").(*model.ServiceSpec),
 				Method: c.String("method"),
 				Server: c.String("server"),
+				Mixins: c.List("mixin"),
 			}, nil
 		},
 	)
@@ -361,6 +372,17 @@ func completeServiceArgs() cli.CompletionFunc {
 	}
 }
 
+func completeMixins() cli.CompletionFunc {
+	return func(cc *cli.Context) []cli.CompletionItem {
+		mo := contextual.Workspace(cc).Model()
+		names := make([]string, 0, len(mo.Mixins))
+		for _, m := range mo.Mixins {
+			names = append(names, m.Name)
+		}
+		return cli.ValueCompletion(names...).Complete(cc)
+	}
+}
+
 func completeServer() cli.CompletionFunc {
 	return func(cc *cli.Context) []cli.CompletionItem {
 		service, _, ok := tryContextResolve(cc)
@@ -384,7 +406,7 @@ func tryContextResolve(c *cli.Context) (service *model.Service, res *model.Resou
 		return
 	}
 	mo := contextual.Workspace(c).Model()
-	merged, err := mo.Resolve(*v, server, method)
+	merged, err := mo.Resolve(*v, server, method, c.List("mixin")...)
 	service = merged.Service()
 	res = merged.Resource()
 
