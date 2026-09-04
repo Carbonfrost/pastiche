@@ -10,7 +10,7 @@ require (
 	github.com/Carbonfrost/joe-cli-http v0.12.0
 	github.com/antchfx/xmlquery v1.5.1
 	github.com/antchfx/xpath v1.3.8
-	github.com/fullstorydev/grpcurl v1.9.3
+	github.com/fullstorydev/grpcurl v1.9.4
 	github.com/jhump/protoreflect v1.18.1
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/onsi/ginkgo/v2 v2.32.1
