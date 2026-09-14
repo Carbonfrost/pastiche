@@ -12,8 +12,8 @@ import (
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
 	phttpclient "github.com/Carbonfrost/pastiche/pkg/client"
+	"github.com/Carbonfrost/pastiche/pkg/internal/modelfakes"
 	"github.com/Carbonfrost/pastiche/pkg/model"
-	"github.com/Carbonfrost/pastiche/pkg/model/modelfakes"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

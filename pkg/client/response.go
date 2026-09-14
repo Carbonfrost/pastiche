@@ -14,7 +14,7 @@ import (
 	"github.com/antchfx/xmlquery"
 )
 
-//counterfeiter:generate . Response
+//counterfeiter:generate -o ../internal/clientfakes . Response
 
 type Response interface {
 	Data() (any, error)

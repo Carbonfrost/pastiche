@@ -14,7 +14,7 @@ import (
 
 	joehttpclient "github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/pastiche/pkg/client"
-	"github.com/Carbonfrost/pastiche/pkg/client/clientfakes"
+	"github.com/Carbonfrost/pastiche/pkg/internal/clientfakes"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

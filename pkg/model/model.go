@@ -24,7 +24,7 @@ import (
 
 //go:generate go tool counterfeiter -generate
 
-//counterfeiter:generate . ResolvedResource
+//counterfeiter:generate -o ../internal/modelfakes . ResolvedResource
 
 type Model struct {
 	Services []*Service

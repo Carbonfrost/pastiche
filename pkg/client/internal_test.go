@@ -7,8 +7,8 @@ import (
 	"net/url"
 
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
+	"github.com/Carbonfrost/pastiche/pkg/internal/modelfakes"
 	"github.com/Carbonfrost/pastiche/pkg/model"
-	"github.com/Carbonfrost/pastiche/pkg/model/modelfakes"
 )
 
 func NewLocation(

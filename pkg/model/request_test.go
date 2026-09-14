@@ -14,8 +14,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/Carbonfrost/pastiche/pkg/internal/modelfakes"
 	"github.com/Carbonfrost/pastiche/pkg/model"
-	"github.com/Carbonfrost/pastiche/pkg/model/modelfakes"
 	"github.com/onsi/gomega/types"
 )
 
