@@ -118,12 +118,12 @@ func (w *Workspace) Load() (*model.Model, error) {
 		return nil, err
 	}
 
-	if err := w.loadFromUser(); err != nil {
-		return nil, err
-	}
+	seen := map[string]bool{}
 
-	if err := w.loadFromWorkspace(); err != nil {
-		return nil, err
+	for _, root := range w.roots() {
+		if err := w.loadRoot(root, seen); err != nil {
+			return nil, err
+		}
 	}
 
 	result := model.New(w.files...)
@@ -153,19 +153,32 @@ func (w *Workspace) loadExamples() error {
 	return nil
 }
 
-func (w *Workspace) loadFromUser() error {
-	root, err := filepath.Abs(os.ExpandEnv("$HOME/.pastiche"))
-	if err != nil {
-		return err
+func (w *Workspace) roots() []string {
+	roots := []string{
+		os.ExpandEnv("$HOME/.pastiche"),
+		".pastiche",
 	}
-	return w.loadFiles(root)
+
+	// PASTICHE_PATH is loaded last so that its items take precedence over
+	// the user and workspace directories when names collide.
+	for _, path := range filepath.SplitList(os.Getenv("PASTICHE_PATH")) {
+		if path == "" {
+			continue
+		}
+		roots = append(roots, path)
+	}
+	return roots
 }
 
-func (w *Workspace) loadFromWorkspace() error {
-	root, err := filepath.Abs(".pastiche")
+func (w *Workspace) loadRoot(path string, seen map[string]bool) error {
+	root, err := filepath.Abs(path)
 	if err != nil {
 		return err
 	}
+	if seen[root] {
+		return nil
+	}
+	seen[root] = true
 	return w.loadFiles(root)
 }
 
@@ -223,6 +236,7 @@ func (w *Workspace) environ() map[string]string {
 		"PASTICHE_DIR":        w.Dir(),
 		"PASTICHE_LOG_DIR":    w.LogDir(),
 		"PASTICHE_CONFIG_DIR": w.ConfigDir(),
+		"PASTICHE_PATH":       os.Getenv("PASTICHE_PATH"),
 	}
 }
 
