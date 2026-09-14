@@ -2,7 +2,6 @@
 package modelfakes
 
 import (
-	"net/url"
 	"sync"
 
 	"github.com/Carbonfrost/pastiche/pkg/model"
@@ -28,20 +27,6 @@ type FakeResolvedResource struct {
 	}
 	endpointReturnsOnCall map[int]struct {
 		result1 *model.Endpoint
-	}
-	EvalRequestStub        func(*url.URL, map[string]any) (*model.Request, error)
-	evalRequestMutex       sync.RWMutex
-	evalRequestArgsForCall []struct {
-		arg1 *url.URL
-		arg2 map[string]any
-	}
-	evalRequestReturns struct {
-		result1 *model.Request
-		result2 error
-	}
-	evalRequestReturnsOnCall map[int]struct {
-		result1 *model.Request
-		result2 error
 	}
 	LineageStub        func() []*model.Resource
 	lineageMutex       sync.RWMutex
@@ -221,71 +206,6 @@ func (fake *FakeResolvedResource) EndpointReturnsOnCall(i int, result1 *model.En
 	fake.endpointReturnsOnCall[i] = struct {
 		result1 *model.Endpoint
 	}{result1}
-}
-
-func (fake *FakeResolvedResource) EvalRequest(arg1 *url.URL, arg2 map[string]any) (*model.Request, error) {
-	fake.evalRequestMutex.Lock()
-	ret, specificReturn := fake.evalRequestReturnsOnCall[len(fake.evalRequestArgsForCall)]
-	fake.evalRequestArgsForCall = append(fake.evalRequestArgsForCall, struct {
-		arg1 *url.URL
-		arg2 map[string]any
-	}{arg1, arg2})
-	stub := fake.EvalRequestStub
-	fakeReturns := fake.evalRequestReturns
-	fake.recordInvocation("EvalRequest", []interface{}{arg1, arg2})
-	fake.evalRequestMutex.Unlock()
-	if stub != nil {
-		return stub(arg1, arg2)
-	}
-	if specificReturn {
-		return ret.result1, ret.result2
-	}
-	return fakeReturns.result1, fakeReturns.result2
-}
-
-func (fake *FakeResolvedResource) EvalRequestCallCount() int {
-	fake.evalRequestMutex.RLock()
-	defer fake.evalRequestMutex.RUnlock()
-	return len(fake.evalRequestArgsForCall)
-}
-
-func (fake *FakeResolvedResource) EvalRequestCalls(stub func(*url.URL, map[string]any) (*model.Request, error)) {
-	fake.evalRequestMutex.Lock()
-	defer fake.evalRequestMutex.Unlock()
-	fake.EvalRequestStub = stub
-}
-
-func (fake *FakeResolvedResource) EvalRequestArgsForCall(i int) (*url.URL, map[string]any) {
-	fake.evalRequestMutex.RLock()
-	defer fake.evalRequestMutex.RUnlock()
-	argsForCall := fake.evalRequestArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2
-}
-
-func (fake *FakeResolvedResource) EvalRequestReturns(result1 *model.Request, result2 error) {
-	fake.evalRequestMutex.Lock()
-	defer fake.evalRequestMutex.Unlock()
-	fake.EvalRequestStub = nil
-	fake.evalRequestReturns = struct {
-		result1 *model.Request
-		result2 error
-	}{result1, result2}
-}
-
-func (fake *FakeResolvedResource) EvalRequestReturnsOnCall(i int, result1 *model.Request, result2 error) {
-	fake.evalRequestMutex.Lock()
-	defer fake.evalRequestMutex.Unlock()
-	fake.EvalRequestStub = nil
-	if fake.evalRequestReturnsOnCall == nil {
-		fake.evalRequestReturnsOnCall = make(map[int]struct {
-			result1 *model.Request
-			result2 error
-		})
-	}
-	fake.evalRequestReturnsOnCall[i] = struct {
-		result1 *model.Request
-		result2 error
-	}{result1, result2}
 }
 
 func (fake *FakeResolvedResource) Lineage() []*model.Resource {

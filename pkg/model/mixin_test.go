@@ -137,7 +137,7 @@ var _ = Describe("Mixin", func() {
 			rr, err := subject.Resolve(strings.Fields("a b"), "default", method, mixins...)
 			Expect(err).NotTo(HaveOccurred())
 
-			merged, err := rr.EvalRequest(nil, nil)
+			merged, err := model.NewRequest(rr)
 			Expect(err).NotTo(HaveOccurred())
 			return merged
 		}

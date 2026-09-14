@@ -74,7 +74,7 @@ var _ = Describe("Resolve", func() {
 				})
 				rr, _ := m.Resolve(strings.Fields("a"), "default", "")
 				baseURL, _ := url.Parse("https://example.com")
-				merged, _ := rr.EvalRequest(baseURL, map[string]any{"var": "hello"})
+				merged, _ := model.NewRequest(rr, model.WithBaseURL(baseURL), model.WithVars(map[string]any{"var": "hello"}))
 
 				Expect(merged.Links[0].HRef).To(Equal("https://example.com/hello"))
 			})
@@ -86,7 +86,7 @@ var _ = Describe("Resolve", func() {
 
 		DescribeTable("examples", func(spec string, m *model.Model) {
 			rr, _ := m.Resolve(strings.Fields(spec), "default", "")
-			merged, _ := rr.EvalRequest(nil, nil)
+			merged, _ := model.NewRequest(rr)
 			Expect(merged.Auth).To(Equal(&model.BasicAuth{User: "expected"}))
 		},
 			Entry("from endpoint", "a b", model.New(&config.File{
@@ -199,7 +199,7 @@ var _ = Describe("Header", func() {
 
 		spec := []string{"a", "b", "c"}
 		rr, _ := subject.Resolve(spec, "default", "")
-		merged, _ := rr.EvalRequest(nil, nil)
+		merged, _ := model.NewRequest(rr)
 		Expect(merged.Headers).To(expected)
 	},
 		Entry("copied from resource", HaveKeyWithValue("X-From-Resource", []string{"resource"})),
@@ -241,9 +241,9 @@ var _ = Describe("Header", func() {
 		spec := []string{"a", "b"}
 
 		rr, _ := subject.Resolve(spec, "default", "")
-		merged, _ := rr.EvalRequest(nil, uritemplates.Vars{
+		merged, _ := model.NewRequest(rr, model.WithVars(uritemplates.Vars{
 			"var": "endpoint value from var",
-		})
+		}))
 		Expect(merged.Headers).To(HaveKeyWithValue("Test", []string{"endpoint value from var"}))
 		Expect(merged.Headers).To(HaveKeyWithValue("S", []string{"endpoint value from S var set"}))
 		Expect(merged.Headers).To(HaveKeyWithValue("R", []string{"endpoint value from R var set"}))
@@ -297,7 +297,7 @@ var _ = Describe("ResolvedReference", func() {
 			rr, err := subject.Resolve(spec, "", "")
 			Expect(err).NotTo(HaveOccurred())
 
-			merged, _ := rr.EvalRequest(nil, vars)
+			merged, _ := model.NewRequest(rr, model.WithVars(vars))
 			url := merged.URL
 			Expect(url.String()).To(Equal(expected))
 		},

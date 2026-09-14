@@ -7,7 +7,6 @@ package client_test
 import (
 	"context"
 	"net/http"
-	"net/url"
 
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
@@ -122,7 +121,6 @@ var _ = Describe("pasticheLocation", func() {
 			nil,
 			nil,
 			nil, // no endpoint
-			&model.Request{},
 			nil)
 
 		req, _ := http.NewRequest("GET", "https://example.com", nil)
@@ -139,14 +137,11 @@ var _ = Describe("pasticheLocation", func() {
 				nil,
 				&modelfakes.FakeResolvedResource{
 					EndpointStub: func() *model.Endpoint {
-						return &model.Endpoint{}
-					},
-					EvalRequestStub: func(*url.URL, map[string]any) (*model.Request, error) {
-						return &model.Request{
-							Headers: map[string][]string{
-								"X-Header": {"Value"},
+						return &model.Endpoint{
+							Headers: model.Values{
+								{Name: "X-Header", Values: []string{"Value"}},
 							},
-						}, nil
+						}
 					},
 				},
 			)

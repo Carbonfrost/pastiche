@@ -311,8 +311,6 @@ type ResolvedResource interface {
 	Output() []*OutputConfig
 	Secrets() []*Secret
 	Client() Client
-
-	EvalRequest(baseURL *url.URL, vars map[string]any) (*Request, error)
 }
 
 type resolvedResource struct {
@@ -570,16 +568,6 @@ func (r *resolvedResource) Server() *Server {
 
 func (r *resolvedResource) Mixins() []*Mixin {
 	return r.mixins
-}
-
-func (r *resolvedResource) EvalRequest(baseURL *url.URL, vars map[string]any) (*Request, error) {
-	opts := []RequestOption{
-		WithVars(vars),
-	}
-	if baseURL != nil {
-		opts = append(opts, WithBaseURL(baseURL))
-	}
-	return NewRequest(r, opts...)
 }
 
 func resolveLinks(links []Link, base string, vars map[string]any) []Link {

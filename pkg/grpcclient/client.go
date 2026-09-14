@@ -131,7 +131,7 @@ func (c *Client) doOne(ctx context.Context, l httpclient.Location) (*Response, e
 	if m, ok := l.(modelLocation); ok {
 		c.copyOpts(m.Resolved().Client())
 
-		request, err := m.Resolved().EvalRequest(nil, c.vars())
+		request, err := model.NewRequest(m.Resolved(), model.WithVars(c.vars()))
 		if err != nil {
 			return nil, err
 		}

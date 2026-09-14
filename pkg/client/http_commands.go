@@ -228,8 +228,7 @@ func resolveRequest(c context.Context, req *Request) (*model.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	return merged.EvalRequest(sr.BaseURL(), sr.Vars())
+	return model.NewRequest(merged, model.WithVars(sr.Vars()), model.WithBaseURL(sr.BaseURL()))
 }
 
 func importSpec(c *cli.Context, params *ImportParams) error {
