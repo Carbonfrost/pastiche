@@ -26,6 +26,24 @@ const (
 	ItemKindAll
 )
 
+var itemKindNames = map[ItemKind]string{
+	ItemKindService:  "service",
+	ItemKindVarSet:   "varset",
+	ItemKindFlow:     "flow",
+	ItemKindResource: "resource",
+	ItemKindEndpoint: "endpoint",
+	ItemKindAll:      "all",
+}
+
+// String obtains the name of the kind of item, which is the same name that
+// the corresponding search flag uses
+func (k ItemKind) String() string {
+	if name, ok := itemKindNames[k]; ok {
+		return name
+	}
+	return fmt.Sprintf("ItemKind(%d)", int(k))
+}
+
 // Searcher enumerates the items within a model which match a search criteria.
 type Searcher interface {
 	Results() (iter.Seq[Item], error)

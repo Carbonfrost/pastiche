@@ -5,11 +5,13 @@
 package workspace
 
 import (
+	"bytes"
+
+	cli "github.com/Carbonfrost/joe-cli"
+	"github.com/Carbonfrost/pastiche/pkg/model"
 	g "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/yaml"
-
-	"github.com/Carbonfrost/pastiche/pkg/model"
 )
 
 var _ = g.Describe("describeResults", func() {
@@ -92,4 +94,77 @@ flows:
 			Expect(results.empty()).To(BeFalse())
 		})
 	})
+
+	g.Describe("items", func() {
+		g.It("names each item with its kind, sorted by name", func() {
+			results := describe(
+				&model.Service{Name: "beta", Resource: &model.Resource{}},
+				&model.Resource{Name: "alpha"},
+				&model.Flow{Name: "login"},
+				&model.VarSet{Name: "creds"},
+			)
+
+			Expect(results.items()).To(Equal([]describeItem{
+				{"alpha", model.ItemKindResource},
+				{"beta", model.ItemKindService},
+				{"creds", model.ItemKindVarSet},
+				{"login", model.ItemKindFlow},
+			}))
+		})
+
+		g.It("names an unnamed endpoint by its request method", func() {
+			results := describe(&model.Endpoint{Method: "GET"})
+
+			Expect(results.items()).To(Equal([]describeItem{
+				{"GET", model.ItemKindEndpoint},
+			}))
+		})
+	})
 })
+
+var _ = g.Describe("listItems", func() {
+
+	g.DescribeTable("stylize", func(colorCapable bool, expected string) {
+		results := describe(
+			service("@pastiche/api"),
+			service("@pastiche/meta"),
+			service("@quark/api"),
+			service("@quark/meta"),
+			service("solo"),
+		)
+
+		var buf bytes.Buffer
+		out := cli.NewWriter(&buf)
+		out.SetColorCapable(colorCapable)
+
+		Expect(listItems(out, results)).To(Succeed())
+		Expect(buf.String()).To(Equal(expected))
+	},
+		// Only the first name in each run of names which share a package
+		// prefix is stylized
+		g.Entry("in color", true,
+			"\x1b[36m@pastiche/\x1b[0mapi\tservice\n"+
+				"@pastiche/meta\tservice\n"+
+				"\x1b[36m@quark/\x1b[0mapi\tservice\n"+
+				"@quark/meta\tservice\n"+
+				"solo\tservice\n"),
+		g.Entry("without color", false,
+			"@pastiche/api\tservice\n"+
+				"@pastiche/meta\tservice\n"+
+				"@quark/api\tservice\n"+
+				"@quark/meta\tservice\n"+
+				"solo\tservice\n"),
+	)
+})
+
+func describe(items ...model.Item) *describeResults {
+	var results describeResults
+	for _, item := range items {
+		Expect(results.add(item)).To(Succeed())
+	}
+	return &results
+}
+
+func service(name string) *model.Service {
+	return &model.Service{Name: name, Resource: &model.Resource{}}
+}

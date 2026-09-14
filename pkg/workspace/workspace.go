@@ -6,9 +6,11 @@
 package workspace
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"iter"
 	"maps"
@@ -64,6 +66,8 @@ var (
 		withDefaultAction(),
 	}
 )
+
+const packagePrefixColor = cli.Cyan
 
 // New creates a new workspace
 func New(opts ...Option) *Workspace {
@@ -267,13 +271,16 @@ func (w *Workspace) LogDir() string {
 	return logDir
 }
 
-func (w *Workspace) Describe(c *model.SearchCriteria) error {
+// Describe prints the items in the workspace which match the given parameters,
+// either as their configuration or, when a list was requested, as the names
+// and kinds of the items
+func (w *Workspace) Describe(out cli.Writer, p *DescribeParams) error {
 	mo, err := w.Load()
 	if err != nil {
 		return err
 	}
 
-	results, err := mo.Search(c).Results()
+	results, err := mo.Search(p.SearchCriteria()).Results()
 	if err != nil {
 		return err
 	}
@@ -287,14 +294,17 @@ func (w *Workspace) Describe(c *model.SearchCriteria) error {
 
 	// A spec names the items which are expected to exist, so when the other
 	// criteria filter them all out, this is an error rather than empty output
-	if items.empty() && c.Spec != nil && len(*c.Spec) > 0 {
-		if len(c.IncludeTags) > 0 {
-			return fmt.Errorf("not found with tags %v: %q", c.IncludeTags, c.Spec.Path())
+	if items.empty() && p.Spec != nil && len(*p.Spec) > 0 {
+		if len(p.Tags) > 0 {
+			return fmt.Errorf("not found with tags %v: %q", p.Tags, p.Spec.Path())
 		}
-		return fmt.Errorf("not found: %q", c.Spec.Path())
+		return fmt.Errorf("not found: %q", p.Spec.Path())
 	}
 
-	return displayItems(&items)
+	if p.List {
+		return listItems(out, &items)
+	}
+	return displayItems(out, &items)
 }
 
 type describeResults struct {
@@ -339,6 +349,33 @@ func (d *describeResults) empty() bool {
 	return len(d.Services)+len(d.VarSets)+len(d.Mixins)+len(d.Flows)+len(d.Resources)+len(d.Endpoints) == 0
 }
 
+func (d *describeResults) items() []describeItem {
+	var res []describeItem
+	for _, s := range d.Services {
+		res = append(res, describeItem{s.Name, model.ItemKindService})
+	}
+	for _, v := range d.VarSets {
+		res = append(res, describeItem{v.Name, model.ItemKindVarSet})
+	}
+	for _, f := range d.Flows {
+		res = append(res, describeItem{f.Name, model.ItemKindFlow})
+	}
+	for _, r := range d.Resources {
+		res = append(res, describeItem{r.Name, model.ItemKindResource})
+	}
+	for _, e := range d.Endpoints {
+		res = append(res, describeItem{cmp.Or(e.Name, e.Method), model.ItemKindEndpoint})
+	}
+
+	slices.SortFunc(res, func(x, y describeItem) int {
+		return cmp.Or(
+			cmp.Compare(x.Name, y.Name),
+			cmp.Compare(x.Kind, y.Kind),
+		)
+	})
+	return res
+}
+
 // fileSchema identifies the results as a configuration file, which is only
 // accurate when every item within it can be written as one
 func (d *describeResults) fileSchema() string {
@@ -352,15 +389,58 @@ func toConfig[V any](item model.Item) V {
 	return model.ToConfig(item).(V)
 }
 
-func displayItems(d *describeResults) error {
+func displayItems(out io.Writer, d *describeResults) error {
 	d.Schema = d.fileSchema()
 
 	data, err := yaml.Marshal(d)
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(data))
+	_, err = fmt.Fprintln(out, string(data))
+	return err
+}
+
+type describeItem struct {
+	Name string
+	Kind model.ItemKind
+}
+
+func listItems(out cli.Writer, d *describeResults) error {
+	var previous string
+
+	for _, item := range d.items() {
+		prefix, name := cutPackagePrefix(item.Name)
+
+		// Only the first name in a run of names which share a package prefix
+		// is stylized, which makes it apparent where each package begins
+		if err := writePackagePrefix(out, prefix, prefix != previous); err != nil {
+			return err
+		}
+		previous = prefix
+
+		if _, err := fmt.Fprintf(out, "%s\t%s\n", name, item.Kind); err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+func writePackagePrefix(out cli.Writer, prefix string, stylize bool) error {
+	if stylize && prefix != "" {
+		out.SetForeground(packagePrefixColor)
+		defer out.Reset()
+	}
+
+	_, err := out.WriteString(prefix)
+	return err
+}
+
+func cutPackagePrefix(name string) (prefix string, rest string) {
+	pkg, after, ok := strings.Cut(name, "/")
+	if !ok {
+		return "", name
+	}
+	return pkg + "/", after
 }
 
 func DisableValidation() Option {

@@ -28,6 +28,10 @@ type DescribeParams struct {
 	Kind   model.ItemKind
 	Tags   []string
 	Method string
+
+	// List prints the names and kinds of the matching items rather than
+	// their definitions
+	List bool
 }
 
 type InitParams struct {
@@ -239,9 +243,18 @@ func Describe(paramsopt ...*DescribeParams) cli.Action {
 }
 
 func describeSpec(c *cli.Context, params *DescribeParams) error {
-	return FromContext(c).Describe(
-		params.SearchCriteria(),
-	)
+	return FromContext(c).Describe(c.Stdout, params)
+}
+
+// SetList provides the flag which lists the names of the matching items
+// instead of printing their definitions
+func SetList() Action {
+	return &cli.Prototype{
+		Name:     "list",
+		Aliases:  []string{"l"},
+		HelpText: "List the names and kinds of matching items",
+		Value:    new(bool),
+	}
 }
 
 // SearchCriteria obtains the criteria which the describe parameters select
@@ -313,6 +326,7 @@ func useDescribeParams() bind.ActionBinder[*DescribeParams] {
 						Value:    new(bool),
 						Uses:     cli.Mutex("endpoint", "varset", "mixin", "flow"),
 					},
+					{Uses: SetList()},
 				}...),
 			),
 		},
@@ -324,6 +338,7 @@ func useDescribeParams() bind.ActionBinder[*DescribeParams] {
 				Kind:   describeItemKind(c, spec),
 				Tags:   c.List("tags"),
 				Method: c.String("method"),
+				List:   c.Bool("list"),
 			}, nil
 		},
 	)

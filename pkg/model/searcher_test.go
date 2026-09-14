@@ -266,3 +266,18 @@ var _ = Describe("Search", func() {
 	)
 
 })
+
+var _ = Describe("ItemKind", func() {
+
+	DescribeTable("String", func(kind model.ItemKind, expected string) {
+		Expect(kind.String()).To(Equal(expected))
+	},
+		Entry("service", model.ItemKindService, "service"),
+		Entry("var set", model.ItemKindVarSet, "varset"),
+		Entry("flow", model.ItemKindFlow, "flow"),
+		Entry("resource", model.ItemKindResource, "resource"),
+		Entry("endpoint", model.ItemKindEndpoint, "endpoint"),
+		Entry("all", model.ItemKindAll, "all"),
+		Entry("unknown", model.ItemKind(-1), "ItemKind(-1)"),
+	)
+})
