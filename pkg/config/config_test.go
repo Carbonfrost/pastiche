@@ -251,7 +251,7 @@ var _ = Describe("Config", func() {
 									"Comment":     Equal("Spec step comment"),
 									"Tags":        ConsistOf("spec"),
 								}),
-								"Spec":   Equal("@linear/gql.issue"),
+								"Spec":   Equal(config.ServiceSpec{"@linear/gql", "issue"}),
 								"Method": Equal("POST"),
 							}),
 							MatchFields(IgnoreExtras, Fields{

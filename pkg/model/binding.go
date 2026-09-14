@@ -401,9 +401,9 @@ func step(s config.Step) *Step {
 }
 
 func stepType(s config.Step) StepType {
-	if s.Spec != "" {
+	if len(s.Spec) > 0 {
 		return &SpecStep{
-			Spec: s.Spec,
+			Spec: []string(s.Spec),
 		}
 	}
 	if s.URL != "" {

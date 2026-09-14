@@ -210,7 +210,7 @@ type StepType interface {
 }
 
 type SpecStep struct {
-	Spec string
+	Spec ServiceSpec
 }
 
 type URLStep struct {

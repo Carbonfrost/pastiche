@@ -58,7 +58,7 @@ var _ = Describe("ToConfig", func() {
 					{
 						Name:     "obtain token",
 						Method:   "POST",
-						StepType: &model.SpecStep{Spec: "demo.tokens"},
+						StepType: &model.SpecStep{Spec: []string{"demo", "tokens"}},
 					},
 					{
 						Name:     "call out",
@@ -76,7 +76,7 @@ var _ = Describe("ToConfig", func() {
 					{
 						Name:   "obtain token",
 						Method: "POST",
-						Spec:   "demo.tokens",
+						Spec:   []string{"demo", "tokens"},
 						Links:  []config.Link{},
 					},
 					{

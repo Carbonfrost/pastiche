@@ -4,6 +4,11 @@
 
 package config
 
+import (
+	"encoding/json"
+	"strings"
+)
+
 type File struct {
 	Schema string `json:"$schema,omitempty"`
 
@@ -239,8 +244,25 @@ type Step struct {
 	Body    any            `json:"body,omitempty"`
 	RawBody any            `json:"rawBody,omitempty"`
 	Vars    map[string]any `json:"vars,omitempty"`
-	Spec    string         `json:"spec,omitempty"`
+	Spec    ServiceSpec    `json:"spec,omitempty"`
 	URL     string         `json:"url,omitempty"`
+}
+
+type ServiceSpec []string
+
+func (s *ServiceSpec) UnmarshalJSON(data []byte) error {
+	var path string
+	if err := json.Unmarshal(data, &path); err == nil {
+		*s = strings.Split(path, ".")
+		return nil
+	}
+
+	var slice []string
+	if err := json.Unmarshal(data, &slice); err != nil {
+		return err
+	}
+	*s = slice
+	return nil
 }
 
 func (f *File) Name() string {
