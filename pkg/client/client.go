@@ -138,6 +138,15 @@ func FlagsAndArgs() cli.Action {
 			{Uses: SetFilter()},
 			{Uses: SetType()},
 			{Uses: SetIncludeMetadata()},
+			{
+				Name:      "context",
+				Aliases:   []string{"c"}, // TODO This should be -k once we consider removing --insecure via joe-cli-http@futures
+				UsageText: "NAME",
+				HelpText:  "Use the varset {NAME} as context for resolving --context-param; defaults to the service name",
+				Value:     new(string),
+				Category:  requestOptions,
+			},
+			{Uses: SetContextParam()},
 		}...),
 	)
 }
@@ -160,6 +169,14 @@ func (c *Client) SetIncludeMetadata(t bool) error {
 func (c *Client) SetVarFromEnvVar(v *uritemplates.Var) error {
 	v = VarFromEnv(v)
 	return c.locationResolver.AddVar(v.Name, v.Value)
+}
+
+func (c *Client) AddContextParam(v *cli.NameValue) error {
+	lr, ok := c.locationResolver.(LocationResolver)
+	if !ok {
+		return nil
+	}
+	return lr.AddContextParam(v.Name, v.Value)
 }
 
 // VarFromEnv interprets the value of the URI template variable as an
@@ -221,6 +238,7 @@ func WithDefaultLocationResolver() Option {
 		lateBinding[string]("server"),
 		lateBinding[string]("method"),
 		lateBinding[[]string]("mixin"),
+		lateBinding[string]("context"),
 	)
 	return WithLocationResolver(sr)
 }

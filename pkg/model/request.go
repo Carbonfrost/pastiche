@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"strings"
 
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
@@ -65,6 +66,20 @@ func WithVars(vars map[string]any) RequestOption {
 	})
 }
 
+// WithModel makes the model available so that the "var" expander can resolve
+// qualified names from any varset in the model rather than only from vars.
+func WithModel(m *Model) RequestOption {
+	return requestOption(func(r *requestBuilder) {
+		r.model = m
+	})
+}
+
+func WithContext(vs *VarSet) RequestOption {
+	return requestOption(func(r *requestBuilder) {
+		r.context = vs
+	})
+}
+
 type requestOption func(*requestBuilder)
 
 func (o requestOption) apply(r *requestBuilder) {
@@ -74,6 +89,8 @@ func (o requestOption) apply(r *requestBuilder) {
 type requestBuilder struct {
 	baseURL func() (*uritemplates.URITemplate, error)
 	vars    map[string]any
+	model   *Model
+	context *VarSet
 }
 
 func (b *requestBuilder) build(r ResolvedResource) (*Request, error) {
@@ -93,7 +110,8 @@ func (b *requestBuilder) build(r ResolvedResource) (*Request, error) {
 	expander := e.Compose(
 		e.Prefix("env", e.Env()),
 		e.Prefix("secret", newSecretExpander(r.Secrets())),
-		e.Prefix("var", e.Map(combinedVars)),
+		e.Prefix("context", contextExpander(b.context)),
+		e.Prefix("var", varExpander(combinedVars, b.model)),
 		e.Map(combinedVars),
 	)
 
@@ -129,6 +147,30 @@ func (b *requestBuilder) build(r ResolvedResource) (*Request, error) {
 		Auth:     expandAuth(resolveAuth(r), expander),
 		Expander: expander,
 	}, nil
+}
+
+func contextExpander(vs *VarSet) e.Interface {
+	if vs == nil {
+		return e.Nil
+	}
+	return e.Dig(vs.Vars)
+}
+
+func varExpander(vars map[string]any, mo *Model) e.Interface {
+	base := e.Map(vars)
+	if mo == nil {
+		return base
+	}
+	return e.Func(func(k string) any {
+		name, path, ok := strings.Cut(k, ".")
+		if ok && strings.HasPrefix(name, "@") {
+			if vs, ok := mo.VarSet(name); ok {
+				return e.Dig(vs.Vars).Expand(path)
+			}
+			return nil
+		}
+		return base.Expand(k)
+	})
 }
 
 // bodyContent obtains the content of the request body from the most specific

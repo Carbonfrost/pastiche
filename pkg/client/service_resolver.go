@@ -33,6 +33,16 @@ type LocationResolver interface {
 
 	BaseURL() *url.URL
 	Vars() map[string]any
+
+	// AddContextParam records that the variable named name should be
+	// resolved from path within the context varset, unless an explicit
+	// value for name was set via AddVar.
+	AddContextParam(name, path string) error
+}
+
+type contextParam struct {
+	name string
+	path string
 }
 
 type serviceResolver struct {
@@ -43,6 +53,9 @@ type serviceResolver struct {
 	vars   map[string]any
 	base   *url.URL
 	config func(context.Context) *model.Model
+
+	context       func(context.Context) string
+	contextParams []contextParam
 }
 
 type pasticheLocation struct {
@@ -63,14 +76,16 @@ func NewServiceResolver(
 	server func(context.Context) string,
 	method func(context.Context) string,
 	mixins func(context.Context) []string,
+	context func(context.Context) string,
 ) LocationResolver {
 	return &serviceResolver{
-		root:   root,
-		server: server,
-		method: method,
-		mixins: mixins,
-		config: c,
-		vars:   map[string]any{},
+		root:    root,
+		server:  server,
+		method:  method,
+		mixins:  mixins,
+		context: context,
+		config:  c,
+		vars:    map[string]any{},
 	}
 }
 
@@ -90,8 +105,53 @@ func (s *serviceResolver) AddVar(name string, value any) error {
 	return nil
 }
 
+func (s *serviceResolver) AddContextParam(name, path string) error {
+	s.contextParams = append(s.contextParams, contextParam{name: name, path: path})
+	return nil
+}
+
 func (s *serviceResolver) Vars() map[string]any {
 	return s.vars
+}
+
+// contextName obtains the name of the varset selected as context or implied
+// from the requested service
+func (s *serviceResolver) contextName(ctx context.Context) string {
+	if s.context != nil {
+		if name := s.context(ctx); name != "" {
+			return name
+		}
+	}
+	return (*s.root(ctx)).ServiceName()
+}
+
+func (s *serviceResolver) contextVarSet(ctx context.Context) *model.VarSet {
+	vs, _ := s.config(ctx).VarSet(s.contextName(ctx))
+	return vs
+}
+
+func (s *serviceResolver) resolveContextVars(ctx context.Context) error {
+	if len(s.contextParams) == 0 {
+		return nil
+	}
+
+	vs := s.contextVarSet(ctx)
+	if vs == nil {
+		return fmt.Errorf("varset not found: %q", s.contextName(ctx))
+	}
+
+	for _, p := range s.contextParams {
+		if _, seen := s.vars[p.name]; seen {
+			continue
+		}
+		v, ok := vs.Resolve(p.name, p.path)
+		if !ok {
+			return fmt.Errorf("cannot resolve context param %q using %q in varset %q", p.name, p.path, vs.Name)
+		}
+		s.vars[p.name] = v
+	}
+	s.contextParams = nil
+	return nil
 }
 
 func (s *serviceResolver) BaseURL() *url.URL {
@@ -119,12 +179,16 @@ func (s *serviceResolver) Resolve(c context.Context) ([]httpclient.Location, err
 		return r.Resolve(c)
 	}
 
+	if err := s.resolveContextVars(c); err != nil {
+		return nil, err
+	}
+
 	merged, err := s.config(c).Resolve(spec, s.server(c), s.method(c), s.selectedMixins(c)...)
 	if err != nil {
 		return nil, err
 	}
 
-	location, err := newLocation(s.base, s.vars, merged)
+	location, err := newLocation(merged, s.requestOptions(c)...)
 	if err != nil {
 		return nil, err
 	}
@@ -135,13 +199,26 @@ func (s *serviceResolver) Resolve(c context.Context) ([]httpclient.Location, err
 }
 
 func (s *serviceResolver) resolveRequest(c context.Context) (*model.Request, error) {
+	if err := s.resolveContextVars(c); err != nil {
+		return nil, err
+	}
+
 	spec := *s.root(c)
 	merged, err := s.config(c).Resolve(spec, s.server(c), s.method(c), s.selectedMixins(c)...)
 	if err != nil {
 		return nil, err
 	}
+	return model.NewRequest(merged, s.requestOptions(c)...)
+}
 
-	return model.NewRequest(merged, model.WithBaseURL(s.base), model.WithVars(s.vars))
+func (s *serviceResolver) requestOptions(c context.Context) []model.RequestOption {
+	m := s.config(c)
+	return []model.RequestOption{
+		model.WithBaseURL(s.base),
+		model.WithVars(s.vars),
+		model.WithModel(m),
+		model.WithContext(s.contextVarSet(c)),
+	}
 }
 
 func (s *serviceResolver) resolveResource(c context.Context) (model.ResolvedResource, error) {
@@ -149,8 +226,8 @@ func (s *serviceResolver) resolveResource(c context.Context) (model.ResolvedReso
 	return s.config(c).Resolve(spec, s.server(c), s.method(c), s.selectedMixins(c)...)
 }
 
-func newLocation(base *url.URL, vars map[string]any, resolved model.ResolvedResource) (*pasticheLocation, error) {
-	merged, err := model.NewRequest(resolved, model.WithBaseURL(base), model.WithVars(vars))
+func newLocation(resolved model.ResolvedResource, opts ...model.RequestOption) (*pasticheLocation, error) {
+	merged, err := model.NewRequest(resolved, opts...)
 	if err != nil {
 		return nil, err
 	}

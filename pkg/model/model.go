@@ -129,6 +129,36 @@ type VarSet struct {
 	Vars        map[string]map[string]any
 }
 
+// Resolve looks up the value used to fill the variable named target, at the
+// given dotted path within the varset. The first path segment names a group
+// within Vars. When the path names only the group, the property within that
+// group whose name matches target is used instead.
+func (v *VarSet) Resolve(target, path string) (any, bool) {
+	segs := strings.Split(path, ".")
+	group, ok := v.Vars[segs[0]]
+	if !ok {
+		return nil, false
+	}
+
+	rest := segs[1:]
+	if len(rest) == 0 {
+		rest = []string{target}
+	}
+
+	var cur any = group
+	for _, s := range rest {
+		m, ok := cur.(map[string]any)
+		if !ok {
+			return nil, false
+		}
+		cur, ok = m[s]
+		if !ok {
+			return nil, false
+		}
+	}
+	return cur, true
+}
+
 type Mixin struct {
 	Name        string
 	Comment     string
@@ -319,6 +349,7 @@ type resolvedResource struct {
 	server   *Server
 	service  *Service
 	mixins   []*Mixin
+	model    *Model
 }
 
 var looksLikeURLPattern = regexp.MustCompile(`^(unix|https?)://`)
@@ -497,6 +528,7 @@ func (m *Model) Resolve(spec ServiceSpec, server string, method string, mixins .
 		endpoint: ep,
 		server:   svr,
 		mixins:   selected,
+		model:    m,
 	}, nil
 }
 

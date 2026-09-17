@@ -54,6 +54,7 @@ type modelLocation interface {
 
 type modelLocationResolver interface {
 	Vars() map[string]any
+	Context() *model.VarSet
 }
 
 type Option func(*Client)
@@ -131,7 +132,7 @@ func (c *Client) doOne(ctx context.Context, l httpclient.Location) (*Response, e
 	if m, ok := l.(modelLocation); ok {
 		c.copyOpts(m.Resolved().Client())
 
-		request, err := model.NewRequest(m.Resolved(), model.WithVars(c.vars()))
+		request, err := model.NewRequest(m.Resolved(), c.requestOptions()...)
 		if err != nil {
 			return nil, err
 		}
@@ -158,10 +159,14 @@ func (c *Client) copyOpts(clientOpts model.Client) {
 	}
 }
 
-func (c *Client) vars() map[string]any {
+func (c *Client) requestOptions() []model.RequestOption {
 	if m, ok := c.locationResolver.(modelLocationResolver); ok {
-		return m.Vars()
+		return []model.RequestOption{
+			model.WithVars(m.Vars()),
+			model.WithContext(m.Context()),
+		}
 	}
+
 	return nil
 }
 

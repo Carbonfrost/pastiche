@@ -160,6 +160,25 @@ func SetVarFromEnvVar(v ...*uritemplates.Var) cli.Action {
 	)
 }
 
+// SetContextParam specifies a template parameter, named NAME, whose value is
+// resolved from PATH within the context varset named by --context (or, when
+// absent, the varset matching the requested service's name).  An explicit
+// --param always wins over a value resolved this way.
+func SetContextParam(v ...*cli.NameValue) cli.Action {
+	return cli.Pipeline(
+		&cli.Prototype{
+			Name:      "context-param",
+			Aliases:   []string{"K"},
+			UsageText: "NAME=PATH",
+			HelpText:  "Resolve {NAME} from {PATH} within the context varset to fill a template variable",
+			Value:     new(cli.NameValue),
+			Category:  requestOptions,
+			Options:   cli.EachOccurrence,
+		},
+		withBinding((*Client).AddContextParam, v),
+	)
+}
+
 // FetchAndPrint invokes the client and prints the results.
 func FetchAndPrint() cli.Action {
 	return cli.ActionOf(func(ctx context.Context) error {
@@ -228,7 +247,9 @@ func resolveRequest(c context.Context, req *Request) (*model.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	return model.NewRequest(merged, model.WithVars(sr.Vars()), model.WithBaseURL(sr.BaseURL()))
+
+	context, _ := mo.VarSet(req.Spec.ServiceName())
+	return model.NewRequest(merged, model.WithVars(sr.Vars()), model.WithBaseURL(sr.BaseURL()), model.WithContext(context))
 }
 
 func importSpec(c *cli.Context, params *ImportParams) error {

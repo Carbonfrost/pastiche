@@ -126,6 +126,104 @@ var _ = Describe("NewRequest", func() {
 		)
 	})
 
+	Context("context expander", func() {
+
+		var exampleVarSet = &model.VarSet{
+			Name: "@example/customers",
+			Vars: map[string]map[string]any{
+				"loyal": {"id": "ABC"},
+			},
+		}
+
+		It("resolves a dotted path within the selected context varset", func() {
+			resource := new(modelfakes.FakeResolvedResource)
+			resource.EndpointReturns(&model.Endpoint{
+				Query: newHeader("id", "${context.loyal.id}"),
+			})
+
+			result, err := model.NewRequest(
+				resource,
+				model.WithBaseURL(mustParseURL("https://example.com")),
+				model.WithContext(exampleVarSet),
+			)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result.URL.Query()).To(HaveKeyWithValue("id", []string{"ABC"}))
+		})
+
+		It("resolves to nothing when there is no context", func() {
+			resource := new(modelfakes.FakeResolvedResource)
+			resource.EndpointReturns(&model.Endpoint{
+				Query: newHeader("id", "${context.loyal.id}"),
+			})
+
+			result, err := model.NewRequest(
+				resource,
+				model.WithBaseURL(mustParseURL("https://example.com")),
+			)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result.URL.Query()).To(HaveKeyWithValue("id", []string{""}))
+		})
+	})
+
+	Context("var expander", func() {
+
+		It("resolves a plain name from the effective vars", func() {
+			resource := new(modelfakes.FakeResolvedResource)
+			resource.EndpointReturns(&model.Endpoint{
+				Query: newHeader("id", "${var.id}"),
+			})
+
+			result, err := model.NewRequest(
+				resource,
+				model.WithBaseURL(mustParseURL("https://example.com")),
+				model.WithVars(map[string]any{"id": "ABC"}),
+			)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result.URL.Query()).To(HaveKeyWithValue("id", []string{"ABC"}))
+		})
+
+		It("resolves a qualified name by digging any varset in the model", func() {
+			resource := new(modelfakes.FakeResolvedResource)
+			resource.EndpointReturns(&model.Endpoint{
+				Query: newHeader("id", "${var.@example/customers.loyal.id}"),
+			})
+
+			mo := &model.Model{
+				VarSets: []*model.VarSet{
+					{
+						Name: "@example/customers",
+						Vars: map[string]map[string]any{
+							"loyal": {"id": "ABC"},
+						},
+					},
+				},
+			}
+
+			result, err := model.NewRequest(
+				resource,
+				model.WithBaseURL(mustParseURL("https://example.com")),
+				model.WithModel(mo),
+			)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result.URL.Query()).To(HaveKeyWithValue("id", []string{"ABC"}))
+		})
+
+		It("resolves to nothing for an unknown qualified varset", func() {
+			resource := new(modelfakes.FakeResolvedResource)
+			resource.EndpointReturns(&model.Endpoint{
+				Query: newHeader("id", "${var.@unknown/varset.loyal.id}"),
+			})
+
+			result, err := model.NewRequest(
+				resource,
+				model.WithBaseURL(mustParseURL("https://example.com")),
+				model.WithModel(&model.Model{}),
+			)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result.URL.Query()).To(HaveKeyWithValue("id", []string{""}))
+		})
+	})
+
 	Context("Secrets", func() {
 
 		var newResource = func(secrets []*model.Secret) *modelfakes.FakeResolvedResource {

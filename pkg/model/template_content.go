@@ -20,18 +20,18 @@ import (
 )
 
 type templateContent struct {
-	*contentSupport
+	contentSupport
 	tpl string
 }
 
 type formContent struct {
-	*contentSupport
+	contentSupport
 }
 
 type Expander = expander.Interface
 
 type objectContent struct {
-	*contentSupport
+	contentSupport
 	value any
 }
 
@@ -40,35 +40,28 @@ type contentSupport struct {
 	vars map[string]any
 }
 
-func newContentSupport(vars map[string]any) *contentSupport {
-	return &contentSupport{
-		form: url.Values{},
-		vars: vars,
-	}
-}
-
 func newFormContent(form map[string][]string, vars map[string]any) joehttpclient.Content {
 	return &formContent{
-		contentSupport: &contentSupport{
-			form: form,
-			vars: vars,
-		},
+		form: form,
+		vars: vars,
 	}
 }
 
 func newTemplateContent(body any, vars map[string]any) joehttpclient.Content {
 	if str, ok := body.(string); ok {
 		return &templateContent{
-			contentSupport: newContentSupport(vars),
-			tpl:            str,
+			form: url.Values{},
+			vars: vars,
+			tpl:  str,
 		}
 	}
 	if body == nil {
 		return nil
 	}
 	return &objectContent{
-		contentSupport: newContentSupport(vars),
-		value:          body,
+		form:  url.Values{},
+		vars:  vars,
+		value: body,
 	}
 }
 

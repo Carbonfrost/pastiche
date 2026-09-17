@@ -18,7 +18,7 @@ func NewLocation(
 	ep *model.Endpoint,
 	u *url.URL) *pasticheLocation {
 
-	loc, _ := newLocation(nil, nil, &modelfakes.FakeResolvedResource{
+	loc, _ := newLocation(&modelfakes.FakeResolvedResource{
 		ResourceStub: func() *model.Resource {
 			return resource
 		},
@@ -36,6 +36,6 @@ func NewLocation(
 }
 
 func NewLocationVars(vars uritemplates.Vars, r model.ResolvedResource) *pasticheLocation {
-	loc, _ := newLocation(nil, vars, r)
+	loc, _ := newLocation(r, model.WithVars(vars))
 	return loc
 }
