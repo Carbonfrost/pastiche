@@ -4,6 +4,7 @@ import (
 	_ "embed"
 )
 
+// The various schemas used in the configuration API
 const (
 	SchemaFile     = "pastiche:file"
 	SchemaService  = "pastiche:service"

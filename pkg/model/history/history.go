@@ -1,6 +1,7 @@
 // Copyright 2026 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+
 package history
 
 import (
@@ -41,7 +42,7 @@ type Response struct {
 	Body       *bytes.Buffer
 }
 
-// NewHistoryLogEntry creates a new HistoryLogEntry from model types.
+// NewLogEntry creates a new LogEntry from model types.
 // It returns the entry and an io.Writer for capturing the response body as it streams in.
 func NewLogEntry(spec []string, server string, baseURL *url.URL, req *model.Request, resp *httpclient.Response) (*LogEntry, io.Writer) {
 	var vars map[string]any

@@ -655,7 +655,7 @@ func (t tsvFilter) Search(ctx context.Context, resp Response) ([]byte, error) {
 
 func extractFieldValue(data any, field string) string {
 	// Navigate to the field using dig logic
-	var current any = data
+	var current = data
 	var err error
 
 	for name := range strings.SplitSeq(strings.TrimLeft(field, "."), ".") {
