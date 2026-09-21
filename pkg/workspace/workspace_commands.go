@@ -246,17 +246,6 @@ func describeSpec(c *cli.Context, params *DescribeParams) error {
 	return FromContext(c).Describe(c.Stdout, params)
 }
 
-// SetList provides the flag which lists the names of the matching items
-// instead of printing their definitions
-func SetList() Action {
-	return &cli.Prototype{
-		Name:     "list",
-		Aliases:  []string{"l"},
-		HelpText: "List the names and kinds of matching items",
-		Value:    new(bool),
-	}
-}
-
 // SearchCriteria obtains the criteria which the describe parameters select
 func (p *DescribeParams) SearchCriteria() *model.SearchCriteria {
 	return &model.SearchCriteria{
@@ -326,7 +315,12 @@ func useDescribeParams() bind.ActionBinder[*DescribeParams] {
 						Value:    new(bool),
 						Uses:     cli.Mutex("endpoint", "varset", "mixin", "flow"),
 					},
-					{Uses: SetList()},
+					{
+						Name:     "list",
+						Aliases:  []string{"l"},
+						HelpText: "List the names and kinds of matching items",
+						Value:    new(bool),
+					},
 				}...),
 			),
 		},
