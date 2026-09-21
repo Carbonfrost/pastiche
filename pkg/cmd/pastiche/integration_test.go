@@ -51,7 +51,7 @@ var _ = Describe("Integration", Label("integration"), Ordered, func() {
 					app.Stdout = &capture
 
 					args, _ := cli.Split(arguments())
-					err := app.RunContext(context.Background(), args)
+					err := app.RunContext(context.Background(), args...)
 					Expect(err).NotTo(HaveOccurred())
 					Expect(capture.String()).To(expected)
 				},
@@ -121,7 +121,7 @@ varSets:
 				app.Stdout = &capture
 
 				args, _ := cli.Split(arguments)
-				return app.RunContext(context.Background(), args)
+				return app.RunContext(context.Background(), args...)
 			}
 
 			It("resolves the value using the full path", func() {
@@ -211,7 +211,7 @@ varSets:
 				app.Stdout = &capture
 
 				args, _ := cli.Split(arguments)
-				return app.RunContext(context.Background(), args)
+				return app.RunContext(context.Background(), args...)
 			}
 
 			It("resolves ${context...} from the implied context varset", func() {

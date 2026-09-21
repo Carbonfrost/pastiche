@@ -30,7 +30,7 @@ const (
 )
 
 func Run() {
-	NewApp().Run(os.Args)
+	NewApp().Run(os.Args...)
 }
 
 func NewApp() *cli.App {

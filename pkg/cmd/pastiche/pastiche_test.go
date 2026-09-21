@@ -24,7 +24,7 @@ var _ = Describe("NewApp", func() {
 				app.Stdout = io.Discard
 
 				args, _ := cli.Split(arguments)
-				err := app.RunContext(context.Background(), args)
+				err := app.RunContext(context.Background(), args...)
 				Expect(err).To(errExpected)
 			},
 			Entry(

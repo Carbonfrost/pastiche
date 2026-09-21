@@ -16,7 +16,6 @@ func Clear(l *Log) Action {
 			Options:  cli.Exits,
 			Value:    new(bool),
 		},
-		// TODO joe-cli@futures removes this extraneous generics
-		bind.Call0[cli.Action](l.Clear),
+		bind.Call0(l.Clear),
 	)
 }

@@ -6,16 +6,16 @@ module github.com/Carbonfrost/pastiche
 go 1.27.0
 
 require (
-	github.com/Carbonfrost/joe-cli v0.21.0
+	github.com/Carbonfrost/joe-cli v0.22.0
 	github.com/Carbonfrost/joe-cli-http v0.12.0
 	github.com/antchfx/xmlquery v1.5.1
 	github.com/antchfx/xpath v1.3.8
 	github.com/fullstorydev/grpcurl v1.9.4
 	github.com/jhump/protoreflect v1.18.1
 	github.com/jmespath/go-jmespath v0.4.0
-	github.com/onsi/ginkgo/v2 v2.32.1
+	github.com/onsi/ginkgo/v2 v2.33.0
 	github.com/onsi/gomega v1.43.0
-	golang.org/x/term v0.45.0
+	golang.org/x/term v0.46.0
 	google.golang.org/grpc v1.83.2
 	sigs.k8s.io/yaml v1.6.0
 )
@@ -30,7 +30,7 @@ require (
 	github.com/envoyproxy/protoc-gen-validate v1.3.3 // indirect
 	github.com/fatih/color v1.19.0 // indirect
 	github.com/fatih/structtag v1.2.0 // indirect
-	github.com/go-critic/go-critic v0.14.4 // indirect
+	github.com/go-critic/go-critic v0.15.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.5 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
@@ -45,7 +45,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/google/pprof v0.0.0-20260830191439-4932ad3515ea // indirect
+	github.com/google/pprof v0.0.0-20260906184651-6331bc6350fe // indirect
 	github.com/hashicorp/go-version v1.9.0 // indirect
 	github.com/jhump/protoreflect/v2 v2.0.0-beta.2 // indirect
 	github.com/juju/ansiterm v1.0.0 // indirect
@@ -54,9 +54,9 @@ require (
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
-	github.com/maxbrunsfeld/counterfeiter/v6 v6.12.2 // indirect
+	github.com/maxbrunsfeld/counterfeiter/v6 v6.13.0 // indirect
 	github.com/mgechev/dots v1.0.0 // indirect
-	github.com/mgechev/revive v1.15.0 // indirect
+	github.com/mgechev/revive v1.16.0 // indirect
 	github.com/mitchellh/go-ps v1.0.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
@@ -71,16 +71,16 @@ require (
 	github.com/spiffe/go-spiffe/v2 v2.8.1 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
-	golang.org/x/exp/typeparams v0.0.0-20260727155853-b88d891fe743 // indirect
-	golang.org/x/mod v0.40.0 // indirect
-	golang.org/x/net v0.58.0 // indirect
-	golang.org/x/sync v0.22.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/text v0.41.0 // indirect
-	golang.org/x/tools v0.49.0 // indirect
+	golang.org/x/exp/typeparams v0.0.0-20260908205506-85c1c2202aba // indirect
+	golang.org/x/mod v0.41.0 // indirect
+	golang.org/x/net v0.59.0 // indirect
+	golang.org/x/sync v0.23.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
+	golang.org/x/text v0.42.0 // indirect
+	golang.org/x/tools v0.50.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260904194346-d0f1323225a4 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
-	honnef.co/go/tools v0.7.0 // indirect
+	honnef.co/go/tools v0.8.1 // indirect
 )
 
 tool (
