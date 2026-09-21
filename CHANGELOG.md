@@ -1,5 +1,63 @@
 # Changelog
 
+## v0.6.0 (September 20, 2026)
+
+### New Features
+
+* Codex:
+    * @go/pkg (2d4450c)
+* Mixins (6a8ff86)
+* Secrets (f3f68c0)    
+* Context flags (83bc954)
+* JSON vars (eee7373)
+* Describe command improvements:
+    * `--list` option in describe command (05a8d60)
+    * Allow other types to be described (ca62e5f)
+* Introduce workspace path lookup using `PASTICHE_PATH` var (e0f5568)
+
+### Bug fixes and improvements
+
+* Fix categories and enums of various flags (5a060c3)
+* Fix mapping of links to configuration values (bc25981)
+* Fix missing mappings of tags, comments in conversion to config values (5030331)
+* `ToConfig` improvements and support across more types(9863e82)
+* Inline `SetList` in search criteria (4b7c485)
+* Allow service spec to be list (8942f5b)
+* Introduce websocket client type (0d3e17d)
+* Include tags, comments in init; support set flag; yaml codec (4cf8085)
+* Relocate log clear command (b067589)
+* Read workspace logs (958bc54)
+* Use abbreviated marshalling of values where available (46a8d9b)
+* `Values` to represent complex merging of headers and query strings (7854a58)
+* Implement optional param bindings in workspace commands (c3620ff)
+* Relocate init into workspace package (267068d)
+* Add json flag to workspace env; use built-in Joe actions (da0eb13)
+* Relocate Describe into workspace pkg (d24b112)
+* `Describe` command improvements to allow searching other types (710f0d1)
+* Bug fix: ensure Query configuration propagates to config (6e8b16d)
+* Condense HTTP and TLS flags in synopsis screen (387330f)
+* Modernizations and refactorings:
+    * Remove joecli Workspace from exported Workspace API (a2f5eba)
+    * Apply go modernizations (af563e8)
+    * Remove fake generation to an internal package (vanity) (845ea8b)
+    * History refactor (ed8826f)
+    * Refactor logs into workspace; separate JSON handling (b1b2892)
+* Documentation updates:
+    * Schema file (7c22169)
+    * Update json_info documentation (c4d98c0, cb88c9c, 6aa821c)
+    * Upgrade dependent versions (e021b2e)    
+* Chores:
+    * Update GitHub workflow configuration (57e301b)
+    * Update dependent versions (582a097, a98bed2, dca12e6)
+    * Bump actions/checkout from 6 to 7 (51dc814)
+    * Bump actions/setup-go from 6 to 7 (51cc4ea)
+    * Upgrade to go1.27 (8c807f8)
+    * Addresses linter errors (409ebc5)
+    * Update .pastiche/gitignore (7a897f7)
+    * Bug fix: Include /logs in gitignore (2e955cd)
+* Remove `EvalRequest` from resolved resource (28cd20e)
+
+
 ## v0.5.0 (August 22, 2026)
 
 ### New Features
