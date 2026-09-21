@@ -747,6 +747,7 @@ func ListFilters() cli.Action {
 		&cli.Prototype{
 			Name:     "list-filters",
 			HelpText: "List available output filters then exit",
+			Category: outputOptions,
 		},
 		provider.ListProviders("filter"),
 	)
@@ -758,6 +759,7 @@ func SetIncludeMetadata(f ...bool) cli.Action {
 			Name:     "include-meta",
 			Value:    new(bool),
 			HelpText: "Include metadata in the output",
+			Category: outputOptions,
 		},
 		bind.Call2((*Client).SetIncludeMetadata, bind.FromContext(FromContext), bind.Exact(f...)),
 	)
@@ -775,9 +777,10 @@ func SetFilter(f ...Filter) cli.Action {
 			Name:     "filter",
 			Aliases:  []string{"l"},
 			HelpText: "Apply a filter query to the response data using a supported format",
+			Category: outputOptions,
 		},
 		bind.Call2((*Client).SetFilter, bind.FromContext(FromContext), actualBind),
-		cli.Accessory("-", (*provider.Value).ArgumentFlag),
+		cli.Accessory("-", (*provider.Value).ArgumentFlag, cli.Category(outputOptions)),
 	)
 }
 

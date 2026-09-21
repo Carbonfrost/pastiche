@@ -25,6 +25,7 @@ import (
 
 const (
 	requestOptions = "Request options"
+	outputOptions  = "Output options"
 )
 
 type Request struct {
@@ -52,6 +53,8 @@ func SetType(v ...Type) cli.Action {
 			Name:     "client",
 			Aliases:  []string{"g"},
 			HelpText: "Specify the client that will be used",
+			Category: requestOptions,
+			Uses:     cli.Enum("http", "grpc", "websocket"),
 		},
 		bind.Call2((*Client).SetType, bind.FromContext(FromContext), bind.Exact(v...)),
 	)
@@ -343,6 +346,7 @@ func useRequest() bind.ActionBinder[*Request] {
 						Aliases:    []string{"S"},
 						HelpText:   "Use the specified server for the request",
 						Value:      new(string),
+						Category:   requestOptions,
 						Completion: completeServer(),
 					},
 					{
