@@ -211,6 +211,9 @@ func client(c *config.Client) Client {
 	if c.HTTP != nil {
 		return &HTTPClient{}
 	}
+	if c.WebSocket != nil {
+		return &WebSocketClient{}
+	}
 
 	return &HTTPClient{}
 }

@@ -13,10 +13,12 @@ import (
 // Type enumerates the client types available to Pastiche client
 type Type int
 
+// The various types of clients
 const (
 	TypeUnspecified Type = iota
 	TypeHTTP
 	TypeGRPC
+	TypeWebsocket
 	maxType
 )
 
@@ -24,6 +26,7 @@ var (
 	typeLabels = [maxType]string{
 		"HTTP",
 		"GRPC",
+		"WebSocket",
 	}
 )
 

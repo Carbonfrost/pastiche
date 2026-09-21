@@ -316,6 +316,9 @@ type GRPCClient struct {
 type HTTPClient struct {
 }
 
+type WebSocketClient struct {
+}
+
 type Auth interface {
 	authSigil()
 }
@@ -925,11 +928,13 @@ func sameType(x, y any) bool {
 	return reflect.TypeOf(x) == reflect.TypeOf(y)
 }
 
-func (*GRPCClient) clientSigil() {}
-func (*HTTPClient) clientSigil() {}
+func (*GRPCClient) clientSigil()      {}
+func (*HTTPClient) clientSigil()      {}
+func (*WebSocketClient) clientSigil() {}
 
-func (*GRPCClient) itemSigil() {}
-func (*HTTPClient) itemSigil() {}
+func (*GRPCClient) itemSigil()      {}
+func (*HTTPClient) itemSigil()      {}
+func (*WebSocketClient) itemSigil() {}
 
 func (*BasicAuth) authSigil() {}
 

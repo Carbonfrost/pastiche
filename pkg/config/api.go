@@ -117,8 +117,9 @@ type Mixin struct {
 }
 
 type Client struct {
-	HTTP *HTTPClient `json:"http,omitempty"`
-	GRPC *GRPCClient `json:"grpc,omitempty"`
+	HTTP      *HTTPClient      `json:"http,omitempty"`
+	GRPC      *GRPCClient      `json:"grpc,omitempty"`
+	WebSocket *WebSocketClient `json:"ws,omitempty"`
 }
 
 type HTTPClient struct {
@@ -128,6 +129,9 @@ type GRPCClient struct {
 	DisableReflection bool   `json:"disableReflection,omitzero"`
 	ProtoSet          string `json:"protoset,omitempty"`
 	Plaintext         bool   `json:"plaintext,omitzero"`
+}
+
+type WebSocketClient struct {
 }
 
 type Auth struct {

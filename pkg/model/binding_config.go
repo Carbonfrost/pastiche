@@ -367,6 +367,10 @@ func configClient(c Client) *config.Client {
 				Plaintext:         client.Plaintext,
 			},
 		}
+	case *WebSocketClient:
+		return &config.Client{
+			WebSocket: new(config.WebSocketClient),
+		}
 	}
 	return nil
 }
