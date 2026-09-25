@@ -13,6 +13,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -122,9 +123,9 @@ func mapOf(kv ...any) (map[string]any, error) {
 
 	m := make(map[string]any, len(kv)/2)
 
-	for i := 0; i < len(kv); i += 2 {
-		key := fmt.Sprint(kv[i])
-		m[key] = kv[i+1]
+	for chunk := range slices.Chunk(kv, 2) {
+		key := fmt.Sprint(chunk[0])
+		m[key] = chunk[1]
 	}
 
 	return m, nil
