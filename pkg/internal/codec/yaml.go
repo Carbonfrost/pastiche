@@ -11,9 +11,12 @@ import (
 
 func init() {
 	// Pastiche uses sigs YAML, which routes via JSON for output
-	marshal.RegisterCodec(marshal.YAML, func() codec.Interface {
-		return &yamlCodec{}
-	})
+	marshal.RegisterCodec(marshal.YAML, YAML)
+}
+
+// YAML provides the YAML codec that Pastiche uses
+func YAML() codec.Interface {
+	return &yamlCodec{}
 }
 
 type yamlCodec struct {

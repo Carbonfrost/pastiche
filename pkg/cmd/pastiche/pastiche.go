@@ -9,10 +9,11 @@ import (
 
 	cli "github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli/extensions/color"
+	"github.com/Carbonfrost/joe-cli/extensions/marshal"
 	"github.com/Carbonfrost/joe-cli/extensions/table"
 	"github.com/Carbonfrost/pastiche/pkg/client"
 	"github.com/Carbonfrost/pastiche/pkg/internal/build"
-	_ "github.com/Carbonfrost/pastiche/pkg/internal/codec" // ensure codecs are registered
+	"github.com/Carbonfrost/pastiche/pkg/internal/codec" // also ensures codecs are registered
 	"github.com/Carbonfrost/pastiche/pkg/server"
 	"github.com/Carbonfrost/pastiche/pkg/workspace"
 )
@@ -48,6 +49,7 @@ func NewApp() *cli.App {
 			cli.RegisterTemplate("PasticheServices", serviceTemplate),
 			cli.ImplicitCommand("fetch"),
 
+			codecs(),
 			workspace.New(),
 		),
 		Commands: []*cli.Command{
@@ -67,4 +69,16 @@ func NewApp() *cli.App {
 			},
 		},
 	}
+}
+
+// codecs registers support for codecs. Flags can't be registered globally because currently
+// --output is used by --fetch, so individual commands should register flags
+func codecs() *marshal.CodecProvider {
+	p := marshal.NewCodecProvider()
+	p.SetOutputCodec(codec.YAML())
+	p.Apply(marshal.WithAction(cli.Pipeline(
+		marshal.CodecRegistry,
+		marshal.ContextValue(p),
+	)))
+	return p
 }

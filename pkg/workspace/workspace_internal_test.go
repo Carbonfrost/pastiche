@@ -8,6 +8,7 @@ import (
 	"bytes"
 
 	cli "github.com/Carbonfrost/joe-cli"
+	joecodec "github.com/Carbonfrost/joe-cli/extensions/marshal/codec"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 	g "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -126,6 +127,29 @@ flows:
 			}))
 		})
 	})
+})
+
+var _ = g.Describe("displayItems", func() {
+
+	DescribeTable("codec", func(enc joecodec.Interface, expected string) {
+		var buf bytes.Buffer
+		Expect(displayItems(&buf, describe(service("demo")), enc)).To(Succeed())
+		Expect(buf.String()).To(Equal(expected))
+	},
+		Entry("nil encodes as YAML", nil,
+			`$schema: pastiche:file
+services:
+- $schema: pastiche:service
+  name: demo
+  resources:
+  - $schema: pastiche:resource
+
+`),
+		Entry("JSON", joecodec.NewJSONCodec(),
+			`{"$schema":"pastiche:file","services":[{"$schema":"pastiche:service","name":"demo","resources":[{"$schema":"pastiche:resource"}]}]}
+
+`),
+	)
 })
 
 var _ = g.Describe("listItems", func() {

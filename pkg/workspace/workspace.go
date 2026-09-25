@@ -21,12 +21,13 @@ import (
 
 	cli "github.com/Carbonfrost/joe-cli"
 	joeconfig "github.com/Carbonfrost/joe-cli/extensions/config"
+	joecodec "github.com/Carbonfrost/joe-cli/extensions/marshal/codec"
 	"github.com/Carbonfrost/pastiche/pkg/config"
+	"github.com/Carbonfrost/pastiche/pkg/internal/codec"
 	"github.com/Carbonfrost/pastiche/pkg/internal/contextkey"
 	"github.com/Carbonfrost/pastiche/pkg/internal/log"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 	"github.com/Carbonfrost/pastiche/pkg/workspace/logs"
-	"sigs.k8s.io/yaml"
 )
 
 // Workspace represents the information about the Pastiche
@@ -307,7 +308,7 @@ func (w *Workspace) Describe(out cli.Writer, p *DescribeParams) error {
 	case p.List:
 		return listItems(out, &items)
 	}
-	return displayItems(out, &items)
+	return displayItems(out, &items, p.Output)
 }
 
 type describeNode struct {
@@ -480,14 +481,16 @@ func toConfig[V any](item model.Item) V {
 	return model.ToConfig(item).(V)
 }
 
-func displayItems(out io.Writer, d *describeResults) error {
+func displayItems(out io.Writer, d *describeResults, enc joecodec.Interface) error {
 	d.Schema = d.fileSchema()
 
-	data, err := yaml.Marshal(d)
-	if err != nil {
+	if enc == nil {
+		enc = codec.YAML()
+	}
+	if err := enc.MarshalWrite(out, d); err != nil {
 		return err
 	}
-	_, err = fmt.Fprintln(out, string(data))
+	_, err := fmt.Fprintln(out)
 	return err
 }
 

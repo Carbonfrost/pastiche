@@ -15,6 +15,8 @@ import (
 	cli "github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli/extensions/bind"
 	"github.com/Carbonfrost/joe-cli/extensions/config"
+	"github.com/Carbonfrost/joe-cli/extensions/marshal"
+	joecodec "github.com/Carbonfrost/joe-cli/extensions/marshal/codec"
 	"github.com/Carbonfrost/joe-cli/extensions/template"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 	"github.com/Carbonfrost/pastiche/pkg/workspace/logs"
@@ -36,6 +38,10 @@ type DescribeParams struct {
 	// Tree prints the names of the matching items as a tree rather than
 	// their definitions
 	Tree bool
+
+	// Output encodes the definitions which are printed.  When nil, YAML is
+	// used.  List and Output are mutually exclusive.
+	Output joecodec.Interface
 }
 
 type InitParams struct {
@@ -331,6 +337,18 @@ func useDescribeParams() bind.ActionBinder[*DescribeParams] {
 						HelpText: "Display the output as a tree",
 						Value:    new(bool),
 					},
+					{
+						Name: "output",
+						Uses: cli.Pipeline(
+							marshal.SetOutput(),
+							cli.Mutex("list"),
+						),
+					},
+					{Uses: marshal.SetOutputArgument()},
+					{
+						Name: "list-output-codecs",
+						Uses: marshal.ListCodecs(),
+					},
 				}...),
 			),
 		},
@@ -344,6 +362,7 @@ func useDescribeParams() bind.ActionBinder[*DescribeParams] {
 				Method: c.String("method"),
 				List:   c.Bool("list"),
 				Tree:   c.Bool("tree"),
+				Output: marshal.CodecProviderFromContext(c),
 			}, nil
 		},
 	)

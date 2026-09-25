@@ -31,6 +31,14 @@ var _ = Describe("NewApp", func() {
 				"disallow persistent HTTP flags",
 				"pastiche describe service --interface en0",
 				MatchError("unknown option: --interface")),
+			Entry(
+				"describe --output and --list are mutually exclusive",
+				"pastiche describe --list --output=json",
+				MatchError("either --output or --list can be used, but not both")),
+			Entry(
+				"describe codec flags don't leak into other commands",
+				"pastiche env --output=json",
+				MatchError("unknown option: --output")),
 		)
 	})
 })

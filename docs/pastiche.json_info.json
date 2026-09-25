@@ -196,6 +196,28 @@
                         "type": "bool",
                         "string": "false"
                     }
+                },
+                {
+                    "name": "output",
+                    "helpText": "Set the output {FORMAT}",
+                    "usageText": "{json|yaml}",
+                    "value": {}
+                },
+                {
+                    "name": "output-arg",
+                    "helpText": "Sets an argument for output",
+                    "value": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "name": "list-output-codecs",
+                    "helpText": "List available codec providers then exit",
+                    "options": "EXITS",
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
+                    }
                 }
             ],
             "args": [
@@ -1637,7 +1659,7 @@
     ],
     "helpText": "Make requests to HTTP APIs using their OpenAPI schemas and definitions.",
     "version": "(devel)",
-    "buildDate": "2026-09-24T19:52:07.953807033-07:00",
+    "buildDate": "2026-09-24T19:52:31.2225468-07:00",
     "comment": "Smart OpenAPI client",
     "options": "SORTED_FLAGS, SORTED_COMMANDS, SORTED_EXPRS"
 }
