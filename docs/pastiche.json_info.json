@@ -185,6 +185,17 @@
                         "type": "bool",
                         "string": "false"
                     }
+                },
+                {
+                    "name": "tree",
+                    "aliases": [
+                        "T"
+                    ],
+                    "helpText": "Display the output as a tree",
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
+                    }
                 }
             ],
             "args": [
@@ -1626,7 +1637,7 @@
     ],
     "helpText": "Make requests to HTTP APIs using their OpenAPI schemas and definitions.",
     "version": "(devel)",
-    "buildDate": "2026-09-20T19:30:27.318265357-07:00",
+    "buildDate": "2026-09-24T19:52:07.953807033-07:00",
     "comment": "Smart OpenAPI client",
     "options": "SORTED_FLAGS, SORTED_COMMANDS, SORTED_EXPRS"
 }

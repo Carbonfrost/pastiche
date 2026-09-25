@@ -301,10 +301,19 @@ func (w *Workspace) Describe(out cli.Writer, p *DescribeParams) error {
 		return fmt.Errorf("not found: %q", p.Spec.Path())
 	}
 
-	if p.List {
+	switch {
+	case p.Tree:
+		return treeItems(out, &items)
+	case p.List:
 		return listItems(out, &items)
 	}
 	return displayItems(out, &items)
+}
+
+type describeNode struct {
+	Name           string
+	Children       []describeNode
+	InlineChildren []describeNode
 }
 
 type describeResults struct {
@@ -321,6 +330,14 @@ type describeEndpoint struct {
 	Method string `json:"method,omitempty"`
 	config.Endpoint
 }
+
+const (
+	treeBranch     = "├── "
+	treeLastBranch = "└── "
+	treeIndent     = "│   "
+	treeLastIndent = "    "
+	bullet         = " • "
+)
 
 func (d *describeResults) add(item model.Item) error {
 	switch it := item.(type) {
@@ -364,7 +381,7 @@ func (d *describeResults) items() []describeItem {
 		res = append(res, describeItem{r.Name, model.ItemKindResource})
 	}
 	for _, e := range d.Endpoints {
-		res = append(res, describeItem{cmp.Or(e.Name, e.Method), model.ItemKindEndpoint})
+		res = append(res, describeItem{endpointName(e.Name, e.Method), model.ItemKindEndpoint})
 	}
 
 	slices.SortFunc(res, func(x, y describeItem) int {
@@ -374,6 +391,80 @@ func (d *describeResults) items() []describeItem {
 		)
 	})
 	return res
+}
+
+func (d *describeResults) tree() []describeNode {
+	var res []describeNode
+	for _, s := range d.Services {
+		res = append(res, describeNode{Name: s.Name, Children: resourceNodes(s.Resources)})
+	}
+	for _, v := range d.VarSets {
+		res = append(res, describeNode{Name: v.Name})
+	}
+	for _, f := range d.Flows {
+		res = append(res, describeNode{Name: f.Name})
+	}
+	res = append(res, resourceNodes(d.Resources)...)
+	for _, e := range d.Endpoints {
+		res = append(res, describeNode{Name: endpointName(e.Name, e.Method)})
+	}
+
+	return sortNodes(res)
+}
+
+func resourceNodes(resources []config.Resource) []describeNode {
+	var res []describeNode
+	for _, r := range resources {
+		children := resourceNodes(r.Resources)
+		inlineChildren := endpointNodes(r)
+
+		// Take the children of the root node instead
+		if r.Name == "" {
+			res = append(res, children...)
+			res = append(res, inlineChildren...)
+			continue
+		}
+		res = append(res, describeNode{Name: r.Name, Children: sortNodes(children), InlineChildren: sortNodes(inlineChildren)})
+	}
+	return sortNodes(res)
+}
+
+func endpointNodes(r config.Resource) []describeNode {
+	endpoints := []struct {
+		method   string
+		endpoint *config.Endpoint
+	}{
+		{"GET", r.Get},
+		{"PUT", r.Put},
+		{"POST", r.Post},
+		{"DELETE", r.Delete},
+		{"OPTIONS", r.Options},
+		{"HEAD", r.Head},
+		{"TRACE", r.Trace},
+		{"PATCH", r.Patch},
+	}
+
+	var res []describeNode
+	for _, e := range endpoints {
+		if e.endpoint != nil {
+			res = append(res, describeNode{Name: endpointName(e.endpoint.Name, e.method)})
+		}
+	}
+	return res
+}
+
+func sortNodes(nodes []describeNode) []describeNode {
+	slices.SortFunc(nodes, func(x, y describeNode) int {
+		return cmp.Compare(x.Name, y.Name)
+	})
+	return nodes
+}
+
+func endpointName(name string, method string) string {
+	if name == "" {
+		return method
+	}
+	return fmt.Sprintf("%s (%s)", method, name)
 }
 
 // fileSchema identifies the results as a configuration file, which is only
@@ -405,24 +496,110 @@ type describeItem struct {
 	Kind model.ItemKind
 }
 
+// listItems prints the name and kind of each item in two columns
 func listItems(out cli.Writer, d *describeResults) error {
-	var previous string
+	// var previous string
+	names := &nameWriter{out: out}
 
 	for _, item := range d.items() {
-		prefix, name := cutPackagePrefix(item.Name)
-
-		// Only the first name in a run of names which share a package prefix
-		// is stylized, which makes it apparent where each package begins
-		if err := writePackagePrefix(out, prefix, prefix != previous); err != nil {
+		if err := names.WriteName(item.Name); err != nil {
 			return err
 		}
-		previous = prefix
-
-		if _, err := fmt.Fprintf(out, "%s\t%s\n", name, item.Kind); err != nil {
+		if _, err := fmt.Fprintf(out, "\t%s\n", item.Kind); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func treeItems(out cli.Writer, d *describeResults) error {
+	names := &nameWriter{out: out}
+
+	for _, node := range d.tree() {
+		if err := names.WriteName(node.Name); err != nil {
+			return err
+		}
+		if err := writeInlineNodes(out, node.InlineChildren); err != nil {
+			return err
+		}
+		if _, err := out.WriteString("\n"); err != nil {
+			return err
+		}
+		if err := writeNodes(out, node.Children, ""); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func writeNodes(out cli.Writer, nodes []describeNode, indent string) error {
+	names := &nameWriter{out: out}
+
+	for i, node := range nodes {
+		branch, childIndent := treeBranch, treeIndent
+		if i == len(nodes)-1 {
+			branch, childIndent = treeLastBranch, treeLastIndent
+		}
+
+		if _, err := out.WriteString(indent + branch); err != nil {
+			return err
+		}
+		if err := names.WriteName(node.Name); err != nil {
+			return err
+		}
+		if err := writeInlineNodes(out, node.InlineChildren); err != nil {
+			return err
+		}
+		if _, err := out.WriteString("\n"); err != nil {
+			return err
+		}
+
+		if err := writeNodes(out, node.Children, indent+childIndent); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func writeInlineNodes(out cli.Writer, nodes []describeNode) error {
+	names := &nameWriter{out: out}
+
+	for i, node := range nodes {
+		if i == 0 {
+			out.WriteString("    ")
+		}
+		if i > 0 {
+			if _, err := out.WriteString(bullet); err != nil {
+				return err
+			}
+		}
+		if err := names.WriteName(node.Name); err != nil {
+			return err
+		}
+
+	}
+	return nil
+}
+
+// nameWriter writes the names of the items in a sequence of siblings.  Only
+// the first name in a run of names which share a package prefix is stylized,
+// which makes it apparent where each package begins.
+type nameWriter struct {
+	out      cli.Writer
+	previous string
+}
+
+func (w *nameWriter) WriteName(name string) error {
+	prefix, rest := cutPackagePrefix(name)
+	stylize := prefix != w.previous
+	w.previous = prefix
+
+	if err := writePackagePrefix(w.out, prefix, stylize); err != nil {
+		return err
+	}
+
+	_, err := w.out.WriteString(rest)
+	return err
 }
 
 func writePackagePrefix(out cli.Writer, prefix string, stylize bool) error {

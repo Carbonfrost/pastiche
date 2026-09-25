@@ -14,9 +14,15 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+var (
+	DescribeTable = g.DescribeTable
+	Entry         = g.Entry
+	It            = g.It
+)
+
 var _ = g.Describe("describeResults", func() {
 
-	g.DescribeTable("add", func(item model.Item, expected string) {
+	DescribeTable("add", func(item model.Item, expected string) {
 		var results describeResults
 		Expect(results.add(item)).To(Succeed())
 		results.Schema = results.fileSchema()
@@ -25,7 +31,7 @@ var _ = g.Describe("describeResults", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(string(data)).To(Equal(expected))
 	},
-		g.Entry("service",
+		Entry("service",
 			&model.Service{
 				Name:     "demo",
 				Resource: &model.Resource{},
@@ -37,14 +43,14 @@ services:
   resources:
   - $schema: pastiche:resource
 `),
-		g.Entry("var set",
+		Entry("var set",
 			&model.VarSet{Name: "creds"},
 			`$schema: pastiche:file
 varSets:
 - $schema: pastiche:varSet
   name: creds
 `),
-		g.Entry("mixin",
+		Entry("mixin",
 			&model.Mixin{Name: "staging", Method: "POST"},
 			`$schema: pastiche:file
 mixins:
@@ -52,7 +58,7 @@ mixins:
   method: POST
   name: staging
 `),
-		g.Entry("flow",
+		Entry("flow",
 			&model.Flow{Name: "login"},
 			`$schema: pastiche:file
 flows:
@@ -62,13 +68,13 @@ flows:
 
 		// Resources and endpoints can't be written as a configuration file,
 		// hence no schema is claimed for the results
-		g.Entry("resource",
+		Entry("resource",
 			&model.Resource{Name: "widgets"},
 			`resources:
 - $schema: pastiche:resource
   name: widgets
 `),
-		g.Entry("endpoint",
+		Entry("endpoint",
 			&model.Endpoint{Name: "listWidgets", Method: "GET"},
 			`endpoints:
 - $schema: pastiche:endpoint
@@ -77,18 +83,18 @@ flows:
 `),
 	)
 
-	g.It("reports an error for an item which can't be described", func() {
+	It("reports an error for an item which can't be described", func() {
 		var results describeResults
 		Expect(results.add(model.Link{})).To(MatchError("cannot describe model.Link"))
 	})
 
 	g.Describe("empty", func() {
-		g.It("is true when no items were added", func() {
+		It("is true when no items were added", func() {
 			var results describeResults
 			Expect(results.empty()).To(BeTrue())
 		})
 
-		g.It("is false when an item was added", func() {
+		It("is false when an item was added", func() {
 			var results describeResults
 			Expect(results.add(&model.Endpoint{Method: "GET"})).To(Succeed())
 			Expect(results.empty()).To(BeFalse())
@@ -96,7 +102,7 @@ flows:
 	})
 
 	g.Describe("items", func() {
-		g.It("names each item with its kind, sorted by name", func() {
+		It("names each item with its kind, sorted by name", func() {
 			results := describe(
 				&model.Service{Name: "beta", Resource: &model.Resource{}},
 				&model.Resource{Name: "alpha"},
@@ -112,7 +118,7 @@ flows:
 			}))
 		})
 
-		g.It("names an unnamed endpoint by its request method", func() {
+		It("names an unnamed endpoint by its request method", func() {
 			results := describe(&model.Endpoint{Method: "GET"})
 
 			Expect(results.items()).To(Equal([]describeItem{
@@ -124,7 +130,7 @@ flows:
 
 var _ = g.Describe("listItems", func() {
 
-	g.DescribeTable("stylize", func(colorCapable bool, expected string) {
+	DescribeTable("stylize", func(colorCapable bool, expected string) {
 		results := describe(
 			service("@pastiche/api"),
 			service("@pastiche/meta"),
@@ -142,13 +148,13 @@ var _ = g.Describe("listItems", func() {
 	},
 		// Only the first name in each run of names which share a package
 		// prefix is stylized
-		g.Entry("in color", true,
+		Entry("in color", true,
 			"\x1b[36m@pastiche/\x1b[0mapi\tservice\n"+
 				"@pastiche/meta\tservice\n"+
 				"\x1b[36m@quark/\x1b[0mapi\tservice\n"+
 				"@quark/meta\tservice\n"+
 				"solo\tservice\n"),
-		g.Entry("without color", false,
+		Entry("without color", false,
 			"@pastiche/api\tservice\n"+
 				"@pastiche/meta\tservice\n"+
 				"@quark/api\tservice\n"+
@@ -156,6 +162,69 @@ var _ = g.Describe("listItems", func() {
 				"solo\tservice\n"),
 	)
 })
+
+var _ = g.Describe("treeItems", func() {
+
+	It("nests the resources of a service and endpoints of a resource", func() {
+		results := describe(&model.Service{
+			Name: "demo",
+			Resource: &model.Resource{
+				Endpoints: []*model.Endpoint{{Method: "GET"}},
+				Resources: []*model.Resource{
+					{
+						Name: "widgets",
+						Endpoints: []*model.Endpoint{
+							{Method: "GET"},
+							{Method: "POST", Name: "createWidget"},
+						},
+						Resources: []*model.Resource{
+							{Name: "parts", Endpoints: []*model.Endpoint{{Method: "GET"}}},
+						},
+					},
+					{
+						Name:      "gadgets",
+						Endpoints: []*model.Endpoint{{Method: "DELETE"}},
+					},
+				},
+			},
+		})
+		Expect(render(results, false)).To(Equal(
+			`demo
+├── GET
+├── gadgets    DELETE
+└── widgets    GET • POST (createWidget)
+    └── parts    GET
+`))
+	})
+
+	// The children of a root don't interrupt the run of package prefixes
+	// which the roots themselves form
+	It("stylizes the package prefix of the roots", func() {
+		results := describe(
+			serviceWithEndpoint("@pastiche/api"),
+			serviceWithEndpoint("@pastiche/meta"),
+		)
+
+		Expect(render(results, true)).To(Equal(
+			"\x1b[36m@pastiche/\x1b[0mapi\n└── GET\n@pastiche/meta\n└── GET\n"))
+	})
+})
+
+func render(results *describeResults, colorCapable bool) string {
+	var buf bytes.Buffer
+	out := cli.NewWriter(&buf)
+	out.SetColorCapable(colorCapable)
+
+	Expect(treeItems(out, results)).To(Succeed())
+	return buf.String()
+}
+
+func serviceWithEndpoint(name string) *model.Service {
+	return &model.Service{
+		Name:     name,
+		Resource: &model.Resource{Endpoints: []*model.Endpoint{{Method: "GET"}}},
+	}
+}
 
 func describe(items ...model.Item) *describeResults {
 	var results describeResults

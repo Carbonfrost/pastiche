@@ -32,6 +32,10 @@ type DescribeParams struct {
 	// List prints the names and kinds of the matching items rather than
 	// their definitions
 	List bool
+
+	// Tree prints the names of the matching items as a tree rather than
+	// their definitions
+	Tree bool
 }
 
 type InitParams struct {
@@ -321,6 +325,12 @@ func useDescribeParams() bind.ActionBinder[*DescribeParams] {
 						HelpText: "List the names and kinds of matching items",
 						Value:    new(bool),
 					},
+					{
+						Name:     "tree",
+						Aliases:  []string{"T"},
+						HelpText: "Display the output as a tree",
+						Value:    new(bool),
+					},
 				}...),
 			),
 		},
@@ -333,6 +343,7 @@ func useDescribeParams() bind.ActionBinder[*DescribeParams] {
 				Tags:   c.List("tags"),
 				Method: c.String("method"),
 				List:   c.Bool("list"),
+				Tree:   c.Bool("tree"),
 			}, nil
 		},
 	)
