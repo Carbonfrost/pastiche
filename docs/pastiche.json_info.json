@@ -78,8 +78,21 @@
             "name": "env",
             "flags": [
                 {
+                    "name": "output",
+                    "helpText": "Set the output {FORMAT}",
+                    "usageText": "{json|yaml}",
+                    "value": {}
+                },
+                {
+                    "name": "output-arg",
+                    "helpText": "Sets an argument for output",
+                    "value": {
+                        "type": "string"
+                    }
+                },
+                {
                     "name": "json",
-                    "helpText": "Print the env vars in json format",
+                    "helpText": "Print the environment as JSON",
                     "value": {
                         "type": "bool",
                         "string": "false"
@@ -208,15 +221,6 @@
                     "helpText": "Sets an argument for output",
                     "value": {
                         "type": "string"
-                    }
-                },
-                {
-                    "name": "list-output-codecs",
-                    "helpText": "List available codec providers then exit",
-                    "options": "EXITS",
-                    "value": {
-                        "type": "bool",
-                        "string": "false"
                     }
                 }
             ],
@@ -1563,6 +1567,15 @@
     ],
     "flags": [
         {
+            "name": "list-output-codecs",
+            "helpText": "List available codec providers then exit",
+            "options": "EXITS",
+            "value": {
+                "type": "bool",
+                "string": "false"
+            }
+        },
+        {
             "name": "color",
             "helpText": "Controls whether terminal color and styles are used",
             "data": {
@@ -1659,7 +1672,7 @@
     ],
     "helpText": "Make requests to HTTP APIs using their OpenAPI schemas and definitions.",
     "version": "(devel)",
-    "buildDate": "2026-09-24T19:52:31.2225468-07:00",
+    "buildDate": "2026-10-05T00:49:27.415971024-07:00",
     "comment": "Smart OpenAPI client",
     "options": "SORTED_FLAGS, SORTED_COMMANDS, SORTED_EXPRS"
 }

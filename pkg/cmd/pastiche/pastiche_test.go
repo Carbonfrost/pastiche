@@ -35,10 +35,6 @@ var _ = Describe("NewApp", func() {
 				"describe --output and --list are mutually exclusive",
 				"pastiche describe --list --output=json",
 				MatchError("either --output or --list can be used, but not both")),
-			Entry(
-				"describe codec flags don't leak into other commands",
-				"pastiche env --output=json",
-				MatchError("unknown option: --output")),
 		)
 	})
 })

@@ -6,8 +6,6 @@ package workspace
 
 import (
 	"cmp"
-	"encoding/json"
-	"io"
 	"os"
 	"path/filepath"
 	"slices"
@@ -164,9 +162,15 @@ func Env() Action {
 			Uses: cli.Pipeline(
 				cli.AddFlags([]*cli.Flag{
 					{
+						Name: "output",
+						Uses: marshal.SetOutput(),
+					},
+					{Uses: marshal.SetOutputArgument()},
+					{
 						Name:     "json",
 						HelpText: "Print the env vars in json format",
 						Value:    new(bool),
+						Action:   marshal.SetOutput(unwrap(marshal.JSON.New(marshal.WithProviderDefaults()))),
 					},
 				}...),
 				cli.AddArgs([]*cli.Arg{
@@ -178,7 +182,7 @@ func Env() Action {
 			),
 			Action: cli.IfMatch(
 				cli.ContextFilterFunc(seenOutputFlags),
-				bind.Call3(dumpEnv, bind.FromContext(FromContext), bind.Stdout(), bind.List("vars")),
+				bind.Call2(dumpEnv, bind.Context(), bind.List("vars")),
 				config.PrintEnv(),
 			),
 		},
@@ -186,16 +190,16 @@ func Env() Action {
 }
 
 func seenOutputFlags(c *cli.Context) bool {
-	return c.Seen("json")
+	return c.Seen("output") || c.Seen("output-arg") || c.Seen("json")
 }
 
-func dumpEnv(w *Workspace, out io.Writer, vars []string) error {
-	env := w.environ()
+func dumpEnv(c *cli.Context, vars []string) error {
+	env := FromContext(c).environ()
 
 	if len(vars) > 0 {
 		env = filterMap(env, vars)
 	}
-	return json.NewEncoder(out).Encode(env)
+	return marshal.DumpContext(c, env)
 }
 
 func filterMap(in map[string]string, vars []string) map[string]string {
@@ -345,10 +349,6 @@ func useDescribeParams() bind.ActionBinder[*DescribeParams] {
 						),
 					},
 					{Uses: marshal.SetOutputArgument()},
-					{
-						Name: "list-output-codecs",
-						Uses: marshal.ListCodecs(),
-					},
 				}...),
 			),
 		},
@@ -426,4 +426,8 @@ func exactOrUse[T any](useFactory func() bind.ActionBinder[T], paramsopt []T) bi
 		return useFactory()
 	}
 	panic("expected 0 or 1 arg")
+}
+
+func unwrap[T any](v T, _ any) T {
+	return v
 }

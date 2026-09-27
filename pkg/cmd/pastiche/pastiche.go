@@ -52,6 +52,12 @@ func NewApp() *cli.App {
 			codecs(),
 			workspace.New(),
 		),
+		Flags: []*cli.Flag{
+			{
+				Name: "list-output-codecs",
+				Uses: marshal.ListCodecs(),
+			},
+		},
 		Commands: []*cli.Command{
 			{Name: "init", Uses: workspace.Init()},
 			{Name: "env", Uses: workspace.Env()},
