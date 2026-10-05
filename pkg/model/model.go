@@ -50,7 +50,7 @@ type Service struct {
 	Params      []*Param
 	Client      Client
 	Auth        Auth
-	Output      []*OutputConfig
+	Output      []*Output
 	Secrets     []*Secret
 }
 
@@ -68,7 +68,7 @@ type Server struct {
 	Vars        map[string]any
 	Params      []*Param
 	Auth        Auth
-	Output      []*OutputConfig
+	Output      []*Output
 	Secrets     []*Secret
 }
 
@@ -91,7 +91,7 @@ type Resource struct {
 	Vars        map[string]any
 	Params      []*Param
 	Auth        Auth
-	Output      []*OutputConfig
+	Output      []*Output
 }
 
 type Endpoint struct {
@@ -110,7 +110,7 @@ type Endpoint struct {
 	Vars        map[string]any
 	Params      []*Param
 	Auth        Auth
-	Output      []*OutputConfig
+	Output      []*Output
 }
 
 type Link struct {
@@ -189,13 +189,13 @@ type Mixin struct {
 	Auth        Auth
 }
 
-type OutputConfig struct {
+type Output struct {
 	Name            string
 	Comment         string
 	Title           string
 	Description     string
 	Links           []Link
-	Filter          OutputFilter
+	Filter          OutputImpl
 	IncludeMetadata bool
 }
 
@@ -245,11 +245,11 @@ type Step struct {
 	Body        any
 	RawBody     any
 	Vars        map[string]any
-	StepType    StepType
+	Step        StepImpl
 }
 
-type StepType interface {
-	stepTypeSigil()
+type StepImpl interface {
+	stepImplSigil()
 }
 
 type SpecStep struct {
@@ -260,8 +260,8 @@ type URLStep struct {
 	URL string
 }
 
-type OutputFilter interface {
-	outputFilterSigil()
+type OutputImpl interface {
+	outputImplSigil()
 }
 
 type TemplateOutput struct {
@@ -354,7 +354,7 @@ type ResolvedResource interface {
 	Mixins() []*Mixin
 
 	// TODO: These should probably be via request
-	Output() []*OutputConfig
+	Output() []*Output
 	Secrets() []*Secret
 	Client() Client
 	Params() []*Param
@@ -690,11 +690,11 @@ func (r *resolvedResource) Client() Client {
 	return client
 }
 
-func (r *resolvedResource) Output() []*OutputConfig {
+func (r *resolvedResource) Output() []*Output {
 	return locate(
 		r,
 		reduceOutput,
-		[]*OutputConfig{},
+		[]*Output{},
 		(*Endpoint).output,
 		(*Resource).output,
 		(*Server).output,
@@ -871,10 +871,10 @@ func (s *Server) auth() Auth   { return s.Auth }
 func (s *Service) auth() Auth  { return s.Auth }
 func (m *Mixin) auth() Auth    { return m.Auth }
 
-func (e *Endpoint) output() []*OutputConfig { return e.Output }
-func (r *Resource) output() []*OutputConfig { return r.Output }
-func (s *Server) output() []*OutputConfig   { return s.Output }
-func (s *Service) output() []*OutputConfig  { return s.Output }
+func (e *Endpoint) output() []*Output { return e.Output }
+func (r *Resource) output() []*Output { return r.Output }
+func (s *Server) output() []*Output   { return s.Output }
+func (s *Service) output() []*Output  { return s.Output }
 
 func (s *Server) secrets() []*Secret  { return s.Secrets }
 func (s *Service) secrets() []*Secret { return s.Secrets }
@@ -909,8 +909,8 @@ func reduceVars(x, y map[string]any) map[string]any {
 	return x
 }
 
-func reduceOutput(x, y []*OutputConfig) []*OutputConfig {
-	byName := make(map[string]*OutputConfig)
+func reduceOutput(x, y []*Output) []*Output {
+	byName := make(map[string]*Output)
 	for _, o := range x {
 		if o.Name != "" {
 			byName[o.Name] = o
@@ -1000,15 +1000,15 @@ func (*BasicAuth) authSigil() {}
 func (*ExecSecret) secretProviderSigil() {}
 func (*FileSecret) secretProviderSigil() {}
 
-func (*TemplateOutput) outputFilterSigil() {}
-func (*JMESPathOutput) outputFilterSigil() {}
-func (*XPathOutput) outputFilterSigil()    {}
-func (*DigOutput) outputFilterSigil()      {}
-func (*JSONOutput) outputFilterSigil()     {}
-func (*XMLOutput) outputFilterSigil()      {}
-func (*YAMLOutput) outputFilterSigil()     {}
-func (*TSVOutput) outputFilterSigil()      {}
-func (*TableOutput) outputFilterSigil()    {}
+func (*TemplateOutput) outputImplSigil() {}
+func (*JMESPathOutput) outputImplSigil() {}
+func (*XPathOutput) outputImplSigil()    {}
+func (*DigOutput) outputImplSigil()      {}
+func (*JSONOutput) outputImplSigil()     {}
+func (*XMLOutput) outputImplSigil()      {}
+func (*YAMLOutput) outputImplSigil()     {}
+func (*TSVOutput) outputImplSigil()      {}
+func (*TableOutput) outputImplSigil()    {}
 
-func (*SpecStep) stepTypeSigil() {}
-func (*URLStep) stepTypeSigil()  {}
+func (*SpecStep) stepImplSigil() {}
+func (*URLStep) stepImplSigil()  {}

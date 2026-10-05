@@ -274,7 +274,7 @@ func configStep(s *Step) config.Step {
 		Vars:        s.Vars,
 	}
 
-	switch t := s.StepType.(type) {
+	switch t := s.Step.(type) {
 	case *SpecStep:
 		step.Spec = []string(t.Spec)
 	case *URLStep:

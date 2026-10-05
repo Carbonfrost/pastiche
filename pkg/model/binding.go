@@ -282,16 +282,16 @@ func mixin(m config.Mixin) *Mixin {
 	}
 }
 
-func outputs(outs []config.Output) []*OutputConfig {
-	res := make([]*OutputConfig, len(outs))
+func outputs(outs []config.Output) []*Output {
+	res := make([]*Output, len(outs))
 	for i, o := range outs {
 		res[i] = output(o)
 	}
 	return res
 }
 
-func output(o config.Output) *OutputConfig {
-	return &OutputConfig{
+func output(o config.Output) *Output {
+	return &Output{
 		Name:            o.Name,
 		Comment:         o.Comment,
 		Title:           o.Title,
@@ -302,7 +302,7 @@ func output(o config.Output) *OutputConfig {
 	}
 }
 
-func outputFilter(o config.Output) OutputFilter {
+func outputFilter(o config.Output) OutputImpl {
 	if o.Template != nil {
 		return &TemplateOutput{
 			Text: o.Template.Text,
@@ -418,11 +418,11 @@ func step(s config.Step) *Step {
 		Body:        s.Body,
 		RawBody:     s.RawBody,
 		Vars:        s.Vars,
-		StepType:    stepType(s),
+		Step:        stepType(s),
 	}
 }
 
-func stepType(s config.Step) StepType {
+func stepType(s config.Step) StepImpl {
 	if len(s.Spec) > 0 {
 		return &SpecStep{
 			Spec: []string(s.Spec),

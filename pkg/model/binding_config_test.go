@@ -56,13 +56,13 @@ var _ = Describe("ToConfig", func() {
 				Title: "Log in",
 				Steps: []*model.Step{
 					{
-						Name:     "obtain token",
-						Method:   "POST",
-						StepType: &model.SpecStep{Spec: []string{"demo", "tokens"}},
+						Name:   "obtain token",
+						Method: "POST",
+						Step:   &model.SpecStep{Spec: []string{"demo", "tokens"}},
 					},
 					{
-						Name:     "call out",
-						StepType: &model.URLStep{URL: "https://example.com"},
+						Name: "call out",
+						Step: &model.URLStep{URL: "https://example.com"},
 					},
 				},
 				Vars: map[string]any{"user": "root"},

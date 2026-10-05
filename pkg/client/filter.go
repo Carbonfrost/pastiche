@@ -905,7 +905,7 @@ func (n namedOutputFilter) IncludeMetadata() bool {
 	return false
 }
 
-func outputFilterToFilter(of model.OutputFilter) (Filter, error) {
+func outputFilterToFilter(of model.OutputImpl) (Filter, error) {
 	switch f := of.(type) {
 	case *model.TemplateOutput:
 		if f.File != "" {
