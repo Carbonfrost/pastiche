@@ -114,19 +114,19 @@ var _ = Describe("Mixin", func() {
 		It("selects the endpoint named by the method of the mixin", func() {
 			rr, err := subject.Resolve(strings.Fields("a b"), "default", "", "staging")
 			Expect(err).NotTo(HaveOccurred())
-			Expect(rr.Endpoint().Method).To(Equal("POST"))
+			Expect(rr.Endpoint.Method).To(Equal("POST"))
 		})
 
 		It("prefers an explicit method over the method of the mixin", func() {
 			rr, err := subject.Resolve(strings.Fields("a b"), "default", "GET", "staging")
 			Expect(err).NotTo(HaveOccurred())
-			Expect(rr.Endpoint().Method).To(Equal("GET"))
+			Expect(rr.Endpoint.Method).To(Equal("GET"))
 		})
 
 		It("obtains the mixins in the order that they were named", func() {
 			rr, err := subject.Resolve(strings.Fields("a b"), "default", "GET", "verbose", "staging")
 			Expect(err).NotTo(HaveOccurred())
-			Expect(names(rr.Mixins())).To(Equal([]string{"verbose", "staging"}))
+			Expect(names(rr.Mixins)).To(Equal([]string{"verbose", "staging"}))
 		})
 	})
 

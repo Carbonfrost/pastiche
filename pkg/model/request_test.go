@@ -14,7 +14,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/Carbonfrost/pastiche/pkg/internal/modelfakes"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 	"github.com/onsi/gomega/types"
 )
@@ -24,22 +23,23 @@ var _ = Describe("NewRequest", func() {
 	Context("Headers", func() {
 
 		DescribeTable("examples", func(expected types.GomegaMatcher) {
-			resource := new(modelfakes.FakeResolvedResource)
-			resource.ServiceReturns(&model.Service{})
-			resource.ServerReturns(&model.Server{
-				Headers: newHeader("T", "server"),
-			})
-			resource.EndpointReturns(&model.Endpoint{
-				Headers: newHeader("S", "endpoint", "E", "endpoint", "T", "X"),
-			})
-			resource.LineageReturns([]*model.Resource{
-				{
-					Headers: newHeader("S", "parent", "U", "lineage2", "W", "lineage2", "T", "X"),
+			resource := &model.ResolvedResource{
+				Service: &model.Service{},
+				Server: &model.Server{
+					Headers: newHeader("T", "server"),
 				},
-				{
-					Headers: newHeader("S", "child", "V", "lineage1", "W", "lineage1", "T", "X"),
+				Endpoint: &model.Endpoint{
+					Headers: newHeader("S", "endpoint", "E", "endpoint", "T", "X"),
 				},
-			})
+				Lineage: []*model.Resource{
+					{
+						Headers: newHeader("S", "parent", "U", "lineage2", "W", "lineage2", "T", "X"),
+					},
+					{
+						Headers: newHeader("S", "child", "V", "lineage1", "W", "lineage1", "T", "X"),
+					},
+				},
+			}
 
 			req, err := model.NewRequest(resource, model.WithBaseURL(mustParseURL("https://example.com")))
 			Expect(err).NotTo(HaveOccurred())
@@ -67,15 +67,16 @@ var _ = Describe("NewRequest", func() {
 	Context("Query", func() {
 
 		It("merges into the result", func() {
-			resource := new(modelfakes.FakeResolvedResource)
-			resource.EndpointReturns(&model.Endpoint{
-				Query: newHeader("hello", "world", "in", "${var.s}"),
-			})
-			resource.LineageReturns([]*model.Resource{
-				{
-					URITemplate: mustParseURITemplate("/{?x}"),
+			resource := &model.ResolvedResource{
+				Endpoint: &model.Endpoint{
+					Query: newHeader("hello", "world", "in", "${var.s}"),
 				},
-			})
+				Lineage: []*model.Resource{
+					{
+						URITemplate: mustParseURITemplate("/{?x}"),
+					},
+				},
+			}
 
 			result, _ := model.NewRequest(
 				resource,
@@ -86,22 +87,23 @@ var _ = Describe("NewRequest", func() {
 		})
 
 		DescribeTable("examples", func(expected types.GomegaMatcher) {
-			resource := new(modelfakes.FakeResolvedResource)
-			resource.ServiceReturns(&model.Service{})
-			resource.ServerReturns(&model.Server{
-				Query: newHeader("T", "server"),
-			})
-			resource.EndpointReturns(&model.Endpoint{
-				Query: newHeader("S", "endpoint", "E", "endpoint", "T", "X"),
-			})
-			resource.LineageReturns([]*model.Resource{
-				{
-					Query: newHeader("S", "parent", "U", "lineage2", "W", "lineage2", "T", "X"),
+			resource := &model.ResolvedResource{
+				Service: &model.Service{},
+				Server: &model.Server{
+					Query: newHeader("T", "server"),
 				},
-				{
-					Query: newHeader("S", "child", "V", "lineage1", "W", "lineage1", "T", "X"),
+				Endpoint: &model.Endpoint{
+					Query: newHeader("S", "endpoint", "E", "endpoint", "T", "X"),
 				},
-			})
+				Lineage: []*model.Resource{
+					{
+						Query: newHeader("S", "parent", "U", "lineage2", "W", "lineage2", "T", "X"),
+					},
+					{
+						Query: newHeader("S", "child", "V", "lineage1", "W", "lineage1", "T", "X"),
+					},
+				},
+			}
 
 			req, err := model.NewRequest(resource, model.WithBaseURL(mustParseURL("https://example.com")))
 			Expect(err).NotTo(HaveOccurred())
@@ -136,10 +138,11 @@ var _ = Describe("NewRequest", func() {
 		}
 
 		It("resolves a dotted path within the selected context varset", func() {
-			resource := new(modelfakes.FakeResolvedResource)
-			resource.EndpointReturns(&model.Endpoint{
-				Query: newHeader("id", "${context.loyal.id}"),
-			})
+			resource := &model.ResolvedResource{
+				Endpoint: &model.Endpoint{
+					Query: newHeader("id", "${context.loyal.id}"),
+				},
+			}
 
 			result, err := model.NewRequest(
 				resource,
@@ -151,10 +154,11 @@ var _ = Describe("NewRequest", func() {
 		})
 
 		It("resolves to nothing when there is no context", func() {
-			resource := new(modelfakes.FakeResolvedResource)
-			resource.EndpointReturns(&model.Endpoint{
-				Query: newHeader("id", "${context.loyal.id}"),
-			})
+			resource := &model.ResolvedResource{
+				Endpoint: &model.Endpoint{
+					Query: newHeader("id", "${context.loyal.id}"),
+				},
+			}
 
 			result, err := model.NewRequest(
 				resource,
@@ -168,10 +172,11 @@ var _ = Describe("NewRequest", func() {
 	Context("var expander", func() {
 
 		It("resolves a plain name from the effective vars", func() {
-			resource := new(modelfakes.FakeResolvedResource)
-			resource.EndpointReturns(&model.Endpoint{
-				Query: newHeader("id", "${var.id}"),
-			})
+			resource := &model.ResolvedResource{
+				Endpoint: &model.Endpoint{
+					Query: newHeader("id", "${var.id}"),
+				},
+			}
 
 			result, err := model.NewRequest(
 				resource,
@@ -183,10 +188,11 @@ var _ = Describe("NewRequest", func() {
 		})
 
 		It("resolves a qualified name by digging any varset in the model", func() {
-			resource := new(modelfakes.FakeResolvedResource)
-			resource.EndpointReturns(&model.Endpoint{
-				Query: newHeader("id", "${var.@example/customers.loyal.id}"),
-			})
+			resource := &model.ResolvedResource{
+				Endpoint: &model.Endpoint{
+					Query: newHeader("id", "${var.@example/customers.loyal.id}"),
+				},
+			}
 
 			mo := &model.Model{
 				VarSets: []*model.VarSet{
@@ -209,10 +215,11 @@ var _ = Describe("NewRequest", func() {
 		})
 
 		It("resolves to nothing for an unknown qualified varset", func() {
-			resource := new(modelfakes.FakeResolvedResource)
-			resource.EndpointReturns(&model.Endpoint{
-				Query: newHeader("id", "${var.@unknown/varset.loyal.id}"),
-			})
+			resource := &model.ResolvedResource{
+				Endpoint: &model.Endpoint{
+					Query: newHeader("id", "${var.@unknown/varset.loyal.id}"),
+				},
+			}
 
 			result, err := model.NewRequest(
 				resource,
@@ -226,14 +233,14 @@ var _ = Describe("NewRequest", func() {
 
 	Context("Secrets", func() {
 
-		var newResource = func(secrets []*model.Secret) *modelfakes.FakeResolvedResource {
-			resource := new(modelfakes.FakeResolvedResource)
-			resource.ServiceReturns(&model.Service{})
-			resource.SecretsReturns(secrets)
-			resource.EndpointReturns(&model.Endpoint{
-				Headers: newHeader("Authorization", "Bearer ${secret.token}"),
-			})
-			return resource
+		var newResource = func(secrets []*model.Secret) *model.ResolvedResource {
+			return &model.ResolvedResource{
+				Service: &model.Service{},
+				Secrets: secrets,
+				Endpoint: &model.Endpoint{
+					Headers: newHeader("Authorization", "Bearer ${secret.token}"),
+				},
+			}
 		}
 
 		It("expands file secrets and trims trailing whitespace by default", func() {

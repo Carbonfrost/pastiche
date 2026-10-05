@@ -28,14 +28,14 @@ type RequestOption interface {
 	apply(*requestBuilder)
 }
 
-func NewRequest(r ResolvedResource, opts ...RequestOption) (*Request, error) {
+func NewRequest(r *ResolvedResource, opts ...RequestOption) (*Request, error) {
 	b := &requestBuilder{
 		baseURL: func() (*uritemplates.URITemplate, error) {
 			// Treat server baseURL as a potential URI template
-			if r.Server() == nil {
+			if r.Server == nil {
 				return nil, nil
 			}
-			return uritemplates.Parse(r.Server().BaseURL)
+			return uritemplates.Parse(r.Server.BaseURL)
 		},
 	}
 
@@ -93,9 +93,9 @@ type requestBuilder struct {
 	context *VarSet
 }
 
-func (b *requestBuilder) build(r ResolvedResource) (*Request, error) {
-	prefix := make([]string, len(r.Lineage()))
-	for i, c := range r.Lineage() {
+func (b *requestBuilder) build(r *ResolvedResource) (*Request, error) {
+	prefix := make([]string, len(r.Lineage))
+	for i, c := range r.Lineage {
 		prefix[i] = fmt.Sprint(c.URITemplate)
 	}
 
@@ -109,7 +109,7 @@ func (b *requestBuilder) build(r ResolvedResource) (*Request, error) {
 
 	expander := e.Compose(
 		e.Prefix("env", e.Env()),
-		e.Prefix("secret", newSecretExpander(r.Secrets())),
+		e.Prefix("secret", newSecretExpander(r.Secrets)),
 		e.Prefix("context", contextExpander(b.context)),
 		e.Prefix("var", varExpander(combinedVars, b.model)),
 		e.Map(combinedVars),
@@ -176,18 +176,18 @@ func varExpander(vars map[string]any, mo *Model) e.Interface {
 // bodyContent obtains the content of the request body from the most specific
 // layer which defines one.  A mixin, which the caller selected explicitly, is
 // more specific than the endpoint or the resource.
-func bodyContent(r ResolvedResource, vars map[string]any) httpclient.Content {
-	for _, m := range slices.Backward(r.Mixins()) {
+func bodyContent(r *ResolvedResource, vars map[string]any) httpclient.Content {
+	for _, m := range slices.Backward(r.Mixins) {
 		if content := newContent(m.Form, m.Body, m.RawBody, vars); content != nil {
 			return content
 		}
 	}
-	if ep := r.Endpoint(); ep != nil {
+	if ep := r.Endpoint; ep != nil {
 		if content := newContent(ep.Form, ep.Body, ep.RawBody, vars); content != nil {
 			return content
 		}
 	}
-	if res := r.Resource(); res != nil {
+	if res := r.Resource; res != nil {
 		return newContent(res.Form, res.Body, res.RawBody, vars)
 	}
 	return nil

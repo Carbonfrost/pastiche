@@ -202,7 +202,7 @@ func FetchAndPrint() cli.Action {
 				return err
 			}
 			if p, ok := locations[0].(Location); ok {
-				clientType = fromClientType(p.Resolved().Client())
+				clientType = fromClientType(p.Resolved().Client)
 			}
 		}
 
@@ -431,8 +431,8 @@ func tryContextResolve(c *cli.Context) (service *model.Service, res *model.Resou
 	}
 	mo := contextual.Workspace(c).Model()
 	merged, err := mo.Resolve(*v, server, method, c.List("mixin")...)
-	service = merged.Service()
-	res = merged.Resource()
+	service = merged.Service
+	res = merged.Resource
 
 	if err != nil {
 		return

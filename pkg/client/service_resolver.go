@@ -24,7 +24,7 @@ import (
 type Location interface {
 	httpclient.Location
 
-	Resolved() model.ResolvedResource
+	Resolved() *model.ResolvedResource
 }
 
 // LocationResolver represents an HTTP client location resolver
@@ -62,7 +62,7 @@ type pasticheLocation struct {
 	httpclient.Middleware
 
 	u        *url.URL
-	resolved model.ResolvedResource
+	resolved *model.ResolvedResource
 }
 
 type contextKey string
@@ -221,12 +221,12 @@ func (s *serviceResolver) requestOptions(c context.Context) []model.RequestOptio
 	}
 }
 
-func (s *serviceResolver) resolveResource(c context.Context) (model.ResolvedResource, error) {
+func (s *serviceResolver) resolveResource(c context.Context) (*model.ResolvedResource, error) {
 	spec := *s.root(c)
 	return s.config(c).Resolve(spec, s.server(c), s.method(c), s.selectedMixins(c)...)
 }
 
-func newLocation(resolved model.ResolvedResource, opts ...model.RequestOption) (*pasticheLocation, error) {
+func newLocation(resolved *model.ResolvedResource, opts ...model.RequestOption) (*pasticheLocation, error) {
 	merged, err := model.NewRequest(resolved, opts...)
 	if err != nil {
 		return nil, err
@@ -236,15 +236,15 @@ func newLocation(resolved model.ResolvedResource, opts ...model.RequestOption) (
 	var (
 		endpointMethod  httpclient.Middleware
 		requireEndpoint httpclient.MiddlewareFunc = func(req *http.Request) error {
-			if resolved.Endpoint() == nil {
+			if resolved.Endpoint == nil {
 				return errors.New("no endpoint defined for service/spec")
 			}
 			return nil
 		}
 	)
 
-	if resolved.Endpoint() != nil {
-		endpointMethod = withMethod(resolved.Endpoint().Method)
+	if resolved.Endpoint != nil {
+		endpointMethod = withMethod(resolved.Endpoint.Method)
 	}
 
 	return &pasticheLocation{
@@ -264,7 +264,7 @@ func (l *pasticheLocation) URL(ctx context.Context) (context.Context, *url.URL, 
 	return ctx, l.u, nil
 }
 
-func (l *pasticheLocation) Resolved() model.ResolvedResource {
+func (l *pasticheLocation) Resolved() *model.ResolvedResource {
 	return l.resolved
 }
 

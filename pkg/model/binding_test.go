@@ -32,8 +32,8 @@ var _ = Describe("Resolve", func() {
 
 		merged, err := subject.Resolve(spec, "", "")
 		Expect(err).NotTo(HaveOccurred())
-		Expect(merged.Service()).To(match.Service)
-		Expect(merged.Resource()).To(match.Resource)
+		Expect(merged.Service).To(match.Service)
+		Expect(merged.Resource).To(match.Resource)
 	},
 		Entry("simple",
 			[]string{"httpbin", "get"},
@@ -126,7 +126,7 @@ var _ = Describe("Resolve", func() {
 			})
 
 			rr, _ := m.Resolve(strings.Fields("a b c"), "default", "")
-			params := rr.Params()
+			params := rr.Params
 
 			Expect(params).To(HaveLen(5))
 			Expect(params[0].Name).To(Equal("serviceParam"))
@@ -165,7 +165,7 @@ var _ = Describe("Resolve", func() {
 			})
 
 			rr, _ := m.Resolve(strings.Fields("a b"), "default", "")
-			params := rr.Params()
+			params := rr.Params
 
 			Expect(params).To(HaveLen(1))
 			Expect(params[0].Name).To(Equal("duplicateParam"))
@@ -450,7 +450,7 @@ var _ = Describe("New", func() {
 
 var _ = Describe("Secrets", func() {
 
-	var resolve = func(svc config.Service) model.ResolvedResource {
+	var resolve = func(svc config.Service) *model.ResolvedResource {
 		subject := model.New(&config.File{Services: []config.Service{svc}})
 		rr, err := subject.Resolve(strings.Fields("s"), "default", "")
 		Expect(err).NotTo(HaveOccurred())
@@ -467,7 +467,7 @@ var _ = Describe("Secrets", func() {
 			},
 		})
 
-		Expect(rr.Secrets()).To(ConsistOf(
+		Expect(rr.Secrets).To(ConsistOf(
 			PointTo(MatchFields(IgnoreExtras, Fields{
 				"Name":     Equal("token"),
 				"Provider": Equal(&model.ExecSecret{Command: "echo hi"}),
@@ -496,7 +496,7 @@ var _ = Describe("Secrets", func() {
 			},
 		})
 
-		Expect(rr.Secrets()).To(ConsistOf(
+		Expect(rr.Secrets).To(ConsistOf(
 			PointTo(MatchFields(IgnoreExtras, Fields{"Name": Equal("token")})),
 			PointTo(MatchFields(IgnoreExtras, Fields{
 				"Name":     Equal("shared"),

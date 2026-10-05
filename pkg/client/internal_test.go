@@ -7,7 +7,6 @@ import (
 	"net/url"
 
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
-	"github.com/Carbonfrost/pastiche/pkg/internal/modelfakes"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 )
 
@@ -18,24 +17,16 @@ func NewLocation(
 	ep *model.Endpoint,
 	u *url.URL) *pasticheLocation {
 
-	loc, _ := newLocation(&modelfakes.FakeResolvedResource{
-		ResourceStub: func() *model.Resource {
-			return resource
-		},
-		ServiceStub: func() *model.Service {
-			return service
-		},
-		ServerStub: func() *model.Server {
-			return server
-		},
-		EndpointStub: func() *model.Endpoint {
-			return ep
-		},
+	loc, _ := newLocation(&model.ResolvedResource{
+		Resource: resource,
+		Service:  service,
+		Server:   server,
+		Endpoint: ep,
 	})
 	return loc
 }
 
-func NewLocationVars(vars uritemplates.Vars, r model.ResolvedResource) *pasticheLocation {
+func NewLocationVars(vars uritemplates.Vars, r *model.ResolvedResource) *pasticheLocation {
 	loc, _ := newLocation(r, model.WithVars(vars))
 	return loc
 }

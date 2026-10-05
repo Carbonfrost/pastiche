@@ -49,7 +49,7 @@ type Client struct {
 }
 
 type modelLocation interface {
-	Resolved() model.ResolvedResource
+	Resolved() *model.ResolvedResource
 }
 
 type modelLocationResolver interface {
@@ -130,7 +130,7 @@ func (c *Client) doOne(ctx context.Context, l httpclient.Location) (*Response, e
 	// TODO Would be better to apply opts to the specific invocation than globally
 	// to the client
 	if m, ok := l.(modelLocation); ok {
-		c.copyOpts(m.Resolved().Client())
+		c.copyOpts(m.Resolved().Client)
 
 		request, err := model.NewRequest(m.Resolved(), c.requestOptions()...)
 		if err != nil {

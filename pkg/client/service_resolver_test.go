@@ -11,7 +11,6 @@ import (
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli-http/uritemplates"
 	phttpclient "github.com/Carbonfrost/pastiche/pkg/client"
-	"github.com/Carbonfrost/pastiche/pkg/internal/modelfakes"
 	"github.com/Carbonfrost/pastiche/pkg/model"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -135,13 +134,11 @@ var _ = Describe("pasticheLocation", func() {
 		It("copies headers in Middleware", func() {
 			ctx := phttpclient.NewLocationVars(
 				nil,
-				&modelfakes.FakeResolvedResource{
-					EndpointStub: func() *model.Endpoint {
-						return &model.Endpoint{
-							Headers: model.Values{
-								{Name: "X-Header", Values: []string{"Value"}},
-							},
-						}
+				&model.ResolvedResource{
+					Endpoint: &model.Endpoint{
+						Headers: model.Values{
+							{Name: "X-Header", Values: []string{"Value"}},
+						},
 					},
 				},
 			)

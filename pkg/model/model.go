@@ -22,10 +22,6 @@ import (
 	"github.com/Carbonfrost/pastiche/pkg/internal/log"
 )
 
-//go:generate go tool counterfeiter -generate
-
-//counterfeiter:generate -o ../internal/modelfakes . ResolvedResource
-
 type Model struct {
 	Services []*Service
 	VarSets  []*VarSet
@@ -342,31 +338,22 @@ type BasicAuth struct {
 }
 
 // ResolvedResource represents the resource which was selected by its name
-type ResolvedResource interface {
-	Service() *Service
-	Resource() *Resource
-	Lineage() []*Resource
-	Endpoint() *Endpoint
-	Server() *Server
+type ResolvedResource struct {
+	Service  *Service
+	Resource *Resource
+	Lineage  []*Resource
+	Endpoint *Endpoint
+	Server   *Server
 
-	// Mixins obtains the mixins which were selected for the request, in the
+	// Mixins are the mixins which were selected for the request, in the
 	// order that they are applied.
-	Mixins() []*Mixin
+	Mixins []*Mixin
 
-	// TODO: These should probably be via request
-	Output() []*Output
-	Secrets() []*Secret
-	Client() Client
-	Params() []*Param
-}
-
-type resolvedResource struct {
-	endpoint *Endpoint
-	lineage  []*Resource
-	server   *Server
-	service  *Service
-	mixins   []*Mixin
-	model    *Model
+	Output  []*Output
+	Secrets []*Secret
+	Client  Client
+	Params  []*Param
+	model   *Model
 }
 
 var looksLikeURLPattern = regexp.MustCompile(`^(unix|https?)://`)
@@ -496,7 +483,7 @@ func (m *Model) mixinsByName() map[string]*Mixin {
 // Resolve locates the resource named by the spec, optionally within the named
 // server and using the given request method.  Any mixins which are named are
 // applied as the last layer of the resolution.
-func (m *Model) Resolve(spec ServiceSpec, server string, method string, mixins ...string) (ResolvedResource, error) {
+func (m *Model) Resolve(spec ServiceSpec, server string, method string, mixins ...string) (*ResolvedResource, error) {
 	if len(spec) == 0 {
 		return nil, fmt.Errorf("no service specified")
 	}
@@ -539,14 +526,20 @@ func (m *Model) Resolve(spec ServiceSpec, server string, method string, mixins .
 		return nil, fmt.Errorf("no endpoint defined for %v", spec.Path())
 	}
 
-	return &resolvedResource{
-		service:  svc,
-		lineage:  lineage,
-		endpoint: ep,
-		server:   svr,
-		mixins:   selected,
+	rr := &ResolvedResource{
+		Service:  svc,
+		Resource: lineage[len(lineage)-1],
+		Lineage:  lineage,
+		Endpoint: ep,
+		Server:   svr,
+		Mixins:   selected,
 		model:    m,
-	}, nil
+	}
+	rr.Output = resolveOutput(rr)
+	rr.Secrets = resolveSecrets(rr)
+	rr.Client = resolveClient(rr)
+	rr.Params = resolveParams(rr)
+	return rr, nil
 }
 
 // selectMixins looks up each mixin by name, preserving the order in which
@@ -593,30 +586,6 @@ func (r *Resource) Endpoint(m string) (*Endpoint, bool) {
 		}
 	}
 	return nil, false
-}
-
-func (r *resolvedResource) Service() *Service {
-	return r.service
-}
-
-func (r *resolvedResource) Resource() *Resource {
-	return r.lineage[len(r.lineage)-1]
-}
-
-func (r *resolvedResource) Lineage() []*Resource {
-	return r.lineage
-}
-
-func (r *resolvedResource) Endpoint() *Endpoint {
-	return r.endpoint
-}
-
-func (r *resolvedResource) Server() *Server {
-	return r.server
-}
-
-func (r *resolvedResource) Mixins() []*Mixin {
-	return r.mixins
 }
 
 func resolveLinks(links []Link, base string, vars map[string]any) []Link {
@@ -679,18 +648,18 @@ func mergeQuery(u *url.URL, newVals url.Values) {
 	u.RawQuery = q.Encode()
 }
 
-func (r *resolvedResource) Client() Client {
+func resolveClient(r *ResolvedResource) Client {
 	var client Client = &HTTPClient{}
 
-	if r.Service() != nil && r.Service().Client != nil {
-		client = r.Service().Client
+	if r.Service != nil && r.Service.Client != nil {
+		client = r.Service.Client
 	}
 
 	// TODO Allow combinations of client via lineage
 	return client
 }
 
-func (r *resolvedResource) Output() []*Output {
+func resolveOutput(r *ResolvedResource) []*Output {
 	return locate(
 		r,
 		reduceOutput,
@@ -703,7 +672,7 @@ func (r *resolvedResource) Output() []*Output {
 	)
 }
 
-func (r *resolvedResource) Secrets() []*Secret {
+func resolveSecrets(r *ResolvedResource) []*Secret {
 	return locate(
 		r,
 		reduceSecrets,
@@ -716,7 +685,7 @@ func (r *resolvedResource) Secrets() []*Secret {
 	)
 }
 
-func resolveHeaders(r ResolvedResource) http.Header {
+func resolveHeaders(r *ResolvedResource) http.Header {
 	return locate(
 		r,
 		reduceValues,
@@ -729,7 +698,7 @@ func resolveHeaders(r ResolvedResource) http.Header {
 	).ToHeader()
 }
 
-func resolveQuery(r ResolvedResource) url.Values {
+func resolveQuery(r *ResolvedResource) url.Values {
 	return locate(
 		r,
 		reduceValues,
@@ -742,7 +711,7 @@ func resolveQuery(r ResolvedResource) url.Values {
 	).ToURLValues()
 }
 
-func resolveVars(r ResolvedResource) map[string]any {
+func resolveVars(r *ResolvedResource) map[string]any {
 	return locate(
 		r,
 		reduceVars,
@@ -755,31 +724,27 @@ func resolveVars(r ResolvedResource) map[string]any {
 	)
 }
 
-func (r *resolvedResource) Params() []*Param {
-	return r.combinedParams()
-}
-
-func resolveLinks2(r ResolvedResource) []Link {
+func resolveLinks2(r *ResolvedResource) []Link {
 	var result []Link
-	if r.Server() != nil {
-		result = append(result, r.Server().Links...)
+	if r.Server != nil {
+		result = append(result, r.Server.Links...)
 	}
-	if r.Service() != nil {
-		result = append(result, r.Service().Links...)
+	if r.Service != nil {
+		result = append(result, r.Service.Links...)
 	}
-	for _, l := range r.Lineage() {
+	for _, l := range r.Lineage {
 		result = append(result, l.Links...)
 	}
-	if r.Endpoint() != nil {
-		result = append(result, r.Endpoint().Links...)
+	if r.Endpoint != nil {
+		result = append(result, r.Endpoint.Links...)
 	}
-	for _, m := range r.Mixins() {
+	for _, m := range r.Mixins {
 		result = append(result, m.Links...)
 	}
 	return result
 }
 
-func resolveAuth(r ResolvedResource) Auth {
+func resolveAuth(r *ResolvedResource) Auth {
 	return locate(
 		r,
 		reduceAuth,
@@ -792,7 +757,7 @@ func resolveAuth(r ResolvedResource) Auth {
 	)
 }
 
-func (r *resolvedResource) combinedParams() []*Param {
+func resolveParams(r *ResolvedResource) []*Param {
 	return locate(
 		r,
 		reduceParams,
@@ -809,7 +774,7 @@ func (r *resolvedResource) combinedParams() []*Param {
 // broadest to the most specific.  Mixins, which the caller selected explicitly,
 // are the last layer of all.
 func locate[T any](
-	r ResolvedResource,
+	r *ResolvedResource,
 	reducer func(T, T) T,
 	initial T,
 	onEndpoint func(*Endpoint) T,
@@ -820,26 +785,26 @@ func locate[T any](
 
 	res := initial
 
-	if onService != nil && r.Service() != nil {
-		res = reducer(res, onService(r.Service()))
+	if onService != nil && r.Service != nil {
+		res = reducer(res, onService(r.Service))
 	}
 
 	if onResource != nil {
-		for _, l := range r.Lineage() {
+		for _, l := range r.Lineage {
 			res = reducer(res, onResource(l))
 		}
 	}
 
-	if onEndpoint != nil && r.Endpoint() != nil {
-		res = reducer(res, onEndpoint(r.Endpoint()))
+	if onEndpoint != nil && r.Endpoint != nil {
+		res = reducer(res, onEndpoint(r.Endpoint))
 	}
 
-	if onServer != nil && r.Server() != nil {
-		res = reducer(res, onServer(r.Server()))
+	if onServer != nil && r.Server != nil {
+		res = reducer(res, onServer(r.Server))
 	}
 
 	if onMixin != nil {
-		for _, m := range r.Mixins() {
+		for _, m := range r.Mixins {
 			res = reducer(res, onMixin(m))
 		}
 	}

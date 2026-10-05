@@ -881,7 +881,7 @@ func (n namedOutputFilter) Search(ctx context.Context, resp Response) ([]byte, e
 		return nil, err
 	}
 
-	outputs := resolved.Output()
+	outputs := resolved.Output
 
 	// Find the named output
 	for _, o := range outputs {
