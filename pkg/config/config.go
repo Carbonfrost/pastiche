@@ -7,10 +7,10 @@
 package config
 
 import (
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"fmt"
-	"io"
 	"io/fs"
 	"maps"
 	"path"
@@ -20,201 +20,187 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+// MaxIncludeDepth is the maximum number of cascaded inclusions via the
+// source attribute, which also stops cyclic inclusions.
+const MaxIncludeDepth = 16
+
+var (
+	ErrUnsupportedFileFormat = errors.New("unsupported file format")
+	ErrIncludeDepthExceeded  = errors.New("maximum depth of cascaded inclusions exceeded")
+)
+
+type fileFormat struct {
+	toJSON  func([]byte) ([]byte, error)
+	strict  bool
+	varSets bool
+}
+
+var fileFormats = map[string]fileFormat{
+	".json":     {toJSON: jsonToJSON},
+	".jsonvars": {toJSON: jsonToJSON, varSets: true},
+	".yaml":     {toJSON: yamlToJSON, strict: true},
+	".yamlvars": {toJSON: yamlToJSON, strict: true, varSets: true},
+	".yml":      {toJSON: yamlToJSON, strict: true},
+	".ymlvars":  {toJSON: yamlToJSON, strict: true, varSets: true},
+}
+
+// sourced is implemented by types which support the source attribute.
+type sourced interface {
+	source() *string
+
+	// plain converts to a type that doesn't implement sourced, so that it
+	// unmarshals using the default rules
+	plain() any
+}
+
+type (
+	plainService        Service
+	plainServer         Server
+	plainResource       Resource
+	plainEndpoint       Endpoint
+	plainFlow           Flow
+	plainMixin          Mixin
+	plainTemplateOutput TemplateOutput
+	plainGRPCClient     GRPCClient
+)
+
+// sourcer unmarshals file, resolving relative paths and inclusions against it
 type sourcer struct {
-	f fs.FS
+	f     fs.FS
+	file  string
+	depth int
 }
-
-type unmarshaler func([]byte, any) error
-
-var unmarshalers = map[string]unmarshaler{
-	".json":     json.Unmarshal,
-	".jsonvars": unmarshalJSONVarSet,
-	".yaml":     unmarshalYaml,
-	".yamlvars": unmarshalYamlVarSet,
-	".yml":      unmarshalYaml,
-	".ymlvars":  unmarshalYamlVarSet,
-}
-
-var ErrUnsupportedFileFormat = errors.New("unsupported file format")
 
 // LoadFile loads the given file from the file system and name
 func LoadFile(f fs.FS, filename string) (*File, error) {
-	if unmarshal, ok := unmarshalers[filepath.Ext(filename)]; ok {
-		data, err := fs.ReadFile(f, filename)
-		if err != nil {
-			return nil, err
-		}
-
-		result := new(File)
-		result.SetName(filename)
-		if err := unmarshal(data, result); err != nil {
-			return nil, err
-		}
-
-		if len(result.Services) > 0 && result.Service != nil {
-			return nil, fmt.Errorf("must contain either service definition or services list, but not both")
-		}
-
-		src := sourcer{f: f}
-		err = src.source(filename, result)
-		if err != nil {
-			return nil, err
-		}
-
-		return result, nil
+	format, ok := fileFormats[filepath.Ext(filename)]
+	if !ok {
+		return nil, fmt.Errorf("load file %s: %w", filename, ErrUnsupportedFileFormat)
 	}
 
-	return nil, fmt.Errorf("load file %s: %w", filename, ErrUnsupportedFileFormat)
+	result := new(File)
+	result.SetName(filename)
+
+	var target any = result
+	if format.varSets {
+		target = &result.VarSets
+	}
+
+	s := sourcer{f: f, file: filename}
+	if err := s.unmarshal(format, target); err != nil {
+		return nil, err
+	}
+
+	if len(result.Services) > 0 && result.Service != nil {
+		return nil, fmt.Errorf("must contain either service definition or services list, but not both")
+	}
+
+	// The embedded service is inlined into the file, so it isn't visited by
+	// the unmarshaler for sourced types
+	if result.Service != nil {
+		if err := s.include(result.Service); err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
 }
 
-func (s sourcer) source(basefilename string, v any) error {
-	var file string
-
-	switch a := v.(type) {
-	case *File:
-		if a.Service == nil {
-			err := sources(s, basefilename, a.Services)
-			if err != nil {
-				return err
-			}
-			if err := sources(s, basefilename, a.Flows); err != nil {
-				return err
-			}
-			return sources(s, basefilename, a.Mixins)
-		}
-		return s.source(basefilename, a.Service)
-	case *Service:
-		if a == nil {
-			return nil
-		}
-		file = a.Source
-	case *Server:
-		if a == nil {
-			return nil
-		}
-		file = a.Source
-	case *Resource:
-		if a == nil {
-			return nil
-		}
-		file = a.Source
-	case *Endpoint:
-		if a == nil {
-			return nil
-		}
-		file = a.Source
-	case *Flow:
-		if a == nil {
-			return nil
-		}
-		file = a.Source
-	case *Step:
-		if a == nil {
-			return nil
-		}
-		// Steps don't have a source attribute
-	case *Mixin:
-		if a == nil {
-			return nil
-		}
-		file = a.Source
+func (s sourcer) unmarshal(format fileFormat, v any) error {
+	data, err := fs.ReadFile(s.f, s.file)
+	if err != nil {
+		return err
 	}
+	data, err = format.toJSON(data)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(data, v,
+		json.RejectUnknownMembers(format.strict),
+		json.WithUnmarshalers(s.unmarshalers()),
+	)
+}
 
+func (s sourcer) unmarshalers() *json.Unmarshalers {
+	return json.JoinUnmarshalers(
+		json.UnmarshalFromFunc(func(dec *jsontext.Decoder, v sourced) error {
+			// File only implements sourced by promotion from its embedded service
+			if _, ok := v.(*File); ok {
+				return errors.ErrUnsupported
+			}
+			if err := json.UnmarshalDecode(dec, v.plain()); err != nil {
+				return err
+			}
+			return s.include(v)
+		}),
+		json.UnmarshalFromFunc(func(dec *jsontext.Decoder, v *TemplateOutput) error {
+			if err := json.UnmarshalDecode(dec, (*plainTemplateOutput)(v)); err != nil {
+				return err
+			}
+			fixRelative(s.file, &v.File)
+			return nil
+		}),
+		json.UnmarshalFromFunc(func(dec *jsontext.Decoder, v *GRPCClient) error {
+			if err := json.UnmarshalDecode(dec, (*plainGRPCClient)(v)); err != nil {
+				return err
+			}
+			fixRelative(s.file, &v.ProtoSet)
+			return nil
+		}),
+	)
+}
+
+// include unmarshals the file named by the source attribute into v, which
+// cascades when the included file has its own source attribute
+func (s sourcer) include(v sourced) error {
+	src := v.source()
+	file := *src
 	if file == "" {
-		file = basefilename
-	} else {
-		resolvedFile := path.Join(path.Dir(basefilename), file)
-		reader, err := s.f.Open(resolvedFile)
-		if err != nil {
-			return err
-		}
-
-		data, err := io.ReadAll(reader)
-		if err != nil {
-			return err
-		}
-		unmarshal, ok := unmarshalers[filepath.Ext(file)]
-		if !ok {
-			return fmt.Errorf("%s: %w", file, ErrUnsupportedFileFormat)
-		}
-		err = unmarshal(data, v)
-		if err != nil {
-			return fmt.Errorf("%s: %w", file, err)
-		}
-
-		// Further references in recursive includes use this new base file
-		file = resolvedFile
+		return nil
+	}
+	if s.depth >= MaxIncludeDepth {
+		return fmt.Errorf("%s: %w", file, ErrIncludeDepthExceeded)
 	}
 
-	switch a := v.(type) {
-	case *Service:
-		err := sources(s, file, a.Servers)
-		if err != nil {
-			return err
-		}
-		if a.Client != nil && a.Client.GRPC != nil {
-			fixRelative(basefilename, &a.Client.GRPC.ProtoSet)
-		}
-		a.Output = fixOutputsRelative(basefilename, a.Output)
-		return sources(s, file, a.Resources)
-
-	case *Server:
-		a.Output = fixOutputsRelative(basefilename, a.Output)
-
-	case *Resource:
-		err := sources(s, file, a.Resources)
-		if err != nil {
-			return err
-		}
-		a.Output = fixOutputsRelative(basefilename, a.Output)
-		return s.sources(file, a.Get, a.Put, a.Post, a.Delete, a.Options, a.Head, a.Trace, a.Patch, a.Query)
-
-	case *Endpoint:
-		// Nothing to do for endpoints
-
-	case *Flow:
-		return sources(s, file, a.Steps)
-
-	case *Step:
-		// Nothing to do for steps
-
-	case *Mixin:
-		// Nothing to do for mixins
+	format, ok := fileFormats[filepath.Ext(file)]
+	if !ok || format.varSets {
+		return fmt.Errorf("%s: %w", file, ErrUnsupportedFileFormat)
 	}
+
+	included := sourcer{
+		f:     s.f,
+		file:  path.Join(path.Dir(s.file), file),
+		depth: s.depth + 1,
+	}
+
+	// Cleared so that only a source attribute in the included file cascades
+	*src = ""
+	if err := included.unmarshal(format, v); err != nil {
+		return fmt.Errorf("%s: %w", file, err)
+	}
+	*src = file
 	return nil
 }
 
-func (s sourcer) sources(basefilename string, values ...any) error {
-	for _, v := range values {
-		err := s.source(basefilename, v)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+func (s *Service) source() *string  { return &s.Source }
+func (s *Server) source() *string   { return &s.Source }
+func (s *Resource) source() *string { return &s.Source }
+func (s *Endpoint) source() *string { return &s.Source }
+func (s *Flow) source() *string     { return &s.Source }
+func (s *Mixin) source() *string    { return &s.Source }
+
+func (s *Service) plain() any  { return (*plainService)(s) }
+func (s *Server) plain() any   { return (*plainServer)(s) }
+func (s *Resource) plain() any { return (*plainResource)(s) }
+func (s *Endpoint) plain() any { return (*plainEndpoint)(s) }
+func (s *Flow) plain() any     { return (*plainFlow)(s) }
+func (s *Mixin) plain() any    { return (*plainMixin)(s) }
+
+func jsonToJSON(data []byte) ([]byte, error) {
+	return data, nil
 }
 
-func unmarshalYaml(data []byte, v any) error {
-	return yaml.UnmarshalStrict(preprocessYAML(data), v)
-}
-
-func unmarshalYamlVarSet(data []byte, v any) error {
-	return unmarshalYaml(data, &v.(*File).VarSets)
-}
-
-func unmarshalJSONVarSet(data []byte, v any) error {
-	return json.Unmarshal(data, &v.(*File).VarSets)
-}
-
-func sources[V any](s sourcer, basefilename string, values []V) error {
-	for i, v := range values {
-		err := s.source(basefilename, &v)
-		values[i] = v
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+func yamlToJSON(data []byte) ([]byte, error) {
+	return yaml.YAMLToJSON(preprocessYAML(data))
 }
 
 func fixRelative(basefilename string, pathStr *string) {
@@ -223,15 +209,6 @@ func fixRelative(basefilename string, pathStr *string) {
 	}
 	resolvedFile := path.Join(path.Dir(basefilename), *pathStr)
 	*pathStr = resolvedFile
-}
-
-func fixOutputsRelative(basefilename string, out []Output) []Output {
-	for i := range out {
-		if out[i].Template != nil {
-			fixRelative(basefilename, &out[i].Template.File)
-		}
-	}
-	return out
 }
 
 func preprocessYAML(data []byte) []byte {

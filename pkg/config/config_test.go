@@ -84,6 +84,18 @@ var _ = Describe("Config", func() {
 				)),
 			),
 			Entry(
+				"include cascades",
+				"cascade.yml",
+				haveResources(ConsistOf(
+					MatchFields(IgnoreExtras,
+						Fields{
+							"Name":   Equal("a"),
+							"URI":    Equal("/v2/{name}.json"),
+							"Source": Equal("group/_cascade.resource.yml"),
+						}),
+				)),
+			),
+			Entry(
 				"include services",
 				"include_services.yml",
 				haveServices(ContainElements(
@@ -343,14 +355,19 @@ var _ = Describe("Config", func() {
 					)),
 			),
 			Entry(
+				"cyclic include",
+				"error_includeCycle.yml",
+				MatchError(config.ErrIncludeDepthExceeded),
+			),
+			Entry(
 				"unknown attributes",
 				"unknown-attributes.yml",
-				MatchError(ContainSubstring(`unknown field "unknownAttribute"`)),
+				MatchError(ContainSubstring(`unknown object member name "unknownAttribute"`)),
 			),
 			Entry(
 				"included file with unknown attributes",
 				"include-unknown-attributes.yml",
-				MatchError(MatchRegexp(`unknown-attributes.yml: .+ unknown field "unknownAttribute"`)),
+				MatchError(MatchRegexp(`unknown-attributes.yml: .+ unknown object member name "unknownAttribute"`)),
 			),
 		)
 
