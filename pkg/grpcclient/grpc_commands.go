@@ -9,6 +9,7 @@ import (
 	"reflect"
 
 	"github.com/Carbonfrost/joe-cli"
+	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/joe-cli/extensions/bind"
 )
 
@@ -17,18 +18,21 @@ const (
 )
 
 var (
-	tagged  = cli.Data(SourceAnnotation())
-	pkgPath = reflect.TypeFor[Client]().PkgPath()
+	tagged           = cli.Data(SourceAnnotation())
+	synopsisCategory = cli.SynopsisCategory("grpc-client")
+	pkgPath          = reflect.TypeFor[Client]().PkgPath()
 )
 
-func FetchAndPrint() cli.Action {
+type Action = cli.Action
+
+func FetchAndPrint() Action {
 	return cli.ActionFunc(func(c *cli.Context) error {
 		_, err := Do(c)
 		return err
 	})
 }
 
-func ContextValue(c *Client) cli.Action {
+func ContextValue(c *Client) Action {
 	return cli.WithContextValue(servicesKey, c)
 }
 
@@ -40,13 +44,14 @@ func Do(c *cli.Context) ([]*Response, error) {
 	return FromContext(c).Do(c)
 }
 
-func FlagsAndArgs() cli.Action {
+func FlagsAndArgs() Action {
 	return cli.Pipeline(
 		cli.AddFlags(
 			[]*cli.Flag{
-				{Uses: SetPlaintext()},
-				{Uses: SetDisableReflection()},
-				{Uses: SetProtoset()},
+				idFlag(IDPlaintext, SetPlaintext()),
+				idFlag(IDDisableReflection, SetDisableReflection()),
+				idFlag(IDProtoset, SetProtoset()),
+				idFlag(IDHeader, SetHeader()),
 			}...,
 		),
 		cli.AddArgs(
@@ -64,7 +69,7 @@ func SourceAnnotation() (string, string) {
 	return "Source", pkgPath
 }
 
-func SetPlaintext(s ...bool) cli.Action {
+func SetPlaintext(s ...bool) Action {
 	return cli.Pipeline(
 		&cli.Prototype{
 			Name:     "plaintext",
@@ -73,10 +78,11 @@ func SetPlaintext(s ...bool) cli.Action {
 		},
 		bindAction(WithPlaintext, bind.Exact(s...)),
 		tagged,
+		synopsisCategory,
 	)
 }
 
-func SetDisableReflection(s ...bool) cli.Action {
+func SetDisableReflection(s ...bool) Action {
 	return cli.Pipeline(
 		&cli.Prototype{
 			Name:     "disable-reflection",
@@ -85,12 +91,13 @@ func SetDisableReflection(s ...bool) cli.Action {
 		},
 		bindAction(WithDisableReflection, bind.Exact(s...)),
 		tagged,
+		synopsisCategory,
 	)
 }
 
 // TODO joe@futures should allow this to be typed as File
 
-func SetProtoset(s ...string) cli.Action {
+func SetProtoset(s ...string) Action {
 	return cli.Pipeline(
 		&cli.Prototype{
 			Name:     "protoset",
@@ -100,10 +107,26 @@ func SetProtoset(s ...string) cli.Action {
 		},
 		bindAction(WithProtoset, bind.Exact(s...)),
 		tagged,
+		synopsisCategory,
 	)
 }
 
-func SetAddr(s ...string) cli.Action {
+func SetHeader(s ...*httpclient.HeaderValue) cli.Action {
+	return cli.Pipeline(
+		&cli.Prototype{
+			Name:     "header",
+			Aliases:  []string{"H"},
+			HelpText: "Sets header to {NAME} and {VALUE}",
+			Category: requestOptions,
+			Options:  cli.EachOccurrence,
+		},
+		bindAction(AddHeader, bind.Exact(s...)),
+		tagged,
+		synopsisCategory,
+	)
+}
+
+func SetAddr(s ...string) Action {
 	return cli.Pipeline(
 		&cli.Prototype{
 			Name:     "addr",
@@ -115,7 +138,7 @@ func SetAddr(s ...string) cli.Action {
 	)
 }
 
-func SetSymbol(s ...string) cli.Action {
+func SetSymbol(s ...string) Action {
 	return cli.Pipeline(
 		&cli.Prototype{
 			Name:     "symbol",
@@ -128,8 +151,8 @@ func SetSymbol(s ...string) cli.Action {
 }
 
 // TODO These shouldn't be needed once joe-cli@future support covariance
-func bindAction[T any](fn func(T) Option, t bind.Binder[T]) cli.Action {
-	cfn := func(t T) cli.Action {
+func bindAction[T any](fn func(T) Option, t bind.Binder[T]) Action {
+	cfn := func(t T) Action {
 		return fn(t)
 	}
 	return bind.Action(cfn, t)

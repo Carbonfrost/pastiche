@@ -207,7 +207,7 @@ func FetchAndPrint() cli.Action {
 		}
 
 		if clientType == TypeGRPC {
-			return cli.Do(ctx, cli.Pipeline(httpClientInterop, grpcclient.FetchAndPrint()))
+			return cli.Do(ctx, grpcclient.FetchAndPrint())
 		}
 
 		return cli.Do(ctx, httpclient.FetchAndPrint())
@@ -460,37 +460,4 @@ func setDescription(c *cli.Context) error {
 	return c.SetDescription(
 		c.Template("PasticheServices").BindFunc(servicesData),
 	)
-}
-
-// TODO Allow grpcclient to have standalone support for headers
-var httpClientInteropFlags = map[string]func(any) grpcclient.Option{
-	"header": func(in any) grpcclient.Option {
-		header := in.(*httpclient.HeaderValue)
-		return grpcclient.WithHeader(header.Name, header.Value)
-	},
-}
-
-// httpClientInterop scans the context for values that were set using
-// the httpclient and copies them to compatible grpcclient options
-func httpClientInterop(c *cli.Context) error {
-	src, tag := httpclient.SourceAnnotation()
-	client := grpcclient.FromContext(c)
-
-	for flag, optFn := range httpClientInteropFlags {
-		// Ensure that flag is defined and is from httpclient package
-		f, ok := c.LookupFlag(flag)
-		if !ok {
-			continue
-		}
-
-		if v, ok := f.Data[src]; ok && tag == v {
-
-			// TODO Only supports last value in binding lookup
-			actual := c.BindingLookup().Value(flag)
-			opt := optFn(actual)
-			opt(client)
-		}
-	}
-
-	return nil
 }

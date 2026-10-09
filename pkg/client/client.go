@@ -133,11 +133,17 @@ func ContextValue(c *Client) cli.Action {
 // Despite its name, the action contributes no args.
 func FlagsAndArgs() cli.Action {
 	return cli.Pipeline(
+		// Remove --header contributed by each client, which is replaced by
+		// SetHeader that binds to both
+		removeFlag(httpclient.LookupID, httpclient.IDHeader),
+		removeFlag(grpcclient.LookupID, grpcclient.IDHeader),
+
 		cli.AddFlags([]*cli.Flag{
 			{Uses: ListFilters()},
 			{Uses: SetFilter()},
 			{Uses: SetType()},
 			{Uses: SetIncludeMetadata()},
+			{Uses: SetHeader()},
 			{
 				Name:      "context",
 				Aliases:   []string{"c"}, // TODO This should be -k once we consider removing --insecure via joe-cli-http@futures
@@ -148,6 +154,22 @@ func FlagsAndArgs() cli.Action {
 			},
 			{Uses: SetContextParam()},
 		}...),
+	)
+}
+
+// SetHeader provides an action which sets a header on both the HTTP and gRPC
+// clients.
+func SetHeader(v ...*httpclient.HeaderValue) cli.Action {
+	return cli.Pipeline(
+		&cli.Prototype{
+			Name:     "header",
+			Aliases:  []string{"H"},
+			HelpText: "Sets header to {NAME} and {VALUE}",
+			Category: requestOptions,
+			Options:  cli.EachOccurrence,
+		},
+		bind.Action(httpclient.AddRequestHeader, bind.Exact(v...)),
+		bind.Action(grpcclient.AddHeader, bind.Exact(v...)),
 	)
 }
 
@@ -241,6 +263,17 @@ func WithDefaultLocationResolver() Option {
 		lateBinding[string]("context"),
 	)
 	return WithLocationResolver(sr)
+}
+
+func removeFlag[T comparable](filter func(target any) (T, bool), match T) cli.Action {
+	return cli.ProvideValueInitializer(nil, "__finalize__", cli.ActionFunc(func(c *cli.Context) error {
+		for _, f := range c.Command().Flags {
+			if id, ok := filter(f); ok && id == match {
+				return c.RemoveFlag(f)
+			}
+		}
+		return fmt.Errorf("did not find flag %v", match)
+	}))
 }
 
 func withBinding[V any](binder func(*Client, V) error, args []V) cli.Action {

@@ -136,7 +136,12 @@ func (c *Client) doOne(ctx context.Context, l httpclient.Location) (*Response, e
 		if err != nil {
 			return nil, err
 		}
-		c.headers = formatHeaders(request.Headers)
+		// Model headers are added to those set by options, but only for
+		// this invocation, so they don't accumulate across locations
+		headers := c.headers
+		c.headers = append(formatHeaders(request.Headers), headers...)
+		defer func() { c.headers = headers }()
+
 		c.body = request.Body
 		c.auth = request.Auth
 	}
@@ -233,6 +238,11 @@ func WithHeader(name, value string) Option {
 	return func(c *Client) {
 		c.headers = append(c.headers, fmt.Sprintf("%s:%s", name, value))
 	}
+}
+
+// AddHeader provides an option which adds the header to requests
+func AddHeader(v *httpclient.HeaderValue) Option {
+	return WithHeader(v.Name, v.Value)
 }
 
 func (o Option) Execute(c context.Context) error {
