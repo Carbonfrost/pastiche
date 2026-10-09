@@ -1,5 +1,28 @@
 # Changelog
 
+## v0.6.1 (October 8, 2026)
+
+### New features
+
+* Params (e5fc975)
+* Describe using output formats (15eac78)
+* Tree format in describe command (c07dd7a)
+
+### Bug fixes and improvements
+
+* Bug fix: regression: named output filters (b521034)
+* Bug fix: wrong casing in built-in YAML (87e7209)
+* Modernizations:
+    * Rework sourcing to use modern json/v2 (2270a4d)
+    * slices.Chunk (cbff6f6)
+* Refactoring:
+    * Remove ResolvedResource interface (d9f84b5)
+* Breaking change: Apply consistent naming to Output, Step (a8d6a87)
+* Use output codec in env command (643fa4f)
+* Chores:
+    * Update dependent versions (29cd1d5)
+
+
 ## v0.6.0 (September 20, 2026)
 
 ### New Features
