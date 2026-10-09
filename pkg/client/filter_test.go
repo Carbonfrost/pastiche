@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 
+	cli "github.com/Carbonfrost/joe-cli"
 	joehttpclient "github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/pastiche/pkg/client"
 	"github.com/Carbonfrost/pastiche/pkg/internal/clientfakes"
@@ -213,3 +214,39 @@ func must[T any](t T, err any) T {
 	}
 	return t
 }
+
+var _ = Describe("SetFilter", func() {
+
+	var (
+		c   *client.Client
+		run func(args ...string) error
+	)
+
+	BeforeEach(func() {
+		c = client.New()
+		run = func(args ...string) error {
+			app := &cli.App{
+				Name:   "pastiche",
+				Uses:   c,
+				Action: func() {},
+			}
+			return app.RunContext(context.Background(), append([]string{"pastiche"}, args...)...)
+		}
+	})
+
+	It("resolves named output when the filter is not in the registry", func() {
+		Expect(run("--filter", "my-output")).To(Succeed())
+
+		name, ok := client.IsNamedOutputFilter(c.CurrentFilter())
+		Expect(ok).To(BeTrue(), "expected a named output filter but got %T", c.CurrentFilter())
+		Expect(name).To(Equal("my-output"))
+	})
+
+	It("uses the registered filter when the name is in the registry", func() {
+		Expect(run("--filter", "json")).To(Succeed())
+
+		_, ok := client.IsNamedOutputFilter(c.CurrentFilter())
+		Expect(ok).To(BeFalse())
+		Expect(c.CurrentFilter()).NotTo(BeNil())
+	})
+})

@@ -30,3 +30,15 @@ func NewLocationVars(vars uritemplates.Vars, r *model.ResolvedResource) *pastich
 	loc, _ := newLocation(r, model.WithVars(vars))
 	return loc
 }
+
+// CurrentFilter exposes the filter set on the client.
+func (c *Client) CurrentFilter() Filter {
+	return c.filter
+}
+
+// IsNamedOutputFilter determines whether the filter resolves a named output,
+// and if so, which one.
+func IsNamedOutputFilter(f Filter) (string, bool) {
+	n, ok := f.(namedOutputFilter)
+	return n.name, ok
+}

@@ -768,7 +768,7 @@ func SetIncludeMetadata(f ...bool) cli.Action {
 // SetFilter provides an action which sets the filter which will be used in the response.
 // This also provides an accessory flag.
 func SetFilter(f ...Filter) cli.Action {
-	actualBind := provider.Bind[Filter]()
+	actualBind := bind.Seq(provider.BindValue(), newFilterOrNamedOutput)
 	if len(f) > 0 {
 		actualBind = bind.Exact(f...)
 	}
@@ -782,6 +782,18 @@ func SetFilter(f ...Filter) cli.Action {
 		bind.Call2((*Client).SetFilter, bind.FromContext(FromContext), actualBind),
 		cli.Accessory("-", (*provider.Value).ArgumentFlag, cli.Category(outputOptions)),
 	)
+}
+
+func newFilterOrNamedOutput(v *provider.Value) (Filter, error) {
+	if _, ok := FilterRegistry.LookupProvider(v.Name); !ok {
+		return NewNamedOutputFilter(v.Name), nil
+	}
+
+	f, err := FilterRegistry.New(v.Name, v.Args)
+	if err != nil {
+		return nil, err
+	}
+	return f.(Filter), nil
 }
 
 func (j *filterOpts) UnmarshalText(data []byte) error {
