@@ -7,7 +7,7 @@ services:
     Pastiche itself.
   servers:
     - name: local
-      baseURL: http://localhost:9161
+      baseUrl: http://localhost:9161
   resources:
     - name: model
       uri: /api/v0/model
