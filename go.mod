@@ -3,18 +3,18 @@
 // license that can be found in the LICENSE file.
 module github.com/Carbonfrost/pastiche
 
-go 1.27.0
+go 1.27.2
 
 require (
 	github.com/Carbonfrost/joe-cli v0.24.0
-	github.com/Carbonfrost/joe-cli-http v0.12.0
+	github.com/Carbonfrost/joe-cli-http v0.13.0
 	github.com/antchfx/xmlquery v1.5.1
 	github.com/antchfx/xpath v1.3.8
 	github.com/fullstorydev/grpcurl v1.9.4
 	github.com/jhump/protoreflect v1.18.1
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/onsi/ginkgo/v2 v2.33.0
-	github.com/onsi/gomega v1.43.0
+	github.com/onsi/gomega v1.43.1
 	golang.org/x/term v0.46.0
 	google.golang.org/grpc v1.83.2
 	sigs.k8s.io/yaml v1.6.0
@@ -45,18 +45,18 @@ require (
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/google/pprof v0.0.0-20260906184651-6331bc6350fe // indirect
+	github.com/google/pprof v0.0.0-20261008003335-7bae8d8c4c9e // indirect
 	github.com/hashicorp/go-version v1.9.0 // indirect
 	github.com/jhump/protoreflect/v2 v2.0.0-beta.2 // indirect
 	github.com/juju/ansiterm v1.0.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
-	github.com/mattn/go-colorable v0.1.15 // indirect
+	github.com/mattn/go-colorable v0.1.16 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
-	github.com/maxbrunsfeld/counterfeiter/v6 v6.13.0 // indirect
+	github.com/maxbrunsfeld/counterfeiter/v6 v6.14.0 // indirect
 	github.com/mgechev/dots v1.0.0 // indirect
-	github.com/mgechev/revive v1.16.0 // indirect
+	github.com/mgechev/revive v1.17.0 // indirect
 	github.com/mitchellh/go-ps v1.0.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
@@ -77,7 +77,7 @@ require (
 	golang.org/x/sync v0.23.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/text v0.42.0 // indirect
-	golang.org/x/tools v0.50.0 // indirect
+	golang.org/x/tools v0.51.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260904194346-d0f1323225a4 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	honnef.co/go/tools v0.8.1 // indirect
