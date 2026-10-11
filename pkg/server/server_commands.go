@@ -10,8 +10,8 @@ import (
 
 	"github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli-http/httpserver"
-	"github.com/Carbonfrost/pastiche/pkg/config"
 	"github.com/Carbonfrost/pastiche/pkg/contextual"
+	"github.com/Carbonfrost/pastiche/pkg/server/configapp"
 	"github.com/Carbonfrost/pastiche/pkg/server/dashboardapp"
 	"github.com/Carbonfrost/pastiche/pkg/server/metaapi"
 )
@@ -29,8 +29,8 @@ func Serve() cli.Action {
 		),
 		cli.Before(cli.Pipeline(
 			contextual.Middleware(),
-			httpserver.Handle("GET /api/v0/model", httpserver.NewReloadableHandler(handleGetModel)),
-			httpserver.Handle("GET /api/v0/schema", httpserver.NewReloadableHandler(handleSchema)),
+			httpserver.Handle("GET /api/model", httpserver.NewReloadableHandler(handleGetModel)),
+			httpserver.Handle("GET /api/schema", httpserver.NewReloadableHandler(handleSchema)),
 			httpserver.Handle("/", httpserver.NewReloadableHandler(handleDashboard)),
 		)),
 		httpserver.RunServer(),
@@ -48,8 +48,5 @@ func handleDashboard(c context.Context) (http.Handler, error) {
 }
 
 func handleSchema(c context.Context) (http.Handler, error) {
-	mo := config.Schema()
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write(mo)
-	}), nil
+	return configapp.New()
 }
