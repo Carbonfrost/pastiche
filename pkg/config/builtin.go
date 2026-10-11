@@ -64,9 +64,13 @@ func Builtins() []Service {
 	return slices.Collect(maps.Values(c))
 }
 
-func BuiltinFiles() []*File {
-	f, _ := builtinCache()
-	return f
+func BuiltinFiles() []FileOrModule {
+	files, _ := builtinCache()
+	result := make([]FileOrModule, len(files))
+	for i := range files {
+		result[i] = files[i]
+	}
+	return result
 }
 
 func safelyLoadBuiltins(filename string) []*File {

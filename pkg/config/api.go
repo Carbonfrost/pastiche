@@ -285,3 +285,7 @@ func (f *File) Name() string {
 func (f *File) SetName(name string) {
 	f.name = name
 }
+
+func (*File) fileOrModuleSigil() {}
+
+var _ FileOrModule = (*File)(nil)

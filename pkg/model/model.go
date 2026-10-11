@@ -358,14 +358,29 @@ type ResolvedResource struct {
 
 var looksLikeURLPattern = regexp.MustCompile(`^(unix|https?)://`)
 
-// New creates a new model from configuration files
-func New(files ...*config.File) *Model {
+// New creates a new model from configuration file
+func New(files ...config.FileOrModule) *Model {
+	var modules []*Module
+	for _, file := range files {
+		modules = append(modules, newModule(file))
+	}
+
+	result := &Model{}
+	for _, m := range modules {
+		m.copyToModel(result)
+	}
+
+	slices.SortStableFunc(result.Services, serviceByName2)
+	return result
+}
+
+func newModule(in config.FileOrModule) *Module {
 	services := []*Service{}
 	varSets := make([]*VarSet, 0)
 	flows := make([]*Flow, 0)
 	mixins := make([]*Mixin, 0)
 
-	for _, file := range files {
+	for _, file := range filesFromFileOrModule(in) {
 		if file.Service != nil {
 			services = append(services, service(*file.Service))
 		}
@@ -382,14 +397,19 @@ func New(files ...*config.File) *Model {
 			mixins = append(mixins, mixin(v))
 		}
 	}
-
-	slices.SortStableFunc(services, serviceByName2)
-	return &Model{
-		Services: services,
-		VarSets:  varSets,
-		Flows:    flows,
-		Mixins:   mixins,
+	return &Module{
+		services: services,
+		varSets:  varSets,
+		flows:    flows,
+		mixins:   mixins,
 	}
+}
+
+func filesFromFileOrModule(in config.FileOrModule) []*config.File {
+	if mod, ok := in.(*config.Module); ok {
+		return mod.Files
+	}
+	return []*config.File{in.(*config.File)}
 }
 
 func serviceByName2(x, y *Service) int {

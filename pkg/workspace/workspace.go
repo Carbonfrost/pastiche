@@ -39,7 +39,7 @@ type Workspace struct {
 
 	ws *joeconfig.Workspace
 
-	files []*config.File
+	files []config.FileOrModule
 	model *model.Model
 
 	disableValidation bool
