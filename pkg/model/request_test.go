@@ -41,7 +41,7 @@ var _ = Describe("NewRequest", func() {
 				},
 			}
 
-			req, err := model.NewRequest(resource, model.WithBaseURL(mustParseURL("https://example.com")))
+			req, err := model.NewRequest(resource, model.WithBaseURL("https://example.com"))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(req.Headers).To(expected)
 		},
@@ -80,7 +80,7 @@ var _ = Describe("NewRequest", func() {
 
 			result, _ := model.NewRequest(
 				resource,
-				model.WithBaseURL(mustParseURL("https://localhost:8080")),
+				model.WithBaseURL("https://localhost:8080"),
 				model.WithVars(map[string]any{"s": "to", "x": "y"}),
 			)
 			Expect(result.URL.String()).To(Equal("https://localhost:8080/?hello=world&in=to&x=y"))
@@ -105,7 +105,7 @@ var _ = Describe("NewRequest", func() {
 				},
 			}
 
-			req, err := model.NewRequest(resource, model.WithBaseURL(mustParseURL("https://example.com")))
+			req, err := model.NewRequest(resource, model.WithBaseURL("https://example.com"))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(req.URL.Query()).To(expected)
 		},
@@ -146,7 +146,7 @@ var _ = Describe("NewRequest", func() {
 
 			result, err := model.NewRequest(
 				resource,
-				model.WithBaseURL(mustParseURL("https://example.com")),
+				model.WithBaseURL("https://example.com"),
 				model.WithContext(exampleVarSet),
 			)
 			Expect(err).NotTo(HaveOccurred())
@@ -162,7 +162,7 @@ var _ = Describe("NewRequest", func() {
 
 			result, err := model.NewRequest(
 				resource,
-				model.WithBaseURL(mustParseURL("https://example.com")),
+				model.WithBaseURL("https://example.com"),
 			)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(result.URL.Query()).To(HaveKeyWithValue("id", []string{""}))
@@ -180,7 +180,7 @@ var _ = Describe("NewRequest", func() {
 
 			result, err := model.NewRequest(
 				resource,
-				model.WithBaseURL(mustParseURL("https://example.com")),
+				model.WithBaseURL("https://example.com"),
 				model.WithVars(map[string]any{"id": "ABC"}),
 			)
 			Expect(err).NotTo(HaveOccurred())
@@ -207,7 +207,7 @@ var _ = Describe("NewRequest", func() {
 
 			result, err := model.NewRequest(
 				resource,
-				model.WithBaseURL(mustParseURL("https://example.com")),
+				model.WithBaseURL("https://example.com"),
 				model.WithModel(mo),
 			)
 			Expect(err).NotTo(HaveOccurred())
@@ -223,7 +223,7 @@ var _ = Describe("NewRequest", func() {
 
 			result, err := model.NewRequest(
 				resource,
-				model.WithBaseURL(mustParseURL("https://example.com")),
+				model.WithBaseURL("https://example.com"),
 				model.WithModel(&model.Model{}),
 			)
 			Expect(err).NotTo(HaveOccurred())
@@ -251,7 +251,7 @@ var _ = Describe("NewRequest", func() {
 				{Name: "token", Provider: &model.FileSecret{Path: file}},
 			})
 
-			req, err := model.NewRequest(resource, model.WithBaseURL(mustParseURL("https://example.com")))
+			req, err := model.NewRequest(resource, model.WithBaseURL("https://example.com"))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(req.Headers).To(HaveKeyWithValue("Authorization", []string{"Bearer s3cret"}))
 		})
@@ -264,7 +264,7 @@ var _ = Describe("NewRequest", func() {
 				{Name: "token", Provider: &model.FileSecret{Path: file, PreserveTrailingWhitespace: true}},
 			})
 
-			req, err := model.NewRequest(resource, model.WithBaseURL(mustParseURL("https://example.com")))
+			req, err := model.NewRequest(resource, model.WithBaseURL("https://example.com"))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(req.Headers).To(HaveKeyWithValue("Authorization", []string{"Bearer s3cret\n"}))
 		})
@@ -274,7 +274,7 @@ var _ = Describe("NewRequest", func() {
 				{Name: "token", Provider: &model.ExecSecret{Command: "printf s3cret"}},
 			})
 
-			req, err := model.NewRequest(resource, model.WithBaseURL(mustParseURL("https://example.com")))
+			req, err := model.NewRequest(resource, model.WithBaseURL("https://example.com"))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(req.Headers).To(HaveKeyWithValue("Authorization", []string{"Bearer s3cret"}))
 		})
@@ -284,7 +284,7 @@ var _ = Describe("NewRequest", func() {
 				{Name: "token", Provider: &model.FileSecret{Path: "/does/not/exist"}},
 			})
 
-			req, err := model.NewRequest(resource, model.WithBaseURL(mustParseURL("https://example.com")))
+			req, err := model.NewRequest(resource, model.WithBaseURL("https://example.com"))
 			Expect(err).NotTo(HaveOccurred())
 			Expect(req.Headers).To(HaveKeyWithValue("Authorization", []string{"Bearer <missing secret token>"}))
 		})

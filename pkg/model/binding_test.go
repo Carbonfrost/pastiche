@@ -1,10 +1,10 @@
 // Copyright 2023, 2026 The Pastiche Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+
 package model_test
 
 import (
-	"net/url"
 	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -73,7 +73,7 @@ var _ = Describe("Resolve", func() {
 					},
 				})
 				rr, _ := m.Resolve(strings.Fields("a"), "default", "")
-				baseURL, _ := url.Parse("https://example.com")
+				baseURL := "https://example.com"
 				merged, _ := model.NewRequest(rr, model.WithBaseURL(baseURL), model.WithVars(map[string]any{"var": "hello"}))
 
 				Expect(merged.Links[0].HRef).To(Equal("https://example.com/hello"))

@@ -48,13 +48,13 @@ func NewRequest(r *ResolvedResource, opts ...RequestOption) (*Request, error) {
 	return b.build(r)
 }
 
-func WithBaseURL(baseURL *url.URL) RequestOption {
-	if baseURL == nil {
+func WithBaseURL(baseURL string) RequestOption {
+	if baseURL == "" {
 		return nil
 	}
 	return requestOption(func(r *requestBuilder) {
 		r.baseURL = func() (*uritemplates.URITemplate, error) {
-			baseURITemplate, _ := uritemplates.Parse(baseURL.String())
+			baseURITemplate, _ := uritemplates.Parse(baseURL)
 			return baseURITemplate, nil
 		}
 	})

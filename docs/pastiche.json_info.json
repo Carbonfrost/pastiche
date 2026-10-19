@@ -1275,19 +1275,6 @@
                     }
                 },
                 {
-                    "name": "plaintext",
-                    "helpText": "Activate plaintext mode and disable TLS",
-                    "category": "Request options",
-                    "data": {
-                        "ID": "Plaintext",
-                        "Source": "github.com/Carbonfrost/pastiche/pkg/grpcclient"
-                    },
-                    "value": {
-                        "type": "bool",
-                        "string": "false"
-                    }
-                },
-                {
                     "name": "disable-reflection",
                     "helpText": "Disable server gRPC schema reflection",
                     "category": "Request options",
@@ -1360,6 +1347,16 @@
                     "category": "Request options",
                     "options": "EACH_OCCURRENCE",
                     "value": {}
+                },
+                {
+                    "name": "plaintext",
+                    "helpText": "Assume HTTP when otherwise not implied by TLS options",
+                    "category": "Request options",
+                    "options": "NO",
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
+                    }
                 },
                 {
                     "name": "context",
@@ -1452,6 +1449,16 @@
                     },
                     "value": {
                         "type": "string"
+                    }
+                },
+                {
+                    "name": "no-plaintext",
+                    "helpText": "Assume HTTP when otherwise not implied by TLS options",
+                    "category": "Request options",
+                    "options": "HIDDEN",
+                    "value": {
+                        "type": "bool",
+                        "string": "false"
                     }
                 }
             ],
@@ -1751,7 +1758,7 @@
     ],
     "helpText": "Make requests to HTTP APIs using their OpenAPI schemas and definitions.",
     "version": "(devel)",
-    "buildDate": "2026-10-18T20:59:33.377250379-07:00",
+    "buildDate": "2026-11-02T23:22:39.713411587-08:00",
     "comment": "Smart OpenAPI client",
     "options": "SORTED_FLAGS, SORTED_COMMANDS, SORTED_EXPRS"
 }

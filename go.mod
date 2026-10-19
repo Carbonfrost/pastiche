@@ -7,7 +7,7 @@ go 1.27.2
 
 require (
 	github.com/Carbonfrost/joe-cli v0.24.0
-	github.com/Carbonfrost/joe-cli-http v0.13.0
+	github.com/Carbonfrost/joe-cli-http v0.14.0
 	github.com/antchfx/xmlquery v1.5.1
 	github.com/antchfx/xpath v1.3.8
 	github.com/fullstorydev/grpcurl v1.9.4

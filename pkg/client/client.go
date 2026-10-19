@@ -133,10 +133,16 @@ func ContextValue(c *Client) cli.Action {
 // Despite its name, the action contributes no args.
 func FlagsAndArgs() cli.Action {
 	return cli.Pipeline(
-		// Remove --header contributed by each client, which is replaced by
+		// Remove --header, --plaintext contributed by each client, which is replaced by
 		// SetHeader that binds to both
 		removeFlag(httpclient.LookupID, httpclient.IDHeader),
 		removeFlag(grpcclient.LookupID, grpcclient.IDHeader),
+		removeFlag(httpclient.LookupID, httpclient.IDPlaintext),
+		removeFlag(grpcclient.LookupID, grpcclient.IDPlaintext),
+		cli.ProvideValueInitializer(nil, "__finalize__", cli.Pipeline(
+			// TODO In joe-cli@futures,  this should be WithCommand and should remove flags on matching criteria not just name
+			cli.RemoveFlag("no-plaintext"),
+		)),
 
 		cli.AddFlags([]*cli.Flag{
 			{Uses: ListFilters()},
@@ -144,6 +150,7 @@ func FlagsAndArgs() cli.Action {
 			{Uses: SetType()},
 			{Uses: SetIncludeMetadata()},
 			{Uses: SetHeader()},
+			{Uses: SetPlaintext()},
 			{
 				Name:      "context",
 				Aliases:   []string{"c"}, // TODO This should be -k once we consider removing --insecure via joe-cli-http@futures
@@ -170,6 +177,20 @@ func SetHeader(v ...*httpclient.HeaderValue) cli.Action {
 		},
 		bind.Action(httpclient.AddRequestHeader, bind.Exact(v...)),
 		bind.Action(grpcclient.AddHeader, bind.Exact(v...)),
+	)
+}
+
+// SetPlaintext provides an action which disables TLS on both the HTTP and gRPC clients
+func SetPlaintext(v ...bool) cli.Action {
+	return cli.Pipeline(
+		&cli.Prototype{
+			Name:     "plaintext",
+			HelpText: "Assume HTTP when otherwise not implied by TLS options",
+			Category: requestOptions,
+			Options:  cli.No,
+		},
+		bind.Action(httpclient.WithSecure, bind.Exact(v...).(*bind.BoolBinder).Negated()),
+		bind.Action(grpcclient.WithPlaintext, bind.Exact(v...)),
 	)
 }
 

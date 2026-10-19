@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"net/url"
 	"time"
 
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
@@ -44,7 +43,7 @@ type Response struct {
 
 // NewLogEntry creates a new LogEntry from model types.
 // It returns the entry and an io.Writer for capturing the response body as it streams in.
-func NewLogEntry(spec []string, server string, baseURL *url.URL, req *model.Request, resp *httpclient.Response) (*LogEntry, io.Writer) {
+func NewLogEntry(spec []string, server string, baseURL string, req *model.Request, resp *httpclient.Response) (*LogEntry, io.Writer) {
 	var vars map[string]any
 	if req != nil {
 		vars = req.Vars
@@ -72,10 +71,9 @@ func NewLogEntry(spec []string, server string, baseURL *url.URL, req *model.Requ
 	return entry, &responseBody
 }
 
-func historyBaseURL(u *url.URL) *string {
-	if u == nil {
+func historyBaseURL(u string) *string {
+	if u == "" {
 		return nil
 	}
-	s := u.String()
-	return &s
+	return &u
 }

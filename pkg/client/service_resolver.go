@@ -31,8 +31,8 @@ type Location interface {
 type LocationResolver interface {
 	httpclient.LocationResolver
 
-	BaseURL() *url.URL
 	Vars() map[string]any
+	ContextVarSet(context.Context) *model.VarSet
 
 	// AddContextParam records that the variable named name should be
 	// resolved from path within the context varset, unless an explicit
@@ -51,7 +51,8 @@ type serviceResolver struct {
 	method func(context.Context) string
 	mixins func(context.Context) []string
 	vars   map[string]any
-	base   *url.URL
+	base   string
+	secure bool
 	config func(context.Context) *model.Model
 
 	context       func(context.Context) string
@@ -96,6 +97,15 @@ func (s *serviceResolver) selectedMixins(c context.Context) []string {
 	return s.mixins(c)
 }
 
+func (s *serviceResolver) Secure() bool {
+	return s.secure
+}
+
+func (s *serviceResolver) SetSecure(v bool) error {
+	s.secure = v
+	return nil
+}
+
 func (s *serviceResolver) Add(location string) error {
 	return fmt.Errorf("multiple locations not supported")
 }
@@ -125,7 +135,7 @@ func (s *serviceResolver) contextName(ctx context.Context) string {
 	return (*s.root(ctx)).ServiceName()
 }
 
-func (s *serviceResolver) contextVarSet(ctx context.Context) *model.VarSet {
+func (s *serviceResolver) ContextVarSet(ctx context.Context) *model.VarSet {
 	vs, _ := s.config(ctx).VarSet(s.contextName(ctx))
 	return vs
 }
@@ -135,7 +145,7 @@ func (s *serviceResolver) resolveContextVars(ctx context.Context) error {
 		return nil
 	}
 
-	vs := s.contextVarSet(ctx)
+	vs := s.ContextVarSet(ctx)
 	if vs == nil {
 		return fmt.Errorf("varset not found: %q", s.contextName(ctx))
 	}
@@ -154,17 +164,12 @@ func (s *serviceResolver) resolveContextVars(ctx context.Context) error {
 	return nil
 }
 
-func (s *serviceResolver) BaseURL() *url.URL {
+func (s *serviceResolver) BaseURL() string {
 	return s.base
 }
 
-func (s *serviceResolver) SetBaseURL(base *url.URL) error {
-	if base == nil {
-		s.base = base
-		return nil
-	}
-
-	s.base = s.base.ResolveReference(base)
+func (s *serviceResolver) SetBaseURL(base string) error {
+	s.base = base
 	return nil
 }
 
@@ -217,7 +222,7 @@ func (s *serviceResolver) requestOptions(c context.Context) []model.RequestOptio
 		model.WithBaseURL(s.base),
 		model.WithVars(s.vars),
 		model.WithModel(m),
-		model.WithContext(s.contextVarSet(c)),
+		model.WithContext(s.ContextVarSet(c)),
 	}
 }
 
