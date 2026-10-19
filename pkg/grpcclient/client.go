@@ -5,6 +5,7 @@
 package grpcclient
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -142,7 +143,7 @@ func (c *Client) doOne(ctx context.Context, l httpclient.Location) (*Response, e
 		c.headers = append(formatHeaders(request.Headers), headers...)
 		defer func() { c.headers = headers }()
 
-		c.body = request.Body
+		c.body = requireBody(request.Body)
 		c.auth = request.Auth
 	}
 
@@ -181,6 +182,16 @@ func formatHeaders(m map[string][]string) []string {
 		res = append(res, fmt.Sprintf("%s: %s", k, strings.Join(v, ",")))
 	}
 	return res
+}
+
+func requireBody(r io.Reader) io.ReadCloser {
+	if r == nil {
+		return io.NopCloser(new(bytes.Buffer))
+	}
+	if c, ok := r.(io.ReadCloser); ok {
+		return c
+	}
+	return io.NopCloser(r)
 }
 
 func WithAction(a cli.Action) Option {
