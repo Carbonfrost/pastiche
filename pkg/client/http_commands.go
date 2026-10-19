@@ -351,7 +351,7 @@ func useRequest() bind.ActionBinder[*Request] {
 					},
 					{
 						Name:       "mixin",
-						Aliases:    []string{"m"},
+						Aliases:    []string{"M"},
 						UsageText:  "NAME",
 						HelpText:   "Apply the mixin {NAME} to the request",
 						Value:      new([]string),
