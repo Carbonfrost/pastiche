@@ -1,0 +1,13 @@
+name: "@example/customers"
+servers:
+  - name: production
+    baseUrl: __TEST_SERVER_BASE_URL__
+resources:
+  - name: r
+    query:
+      id: "${id}"
+varSets:
+  - name: "@example/customers"
+    vars:
+      loyal:
+        id: "ABC"

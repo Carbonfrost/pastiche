@@ -7,11 +7,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	cli "github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/pastiche/pkg/cmd/pastiche"
@@ -85,30 +87,7 @@ var _ = Describe("Integration", Label("integration"), Ordered, func() {
 					}),
 				)
 
-				tmpDir := GinkgoT().TempDir()
-				origDir, err := os.Getwd()
-				Expect(err).NotTo(HaveOccurred())
-				DeferCleanup(func() { _ = os.Chdir(origDir) })
-
-				Expect(os.MkdirAll(filepath.Join(tmpDir, ".pastiche"), 0755)).To(Succeed())
-				config := fmt.Sprintf(`
-name: "@example/customers"
-servers:
-  - name: production
-    baseUrl: %s
-resources:
-  - name: r
-    query:
-      id: "${id}"
-varSets:
-  - name: "@example/customers"
-    vars:
-      loyal:
-        id: "ABC"
-`, testServer.URL)
-				Expect(os.WriteFile(filepath.Join(tmpDir, ".pastiche", "customers.yml"), []byte(config), 0644)).To(Succeed())
-
-				Expect(os.Chdir(tmpDir)).To(Succeed())
+				useWorkspace("context-param", testServer.URL)
 			})
 
 			AfterEach(func() {
@@ -170,35 +149,7 @@ varSets:
 					}),
 				)
 
-				tmpDir := GinkgoT().TempDir()
-				origDir, err := os.Getwd()
-				Expect(err).NotTo(HaveOccurred())
-				DeferCleanup(func() { _ = os.Chdir(origDir) })
-
-				Expect(os.MkdirAll(filepath.Join(tmpDir, ".pastiche"), 0755)).To(Succeed())
-				config := fmt.Sprintf(`
-name: "@example/customers"
-servers:
-  - name: production
-    baseUrl: %s
-resources:
-  - name: r
-    query:
-      contextId: "${context.loyal.id}"
-      qualifiedId: "${var.@example/customers.loyal.id}"
-varSets:
-  - name: "@example/customers"
-    vars:
-      loyal:
-        id: "ABC"
-  - name: "@example/other"
-    vars:
-      loyal:
-        id: "XYZ"
-`, testServer.URL)
-				Expect(os.WriteFile(filepath.Join(tmpDir, ".pastiche", "customers.yml"), []byte(config), 0644)).To(Succeed())
-
-				Expect(os.Chdir(tmpDir)).To(Succeed())
+				useWorkspace("context-expanders", testServer.URL)
 			})
 
 			AfterEach(func() {
@@ -234,3 +185,39 @@ varSets:
 		})
 	})
 })
+
+const baseURLPlaceholder = "__TEST_SERVER_BASE_URL__"
+
+func useWorkspace(fixture, baseURL string) {
+	GinkgoHelper()
+
+	src := filepath.Join("testdata", "valid-workspaces", fixture)
+	tmpDir := GinkgoT().TempDir()
+	workspaceDir := filepath.Join(tmpDir, ".pastiche")
+
+	err := filepath.WalkDir(src, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+		dst := filepath.Join(workspaceDir, rel)
+		if d.IsDir() {
+			return os.MkdirAll(dst, 0755)
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		data = []byte(strings.ReplaceAll(string(data), baseURLPlaceholder, baseURL))
+		return os.WriteFile(dst, data, 0644)
+	})
+	Expect(err).NotTo(HaveOccurred())
+
+	origDir, err := os.Getwd()
+	Expect(err).NotTo(HaveOccurred())
+	DeferCleanup(func() { _ = os.Chdir(origDir) })
+	Expect(os.Chdir(tmpDir)).To(Succeed())
+}
