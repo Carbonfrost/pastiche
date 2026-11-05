@@ -91,6 +91,7 @@ type requestBuilder struct {
 	vars    map[string]any
 	model   *Model
 	context *VarSet
+	logins  LoginProvider
 }
 
 func (b *requestBuilder) build(r *ResolvedResource) (*Request, error) {
@@ -111,6 +112,7 @@ func (b *requestBuilder) build(r *ResolvedResource) (*Request, error) {
 		e.Prefix("env", e.Env()),
 		e.Prefix("secret", newSecretExpander(r.Secrets)),
 		e.Prefix("context", contextExpander(b.context)),
+		e.Prefix("login", newLoginExpander(b.logins, serverName(r))),
 		e.Prefix("var", varExpander(combinedVars, b.model)),
 		e.Map(combinedVars),
 	)
@@ -147,6 +149,13 @@ func (b *requestBuilder) build(r *ResolvedResource) (*Request, error) {
 		Auth:     expandAuth(resolveAuth(r), expander),
 		Expander: expander,
 	}, nil
+}
+
+func serverName(r *ResolvedResource) string {
+	if r.Server == nil {
+		return ""
+	}
+	return r.Server.Name
 }
 
 func contextExpander(vs *VarSet) e.Interface {

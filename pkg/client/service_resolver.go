@@ -17,6 +17,7 @@ import (
 
 	"github.com/Carbonfrost/joe-cli-http/httpclient"
 	"github.com/Carbonfrost/pastiche/pkg/model"
+	"github.com/Carbonfrost/pastiche/pkg/workspace"
 )
 
 // Location represents an HTTP client location and its resolved resource or
@@ -223,12 +224,21 @@ func (s *serviceResolver) requestOptions(c context.Context) []model.RequestOptio
 		model.WithVars(s.vars),
 		model.WithModel(m),
 		model.WithContext(s.ContextVarSet(c)),
+		withWorkspaceLogins(c),
 	}
 }
 
 func (s *serviceResolver) resolveResource(c context.Context) (*model.ResolvedResource, error) {
 	spec := *s.root(c)
 	return s.config(c).Resolve(spec, s.server(c), s.method(c), s.selectedMixins(c)...)
+}
+
+func withWorkspaceLogins(c context.Context) model.RequestOption {
+	ws, ok := workspace.TryFromContext(c)
+	if !ok {
+		return nil
+	}
+	return model.WithLogins(ws.Logins())
 }
 
 func newLocation(resolved *model.ResolvedResource, opts ...model.RequestOption) (*pasticheLocation, error) {

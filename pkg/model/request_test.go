@@ -6,7 +6,6 @@ package model_test
 
 import (
 	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
@@ -301,12 +300,4 @@ func newHeader(namevalues ...string) model.Values {
 	}
 
 	return v
-}
-
-func mustParseURL(t string) *url.URL {
-	u, err := url.Parse(t)
-	if err != nil {
-		panic(err)
-	}
-	return u
 }

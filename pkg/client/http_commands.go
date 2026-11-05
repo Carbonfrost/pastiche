@@ -252,7 +252,7 @@ func resolveRequest(c context.Context, req *Request) (*model.Request, error) {
 	}
 
 	context, _ := mo.VarSet(req.Spec.ServiceName())
-	return model.NewRequest(merged, model.WithVars(sr.Vars()), model.WithBaseURL(sr.BaseURL()), model.WithContext(context))
+	return model.NewRequest(merged, model.WithVars(sr.Vars()), model.WithBaseURL(sr.BaseURL()), model.WithContext(context), withWorkspaceLogins(c))
 }
 
 func importSpec(c *cli.Context, params *ImportParams) error {

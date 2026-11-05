@@ -11,9 +11,8 @@ import (
 type FakeResponse struct {
 	DataStub        func() (any, error)
 	dataMutex       sync.RWMutex
-	dataArgsForCall []struct {
-	}
-	dataReturns struct {
+	dataArgsForCall []struct{}
+	dataReturns     struct {
 		result1 any
 		result2 error
 	}
@@ -23,9 +22,8 @@ type FakeResponse struct {
 	}
 	DocumentStub        func() (any, error)
 	documentMutex       sync.RWMutex
-	documentArgsForCall []struct {
-	}
-	documentReturns struct {
+	documentArgsForCall []struct{}
+	documentReturns     struct {
 		result1 any
 		result2 error
 	}
@@ -35,23 +33,22 @@ type FakeResponse struct {
 	}
 	ReaderStub        func() io.Reader
 	readerMutex       sync.RWMutex
-	readerArgsForCall []struct {
-	}
-	readerReturns struct {
+	readerArgsForCall []struct{}
+	readerReturns     struct {
 		result1 io.Reader
 	}
 	readerReturnsOnCall map[int]struct {
 		result1 io.Reader
 	}
 	invocations      map[string][][]interface{}
+	callOrder        []string
 	invocationsMutex sync.RWMutex
 }
 
 func (fake *FakeResponse) Data() (any, error) {
 	fake.dataMutex.Lock()
 	ret, specificReturn := fake.dataReturnsOnCall[len(fake.dataArgsForCall)]
-	fake.dataArgsForCall = append(fake.dataArgsForCall, struct {
-	}{})
+	fake.dataArgsForCall = append(fake.dataArgsForCall, struct{}{})
 	stub := fake.DataStub
 	fakeReturns := fake.dataReturns
 	fake.recordInvocation("Data", []interface{}{})
@@ -106,8 +103,7 @@ func (fake *FakeResponse) DataReturnsOnCall(i int, result1 any, result2 error) {
 func (fake *FakeResponse) Document() (any, error) {
 	fake.documentMutex.Lock()
 	ret, specificReturn := fake.documentReturnsOnCall[len(fake.documentArgsForCall)]
-	fake.documentArgsForCall = append(fake.documentArgsForCall, struct {
-	}{})
+	fake.documentArgsForCall = append(fake.documentArgsForCall, struct{}{})
 	stub := fake.DocumentStub
 	fakeReturns := fake.documentReturns
 	fake.recordInvocation("Document", []interface{}{})
@@ -162,8 +158,7 @@ func (fake *FakeResponse) DocumentReturnsOnCall(i int, result1 any, result2 erro
 func (fake *FakeResponse) Reader() io.Reader {
 	fake.readerMutex.Lock()
 	ret, specificReturn := fake.readerReturnsOnCall[len(fake.readerArgsForCall)]
-	fake.readerArgsForCall = append(fake.readerArgsForCall, struct {
-	}{})
+	fake.readerArgsForCall = append(fake.readerArgsForCall, struct{}{})
 	stub := fake.ReaderStub
 	fakeReturns := fake.readerReturns
 	fake.recordInvocation("Reader", []interface{}{})
@@ -222,9 +217,18 @@ func (fake *FakeResponse) Invocations() map[string][][]interface{} {
 	return copiedInvocations
 }
 
+func (fake *FakeResponse) CallOrder() []string {
+	fake.invocationsMutex.RLock()
+	defer fake.invocationsMutex.RUnlock()
+	order := make([]string, len(fake.callOrder))
+	copy(order, fake.callOrder)
+	return order
+}
+
 func (fake *FakeResponse) recordInvocation(key string, args []interface{}) {
 	fake.invocationsMutex.Lock()
 	defer fake.invocationsMutex.Unlock()
+	fake.callOrder = append(fake.callOrder, key)
 	if fake.invocations == nil {
 		fake.invocations = map[string][][]interface{}{}
 	}

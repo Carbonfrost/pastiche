@@ -27,6 +27,7 @@ import (
 	"github.com/Carbonfrost/pastiche/pkg/internal/contextkey"
 	"github.com/Carbonfrost/pastiche/pkg/internal/log"
 	"github.com/Carbonfrost/pastiche/pkg/model"
+	"github.com/Carbonfrost/pastiche/pkg/workspace/logins"
 	"github.com/Carbonfrost/pastiche/pkg/workspace/logs"
 )
 
@@ -104,6 +105,12 @@ func FlagsAndArgs() cli.Action {
 // FromContext gets the Workspace from the context otherwise panics
 func FromContext(ctx context.Context) *Workspace {
 	return contextkey.Resolve(ctx, contextkey.Workspace).(*Workspace)
+}
+
+// TryFromContext gets the Workspace from the context if present
+func TryFromContext(ctx context.Context) (*Workspace, bool) {
+	ws, ok := ctx.Value(contextkey.Workspace).(*Workspace)
+	return ws, ok
 }
 
 // ContextValue provides an action that sets the given value into the context.
@@ -195,7 +202,7 @@ func (w *Workspace) loadFiles(root string) error {
 		}
 
 		// TODO This should follow rules specified in .ignore files instead
-		if d.IsDir() && d.Name() == "logs" {
+		if d.IsDir() && (d.Name() == "logs" || d.Name() == "logins") {
 			return fs.SkipDir
 		}
 		if strings.HasPrefix(d.Name(), "_") {
@@ -263,6 +270,16 @@ func (e *envProvider) Environ() iter.Seq2[string, string] {
 // Log retrieves the workspace request log.
 func (w *Workspace) Log() *logs.Log {
 	return logs.New(w.LogDir())
+}
+
+// Logins obtains the login provider for the workspace
+func (w *Workspace) Logins() model.LoginProvider {
+	return logins.New(w.LoginDir())
+}
+
+// LoginDir obtains the directory which contains the workspace logins
+func (w *Workspace) LoginDir() string {
+	return filepath.Join(w.Dir(), ".pastiche", "logins")
 }
 
 func (w *Workspace) LogDir() string {

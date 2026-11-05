@@ -1,0 +1,12 @@
+name: "@example/customers"
+servers:
+  - name: production
+    baseUrl: __TEST_SERVER_BASE_URL__
+  - name: staging
+    baseUrl: __TEST_SERVER_BASE_URL__
+resources:
+  - name: r
+    headers:
+      Authorization: "Bearer ${login.@example/customers}"
+    query:
+      expiresYear: "${login.@example/customers.expires.year}"

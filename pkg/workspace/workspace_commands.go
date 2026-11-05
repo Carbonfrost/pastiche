@@ -231,6 +231,98 @@ func logDelegate(fn func(*logs.Log) Action) cli.ActionFunc {
 	}
 }
 
+// Auth provides the action to manage logins
+func Auth() Action {
+	return cli.Pipeline(
+		cli.Prototype{
+			Name:     "auth",
+			HelpText: "Manage logins for services in the workspace",
+			Uses: cli.AddCommands([]*cli.Command{
+				{Name: "logout", Uses: loginDelegate1(Logout)},
+			}...),
+			Action: cli.DisplayHelpScreen(),
+		},
+	)
+}
+
+type LogoutParams struct {
+	Server  string
+	Service string
+}
+
+func useLogoutParams() bind.ActionBinder[*LogoutParams] {
+	return newParams(cli.Pipeline(
+		cli.Setup{
+			Uses: cli.Pipeline(
+				cli.AddArgs([]*cli.Arg{
+					{
+						Name:       "service",
+						UsageText:  "SERVICE",
+						HelpText:   "Name of the service to log out of",
+						Value:      new(string),
+						NArg:       1,
+						Completion: completeServices(),
+					},
+				}...),
+				cli.AddFlags([]*cli.Flag{
+					{
+						Name:      "server",
+						Aliases:   []string{"S"},
+						UsageText: "NAME",
+						HelpText:  "Log out of the specified server rather than the default server of the service",
+						Value:     new(string),
+					},
+				}...),
+			),
+		},
+	),
+		func(c *cli.Context) (*LogoutParams, error) {
+			service := c.String("service")
+			return &LogoutParams{
+				Service: service,
+				Server:  loginServer(c, service),
+			}, nil
+		},
+	)
+}
+
+// Logout removes the login for a service and server
+func Logout(p model.LoginProvider, paramsopt ...*LogoutParams) Action {
+	params := exactOrUse(useLogoutParams, paramsopt)
+	return cli.Pipeline(
+		cli.Prototype{
+			Name:     "logout",
+			HelpText: "Remove the login for a service",
+		},
+		bind.Call2(clearLogin, bind.Exact(p), params),
+	)
+}
+
+func clearLogin(p model.LoginProvider, params *LogoutParams) error {
+	return p.ClearLogin(params.Service, params.Server)
+}
+
+func loginServer(c *cli.Context, service string) string {
+	if c.Seen("server") {
+		return c.String("server")
+	}
+
+	mo, err := FromContext(c).Load()
+	if err != nil {
+		return ""
+	}
+	if svr, ok := mo.Server(model.ServiceSpec{service}); ok {
+		return svr.Name
+	}
+	return ""
+}
+
+func loginDelegate1[T any](fn func(model.LoginProvider, ...T) Action) cli.ActionFunc {
+	return func(c *cli.Context) error {
+		return cli.Do(c, fn(FromContext(c).Logins()))
+	}
+}
+
 // SetDisableValidation disables validattion of configuration in the workspace
 func SetDisableValidation() Action {
 	return cli.Pipeline(
