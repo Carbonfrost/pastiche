@@ -124,6 +124,38 @@ var _ = Describe("Logins", func() {
 		})
 	})
 
+	Describe("SaveLogin", func() {
+
+		It("writes the login so that it can be read back", func() {
+			login := &model.Login{Name: "@example/new", Server: "production", Token: "n3w", Expires: &future}
+			Expect(provider.SaveLogin(login)).To(Succeed())
+			Expect(provider.GetLogin("@example/new", "production")).To(Equal(login))
+		})
+
+		It("replaces an existing login", func() {
+			login := &model.Login{Name: "@example/customers", Server: "production", Token: "replaced"}
+			Expect(provider.SaveLogin(login)).To(Succeed())
+			Expect(provider.GetLogin("@example/customers", "production")).To(Equal(login))
+		})
+
+		It("creates the directory and file readable only by the user", func() {
+			sub := logins.New(filepath.Join(dir, "sub"))
+			Expect(sub.SaveLogin(&model.Login{Name: "@example/new", Token: "t"})).To(Succeed())
+
+			info, err := os.Stat(filepath.Join(dir, "sub"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(info.Mode().Perm()).To(Equal(os.FileMode(0o700)))
+
+			info, err = os.Stat(filepath.Join(dir, "sub", "@example-new.json"))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(info.Mode().Perm()).To(Equal(os.FileMode(0o600)))
+		})
+
+		It("rejects names which are not service specs", func() {
+			Expect(provider.SaveLogin(&model.Login{Name: "../x", Token: "t"})).To(MatchError(ContainSubstring("invalid login name")))
+		})
+	})
+
 	Describe("ClearLogin", func() {
 
 		It("removes the login", func() {

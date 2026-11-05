@@ -6,9 +6,14 @@ package workspace
 
 import (
 	"cmp"
+	"errors"
+	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
+	"time"
 
 	cli "github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/joe-cli/extensions/bind"
@@ -239,6 +244,7 @@ func Auth() Action {
 			HelpText: "Manage logins for services in the workspace",
 			Uses: cli.AddCommands([]*cli.Command{
 				{Name: "logout", Uses: loginDelegate1(Logout)},
+				{Name: "login", Uses: loginDelegate1(Login)},
 			}...),
 			Action: cli.DisplayHelpScreen(),
 		},
@@ -522,4 +528,156 @@ func exactOrUse[T any](useFactory func() bind.ActionBinder[T], paramsopt []T) bi
 
 func unwrap[T any](v T, _ any) T {
 	return v
+}
+
+const defaultLoginExpires = 365 * 24 * time.Hour
+
+type LoginParams struct {
+	Spec    string
+	Server  string
+	Expires time.Duration
+}
+
+func useLoginParams() bind.ActionBinder[*LoginParams] {
+	return newParams(cli.Pipeline(
+		cli.Setup{
+			Uses: cli.Pipeline(
+				cli.AddArgs([]*cli.Arg{
+					{
+						Name:       "spec",
+						UsageText:  "SERVICE_SPEC",
+						HelpText:   "Service to log in to, optionally followed by a dot and the server",
+						Value:      new(string),
+						Completion: completeServices(),
+					},
+				}...),
+				cli.AddFlags([]*cli.Flag{
+					{
+						Name:     "with-token",
+						HelpText: "Read the token from stdin",
+						Value:    new(bool),
+					},
+					{
+						Name:      "expires",
+						UsageText: "DURATION",
+						HelpText:  "Duration until the login expires, which defaults to 1 year",
+						Value:     new(defaultLoginExpires),
+					},
+				}...),
+			),
+		},
+	),
+		func(c *cli.Context) (*LoginParams, error) {
+			text := c.String("spec")
+			if text == "" {
+				return nil, &cli.ParseError{
+					Code: cli.ExpectedArgument,
+					Name: "spec",
+					Err:  errors.New("expected argument"),
+				}
+			}
+			if !c.Bool("with-token") {
+				return nil, fmt.Errorf("--with-token is required")
+			}
+
+			expires := c.Duration("expires")
+			if expires <= 0 {
+				return nil, fmt.Errorf("--expires must be a positive duration: %v", expires)
+			}
+			service := c.String("service")
+
+			return &LoginParams{
+				Expires: expires,
+				Server:  loginServer(c, service),
+				Spec:    c.String("spec"),
+			}, nil
+		},
+	)
+}
+
+// Login stores the login for a service and server
+func Login(p model.LoginProvider, paramsopt ...*LoginParams) Action {
+	params := exactOrUse(useLoginParams, paramsopt)
+	return cli.Pipeline(
+		cli.Prototype{
+			Name:     "login",
+			HelpText: "Store the login for a service, reading the token from stdin",
+		},
+		bind.Call3(login, bind.Context(), bind.Exact(p), params),
+	)
+}
+
+func login(c *cli.Context, p model.LoginProvider, params *LoginParams) error {
+	// The spec is required, but this cannot be required by the arg itself
+	// without also requiring it for --help
+	name, server, err := resolveLoginSpec(c, params.Spec)
+	if err != nil {
+		return err
+	}
+
+	token, err := readToken(c)
+	if err != nil {
+		return err
+	}
+
+	expiresAt := time.Now().Add(params.Expires).UTC().Truncate(time.Second)
+	return p.SaveLogin(&model.Login{
+		Name:    name,
+		Server:  server,
+		Token:   token,
+		Expires: &expiresAt,
+	})
+}
+
+func resolveLoginSpec(c *cli.Context, text string) (name, server string, err error) {
+	spec, err := model.ParseServiceSpec(text)
+	if err != nil {
+		return "", "", err
+	}
+	if len(spec) > 2 {
+		return "", "", fmt.Errorf("expected SERVICE or SERVICE.SERVER: %q", text)
+	}
+
+	name = spec.ServiceName()
+	if len(spec) == 2 {
+		server = spec[1]
+	}
+
+	// Check the service and server exist so that a typo doesn't store a
+	// login which is never used
+	mo, err := FromContext(c).Load()
+	if err != nil {
+		return name, server, nil
+	}
+	svc, ok := mo.Service(name)
+	if !ok {
+		return "", "", fmt.Errorf("service not found: %q", name)
+	}
+	if server == "" {
+		if len(svc.Servers) > 0 {
+			server = svc.Servers[0].Name
+		}
+		return name, server, nil
+	}
+	if _, ok := svc.Server(server); !ok {
+		return "", "", fmt.Errorf("no server %q defined for service %q", server, name)
+	}
+	return name, server, nil
+}
+
+// readToken reads the token from stdin, which must not be interactive
+func readToken(c *cli.Context) (string, error) {
+	if c.IsInteractive() {
+		return "", fmt.Errorf("--with-token reads the token from stdin, which must not be interactive")
+	}
+
+	data, err := io.ReadAll(c.Stdin)
+	if err != nil {
+		return "", err
+	}
+	token := strings.TrimSpace(string(data))
+	if token == "" {
+		return "", fmt.Errorf("no token was provided on stdin")
+	}
+	return token, nil
 }

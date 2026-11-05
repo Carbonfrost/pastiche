@@ -7,6 +7,7 @@ package pastiche_test
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	cli "github.com/Carbonfrost/joe-cli"
 	"github.com/Carbonfrost/pastiche/pkg/cmd/pastiche"
@@ -267,6 +269,84 @@ var _ = Describe("Integration", Label("integration"), Ordered, func() {
 				Expect(run("pastiche auth logout")).To(HaveOccurred())
 			})
 		})
+
+		Context("when using auth login", func() {
+
+			var (
+				testServer *httptest.Server
+				received   *http.Request
+			)
+
+			BeforeEach(func() {
+				testServer = httptest.NewServer(
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						received = r
+						fmt.Fprint(w, "ok")
+					}),
+				)
+				useWorkspace("login", testServer.URL)
+			})
+
+			AfterEach(func() {
+				testServer.Close()
+			})
+
+			run := func(arguments string, stdin string) error {
+				app := pastiche.NewApp()
+				app.Stdout = &bytes.Buffer{}
+				app.Stdin = strings.NewReader(stdin)
+
+				args, _ := cli.Split(arguments)
+				return app.RunContext(context.Background(), args...)
+			}
+
+			readLogin := func(server string) map[string]any {
+				data, err := os.ReadFile(filepath.Join(".pastiche", "logins", "@example-customers."+server+".json"))
+				Expect(err).NotTo(HaveOccurred())
+
+				var result map[string]any
+				Expect(json.Unmarshal(data, &result)).To(Succeed())
+				return result
+			}
+
+			expiresIn := func(login map[string]any) time.Duration {
+				t, err := time.Parse(time.RFC3339, login["expires"].(string))
+				Expect(err).NotTo(HaveOccurred())
+				return time.Until(t)
+			}
+
+			It("stores the token from stdin for the default server, which requests then use", func() {
+				Expect(run("pastiche auth login --with-token @example/customers", "n3w\n")).To(Succeed())
+
+				login := readLogin("production")
+				Expect(login).To(HaveKeyWithValue("token", "n3w"))
+				Expect(expiresIn(login)).To(BeNumerically("~", 365*24*time.Hour, time.Minute))
+
+				Expect(run("pastiche fetch @example/customers r", "")).To(Succeed())
+				Expect(received.Header.Get("Authorization")).To(Equal("Bearer n3w"))
+			})
+
+			It("stores the token for the server named in the service spec with --expires", func() {
+				Expect(run("pastiche auth login --with-token --expires=3600s @example/customers.staging", "st\n")).To(Succeed())
+
+				login := readLogin("staging")
+				Expect(login).To(HaveKeyWithValue("token", "st"))
+				Expect(expiresIn(login)).To(BeNumerically("~", time.Hour, time.Minute))
+			})
+
+			DescribeTable("errors",
+				func(arguments string, stdin string, expected string) {
+					Expect(run(arguments, stdin)).To(MatchError(expected))
+				},
+				Entry("missing --with-token", "pastiche auth login @example/customers", "t", "--with-token is required"),
+				Entry("missing spec", "pastiche auth login --with-token", "t", "expected argument for spec"),
+				Entry("empty token", "pastiche auth login --with-token @example/customers", " \n", "no token was provided on stdin"),
+				Entry("unknown service", "pastiche auth login --with-token @example/nope", "t", `service not found: "@example/nope"`),
+				Entry("unknown server", "pastiche auth login --with-token @example/customers.nope", "t", `no server "nope" defined for service "@example/customers"`),
+				Entry("non-positive expires", "pastiche auth login --with-token --expires=0s @example/customers", "t", "--expires must be a positive duration: 0s"),
+			)
+		})
+
 	})
 })
 

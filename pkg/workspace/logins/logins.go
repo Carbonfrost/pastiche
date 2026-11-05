@@ -109,6 +109,41 @@ func (l *Logins) GetLogin(name, server string) (*model.Login, error) {
 	return login, nil
 }
 
+// SaveLogin writes the login to its file.  Because the file contains a
+// token, it is readable only by the user.
+func (l *Logins) SaveLogin(login *model.Login) error {
+	path, err := l.FileName(login.Name, login.Server)
+	if err != nil {
+		return err
+	}
+
+	data, err := json.MarshalIndent(NewEntry(login), "", "  ")
+	if err != nil {
+		return err
+	}
+
+	if err := os.MkdirAll(l.dir, 0o700); err != nil {
+		return err
+	}
+
+	// Write to a temporary file first so that a partial write never
+	// replaces an existing login
+	f, err := os.CreateTemp(l.dir, ".login-*")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(f.Name())
+
+	if _, err := f.Write(append(data, '\n')); err != nil {
+		f.Close()
+		return err
+	}
+	if err := f.Close(); err != nil {
+		return err
+	}
+	return os.Rename(f.Name(), path)
+}
+
 func (l *Logins) ClearLogin(name, server string) error {
 	path, err := l.FileName(name, server)
 	if err != nil {

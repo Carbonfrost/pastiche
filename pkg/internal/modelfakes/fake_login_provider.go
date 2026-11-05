@@ -46,6 +46,15 @@ type FakeLoginProvider struct {
 		result1 *model.Login
 		result2 error
 	}
+	SaveLoginStub        func(*model.Login) error
+	saveLoginMutex       sync.RWMutex
+	saveLoginArgsForCall []FakeLoginProviderSaveLoginArgs
+	saveLoginReturns     struct {
+		result1 error
+	}
+	saveLoginReturnsOnCall map[int]struct {
+		result1 error
+	}
 	invocations      map[string][][]interface{}
 	callOrder        []string
 	invocationsMutex sync.RWMutex
@@ -61,6 +70,11 @@ type FakeLoginProviderClearLoginArgs struct {
 type FakeLoginProviderGetLoginArgs struct {
 	Arg1 string
 	Arg2 string
+}
+
+// FakeLoginProviderSaveLoginArgs holds the arguments of one call to SaveLogin.
+type FakeLoginProviderSaveLoginArgs struct {
+	Arg1 *model.Login
 }
 
 func (fake *FakeLoginProvider) ClearAllLogins() error {
@@ -302,6 +316,73 @@ func (fake *FakeLoginProvider) GetLoginReturnsOnCall(i int, result1 *model.Login
 		result1 *model.Login
 		result2 error
 	}{result1, result2}
+}
+
+func (fake *FakeLoginProvider) SaveLogin(arg1 *model.Login) error {
+	fake.saveLoginMutex.Lock()
+	ret, specificReturn := fake.saveLoginReturnsOnCall[len(fake.saveLoginArgsForCall)]
+	fake.saveLoginArgsForCall = append(fake.saveLoginArgsForCall, FakeLoginProviderSaveLoginArgs{arg1})
+	stub := fake.SaveLoginStub
+	fakeReturns := fake.saveLoginReturns
+	fake.recordInvocation("SaveLogin", []interface{}{arg1})
+	fake.saveLoginMutex.Unlock()
+	if stub != nil {
+		return stub(arg1)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeLoginProvider) SaveLoginCallCount() int {
+	fake.saveLoginMutex.RLock()
+	defer fake.saveLoginMutex.RUnlock()
+	return len(fake.saveLoginArgsForCall)
+}
+
+func (fake *FakeLoginProvider) SaveLoginCalls(stub func(*model.Login) error) {
+	fake.saveLoginMutex.Lock()
+	defer fake.saveLoginMutex.Unlock()
+	fake.SaveLoginStub = stub
+}
+
+func (fake *FakeLoginProvider) SaveLoginArgsForCall(i int) *model.Login {
+	fake.saveLoginMutex.RLock()
+	defer fake.saveLoginMutex.RUnlock()
+	argsForCall := fake.saveLoginArgsForCall[i]
+	return argsForCall.Arg1
+}
+
+func (fake *FakeLoginProvider) SaveLoginArgs() []FakeLoginProviderSaveLoginArgs {
+	fake.saveLoginMutex.RLock()
+	defer fake.saveLoginMutex.RUnlock()
+	args := make([]FakeLoginProviderSaveLoginArgs, len(fake.saveLoginArgsForCall))
+	copy(args, fake.saveLoginArgsForCall)
+	return args
+}
+
+func (fake *FakeLoginProvider) SaveLoginReturns(result1 error) {
+	fake.saveLoginMutex.Lock()
+	defer fake.saveLoginMutex.Unlock()
+	fake.SaveLoginStub = nil
+	fake.saveLoginReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeLoginProvider) SaveLoginReturnsOnCall(i int, result1 error) {
+	fake.saveLoginMutex.Lock()
+	defer fake.saveLoginMutex.Unlock()
+	fake.SaveLoginStub = nil
+	if fake.saveLoginReturnsOnCall == nil {
+		fake.saveLoginReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.saveLoginReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
 }
 
 func (fake *FakeLoginProvider) Invocations() map[string][][]interface{} {

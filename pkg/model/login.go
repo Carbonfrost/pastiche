@@ -28,6 +28,10 @@ type LoginProvider interface {
 	// returned.  When there is no such login, the error wraps fs.ErrNotExist.
 	GetLogin(name, server string) (*Login, error)
 
+	// SaveLogin stores the login, replacing any login with the same name
+	// and server
+	SaveLogin(login *Login) error
+
 	// ClearLogin removes the login with the given name for the given server
 	ClearLogin(name, server string) error
 
