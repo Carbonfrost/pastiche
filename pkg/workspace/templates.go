@@ -12,7 +12,6 @@ import (
 	"github.com/Carbonfrost/joe-cli/extensions/marshal"
 	"github.com/Carbonfrost/joe-cli/extensions/template"
 	"github.com/Carbonfrost/pastiche/pkg/config"
-	"sigs.k8s.io/yaml"
 )
 
 func (p *InitParams) toService() *config.Service {
@@ -63,11 +62,6 @@ func (g *generator) Generate(ctx context.Context, c *template.OutputContext) err
 		return err
 	}
 	return params.newGenerator().Generate(ctx, c)
-}
-
-func yamlContents(v any) template.FileGenerator {
-	data, _ := yaml.Marshal(v)
-	return template.Contents(data)
 }
 
 var _ template.Generator = (*generator)(nil)

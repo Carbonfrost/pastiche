@@ -300,23 +300,6 @@ func headerFromValues(v Values) config.Values {
 	return h
 }
 
-func configValues(v Values) config.Values {
-	if v == nil {
-		return nil
-	}
-	res := make(config.Values, len(v))
-	for i, e := range v {
-		res[i] = config.Value{
-			Name:     e.Name,
-			Value:    e.Value,
-			Values:   e.Values,
-			Optional: e.Optional,
-			Merge:    config.MergeMode(e.Merge),
-		}
-	}
-	return res
-}
-
 func configLinks(links []Link) []config.Link {
 	res := make([]config.Link, len(links))
 	for i, l := range links {

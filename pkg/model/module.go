@@ -78,16 +78,8 @@ func (m *Module) searchModule[T any](name string, items []T, fn func(T) string) 
 }
 
 func (m *Module) copyToModel(dst *Model) {
-	for _, s := range m.Services() {
-		dst.Services = append(dst.Services, s)
-	}
-	for _, v := range m.VarSets() {
-		dst.VarSets = append(dst.VarSets, v)
-	}
-	for _, v := range m.Flows() {
-		dst.Flows = append(dst.Flows, v)
-	}
-	for _, v := range m.Mixins() {
-		dst.Mixins = append(dst.Mixins, v)
-	}
+	dst.Services = append(dst.Services, m.Services()...)
+	dst.VarSets = append(dst.VarSets, m.VarSets()...)
+	dst.Flows = append(dst.Flows, m.Flows()...)
+	dst.Mixins = append(dst.Mixins, m.Mixins()...)
 }

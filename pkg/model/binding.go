@@ -184,23 +184,6 @@ func valuesFromHeader(h config.Values) Values {
 	return res
 }
 
-func values(v config.Values) Values {
-	if v == nil {
-		return nil
-	}
-	res := make(Values, len(v))
-	for i, e := range v {
-		res[i] = Value{
-			Name:     e.Name,
-			Value:    e.Value,
-			Values:   e.Values,
-			Optional: e.Optional,
-			Merge:    MergeMode(e.Merge),
-		}
-	}
-	return res
-}
-
 func params(params []config.Param) []*Param {
 	res := make([]*Param, len(params))
 	for i, p := range params {
