@@ -1,3 +1,5 @@
 {
+  "name": "@example/customers",
+  "server": "staging",
   "token": "st4ging"
 }

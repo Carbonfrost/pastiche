@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"text/tabwriter"
 	"time"
 
 	cli "github.com/Carbonfrost/joe-cli"
@@ -245,6 +246,7 @@ func Auth() Action {
 			Uses: cli.AddCommands([]*cli.Command{
 				{Name: "logout", Uses: loginDelegate1(Logout)},
 				{Name: "login", Uses: loginDelegate1(Login)},
+				{Name: "list", Uses: loginDelegate(ListLogins)},
 			}...),
 			Action: cli.DisplayHelpScreen(),
 		},
@@ -297,6 +299,48 @@ func useLogoutParams() bind.ActionBinder[*LogoutParams] {
 	)
 }
 
+// ListLogins lists the stored logins, without their tokens
+func ListLogins(p model.LoginProvider) Action {
+	return cli.Pipeline(
+		cli.Prototype{
+			Name:     "list",
+			Aliases:  []string{"ls"},
+			HelpText: "List the stored logins",
+			Action: func(c *cli.Context) error {
+				items, err := p.ListLogins()
+				if err != nil {
+					return err
+				}
+				return listLogins(c.Stdout, items, time.Now())
+			},
+		},
+	)
+}
+
+func listLogins(out io.Writer, items []*model.Login, now time.Time) error {
+	if len(items) == 0 {
+		return nil
+	}
+
+	w := tabwriter.NewWriter(out, 0, 4, 2, ' ', 0)
+	fmt.Fprintln(w, "NAME\tSERVER\tEXPIRES")
+	for _, l := range items {
+		fmt.Fprintf(w, "%s\t%s\t%s\n", l.Name, cmp.Or(l.Server, "-"), loginExpires(l, now))
+	}
+	return w.Flush()
+}
+
+func loginExpires(l *model.Login, now time.Time) string {
+	switch {
+	case l.Expires == nil:
+		return "never"
+	case l.Expired(now):
+		return l.Expires.Format(time.RFC3339) + " (expired)"
+	default:
+		return l.Expires.Format(time.RFC3339)
+	}
+}
+
 // Logout removes the login for a service and server
 func Logout(p model.LoginProvider, paramsopt ...*LogoutParams) Action {
 	params := exactOrUse(useLogoutParams, paramsopt)
@@ -344,6 +388,12 @@ func loginServer(c *cli.Context, service string) string {
 		return svr.Name
 	}
 	return ""
+}
+
+func loginDelegate(fn func(model.LoginProvider) Action) cli.ActionFunc {
+	return func(c *cli.Context) error {
+		return cli.Do(c, fn(FromContext(c).Logins()))
+	}
 }
 
 func loginDelegate1[T any](fn func(model.LoginProvider, ...T) Action) cli.ActionFunc {

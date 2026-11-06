@@ -1,4 +1,6 @@
 {
+  "name": "@example/customers",
+  "server": "production",
   "token": "t0ken",
   "expires": "2999-01-02T03:04:05Z"
 }

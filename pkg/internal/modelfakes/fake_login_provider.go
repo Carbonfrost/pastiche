@@ -46,6 +46,17 @@ type FakeLoginProvider struct {
 		result1 *model.Login
 		result2 error
 	}
+	ListLoginsStub        func() ([]*model.Login, error)
+	listLoginsMutex       sync.RWMutex
+	listLoginsArgsForCall []struct{}
+	listLoginsReturns     struct {
+		result1 []*model.Login
+		result2 error
+	}
+	listLoginsReturnsOnCall map[int]struct {
+		result1 []*model.Login
+		result2 error
+	}
 	SaveLoginStub        func(*model.Login) error
 	saveLoginMutex       sync.RWMutex
 	saveLoginArgsForCall []FakeLoginProviderSaveLoginArgs
@@ -314,6 +325,61 @@ func (fake *FakeLoginProvider) GetLoginReturnsOnCall(i int, result1 *model.Login
 	}
 	fake.getLoginReturnsOnCall[i] = struct {
 		result1 *model.Login
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeLoginProvider) ListLogins() ([]*model.Login, error) {
+	fake.listLoginsMutex.Lock()
+	ret, specificReturn := fake.listLoginsReturnsOnCall[len(fake.listLoginsArgsForCall)]
+	fake.listLoginsArgsForCall = append(fake.listLoginsArgsForCall, struct{}{})
+	stub := fake.ListLoginsStub
+	fakeReturns := fake.listLoginsReturns
+	fake.recordInvocation("ListLogins", []interface{}{})
+	fake.listLoginsMutex.Unlock()
+	if stub != nil {
+		return stub()
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeLoginProvider) ListLoginsCallCount() int {
+	fake.listLoginsMutex.RLock()
+	defer fake.listLoginsMutex.RUnlock()
+	return len(fake.listLoginsArgsForCall)
+}
+
+func (fake *FakeLoginProvider) ListLoginsCalls(stub func() ([]*model.Login, error)) {
+	fake.listLoginsMutex.Lock()
+	defer fake.listLoginsMutex.Unlock()
+	fake.ListLoginsStub = stub
+}
+
+func (fake *FakeLoginProvider) ListLoginsReturns(result1 []*model.Login, result2 error) {
+	fake.listLoginsMutex.Lock()
+	defer fake.listLoginsMutex.Unlock()
+	fake.ListLoginsStub = nil
+	fake.listLoginsReturns = struct {
+		result1 []*model.Login
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeLoginProvider) ListLoginsReturnsOnCall(i int, result1 []*model.Login, result2 error) {
+	fake.listLoginsMutex.Lock()
+	defer fake.listLoginsMutex.Unlock()
+	fake.ListLoginsStub = nil
+	if fake.listLoginsReturnsOnCall == nil {
+		fake.listLoginsReturnsOnCall = make(map[int]struct {
+			result1 []*model.Login
+			result2 error
+		})
+	}
+	fake.listLoginsReturnsOnCall[i] = struct {
+		result1 []*model.Login
 		result2 error
 	}{result1, result2}
 }

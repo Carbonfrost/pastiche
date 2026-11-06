@@ -7,12 +7,14 @@
 package logins
 
 import (
+	"cmp"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -159,27 +161,66 @@ func (l *Logins) ClearAllLogins() error {
 	return os.RemoveAll(l.dir)
 }
 
-func (l *Logins) GC() error {
-	matches, err := filepath.Glob(filepath.Join(l.dir, "*"+fileExt))
-	if err != nil {
-		return err
+func (l *Logins) ListLogins() ([]*model.Login, error) {
+	var result []*model.Login
+	for _, f := range l.files() {
+		result = append(result, f.login)
 	}
 
+	slices.SortFunc(result, func(x, y *model.Login) int {
+		return cmp.Or(
+			cmp.Compare(x.Name, y.Name),
+			cmp.Compare(x.Server, y.Server),
+		)
+	})
+	return result, nil
+}
+
+func (l *Logins) GC() error {
 	now := l.now()
-	for _, path := range matches {
-		e, err := readEntry(path)
-		if err != nil {
-			// Not a login, so leave it alone
-			log.Warnf("%s: %v", path, err)
-			continue
-		}
-		if e.toLogin().Expired(now) {
-			if err := os.Remove(path); err != nil && !errors.Is(err, fs.ErrNotExist) {
+	for _, f := range l.files() {
+		if f.login.Expired(now) {
+			if err := os.Remove(f.path); err != nil && !errors.Is(err, fs.ErrNotExist) {
 				return err
 			}
 		}
 	}
 	return nil
+}
+
+type loginFile struct {
+	path  string
+	login *model.Login
+}
+
+// files obtains the logins stored in the directory, skipping files which are
+// not logins
+func (l *Logins) files() []loginFile {
+	// The pattern is valid, so Glob never returns an error
+	matches, _ := filepath.Glob(filepath.Join(l.dir, "*"+fileExt))
+
+	var result []loginFile
+	for _, path := range matches {
+		e, err := readEntry(path)
+		if err != nil {
+			// Not a login, so leave it alone
+			log.Warnf("warning: %v", err)
+			continue
+		}
+
+		login := e.toLogin()
+		if login.Name == "" {
+			login.Name, login.Server = nameFromFile(path)
+		}
+		result = append(result, loginFile{path, login})
+	}
+	return result
+}
+
+func nameFromFile(path string) (name, server string) {
+	base := strings.TrimSuffix(filepath.Base(path), fileExt)
+	name, server, _ = strings.Cut(base, ".")
+	return name, server
 }
 
 // validSpec ensures that the name and server form a valid service spec, which

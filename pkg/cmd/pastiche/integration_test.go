@@ -230,6 +230,41 @@ var _ = Describe("Integration", Label("integration"), Ordered, func() {
 			})
 		})
 
+		Context("when using auth list", func() {
+
+			run := func(arguments string) (string, error) {
+				var out bytes.Buffer
+				app := pastiche.NewApp()
+				app.Stdout = &out
+
+				args, _ := cli.Split(arguments)
+				err := app.RunContext(context.Background(), args...)
+				return out.String(), err
+			}
+
+			It("lists the logins without their tokens", func() {
+				useWorkspace("login", "http://localhost")
+
+				out, err := run("pastiche auth list")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(out).To(Equal(
+					"NAME                SERVER      EXPIRES\n" +
+						"@example/customers  legacy      2000-01-01T00:00:00Z (expired)\n" +
+						"@example/customers  production  2999-01-02T03:04:05Z\n" +
+						"@example/customers  staging     never\n",
+				))
+				Expect(out).NotTo(ContainSubstring("t0ken"))
+			})
+
+			It("prints nothing when there are no logins", func() {
+				useWorkspace("context-param", "http://localhost")
+
+				out, err := run("pastiche auth list")
+				Expect(err).NotTo(HaveOccurred())
+				Expect(out).To(BeEmpty())
+			})
+		})
+
 		Context("when using auth logout", func() {
 
 			BeforeEach(func() {

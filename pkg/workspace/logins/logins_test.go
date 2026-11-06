@@ -124,6 +124,34 @@ var _ = Describe("Logins", func() {
 		})
 	})
 
+	Describe("ListLogins", func() {
+
+		It("lists all logins, including expired ones, sorted by name and server", func() {
+			writeLogin("@example-other.json", `{"name": "@example/other", "token": "other"}`)
+			writeLogin("bad.json", `not json`)
+			writeLogin("notes.txt", `not a login`)
+
+			items, err := provider.ListLogins()
+			Expect(err).NotTo(HaveOccurred())
+
+			var names []string
+			for _, l := range items {
+				names = append(names, l.Name+" "+l.Server)
+			}
+			Expect(names).To(Equal([]string{
+				// Files which do not record the name use the file name
+				"@example-customers ",
+				"@example-customers production",
+				"@example-customers staging",
+				"@example/other ",
+			}))
+		})
+
+		It("is empty when there is no login directory", func() {
+			Expect(logins.New(filepath.Join(dir, "missing")).ListLogins()).To(BeEmpty())
+		})
+	})
+
 	Describe("SaveLogin", func() {
 
 		It("writes the login so that it can be read back", func() {
