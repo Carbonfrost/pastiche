@@ -266,7 +266,6 @@ func useLogoutParams() bind.ActionBinder[*LogoutParams] {
 						UsageText:  "SERVICE",
 						HelpText:   "Name of the service to log out of",
 						Value:      new(string),
-						NArg:       1,
 						Completion: completeServices(),
 					},
 				}...),
@@ -284,6 +283,12 @@ func useLogoutParams() bind.ActionBinder[*LogoutParams] {
 	),
 		func(c *cli.Context) (*LogoutParams, error) {
 			service := c.String("service")
+			if !c.Seen("service") && !c.Seen("expired") {
+				return nil, &cli.ParseError{
+					Code: cli.ExpectedArgument,
+					Name: "service",
+				}
+			}
 			return &LogoutParams{
 				Service: service,
 				Server:  loginServer(c, service),
@@ -299,8 +304,26 @@ func Logout(p model.LoginProvider, paramsopt ...*LogoutParams) Action {
 		cli.Prototype{
 			Name:     "logout",
 			HelpText: "Remove the login for a service",
+			Uses: cli.Pipeline(
+				cli.AddFlags([]*cli.Flag{
+					{Uses: LogoutExpired(p)},
+				}...),
+			),
 		},
 		bind.Call2(clearLogin, bind.Exact(p), params),
+	)
+}
+
+// LogoutExpired removes all expired logins
+func LogoutExpired(p model.LoginProvider) Action {
+	return cli.Pipeline(
+		&cli.Prototype{
+			Name:     "expired",
+			HelpText: "Remove all expired logins instead of the login for a service",
+			Options:  cli.Exits,
+			Value:    new(bool),
+		},
+		bind.Call0(p.GC),
 	)
 }
 

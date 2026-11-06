@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"net/http"
@@ -241,7 +242,14 @@ var _ = Describe("Integration", Label("integration"), Ordered, func() {
 				app.Stderr = &bytes.Buffer{}
 
 				args, _ := cli.Split(arguments)
-				return app.RunContext(context.Background(), args...)
+				err := app.RunContext(context.Background(), args...)
+
+				// Flags which exit, such as --expired, report a zero exit code
+				var exit cli.ExitCoder
+				if errors.As(err, &exit) && exit.ExitCode() == 0 {
+					return nil
+				}
+				return err
 			}
 
 			loginExists := func(server string) bool {
@@ -266,7 +274,18 @@ var _ = Describe("Integration", Label("integration"), Ordered, func() {
 			})
 
 			It("requires the service", func() {
-				Expect(run("pastiche auth logout")).To(HaveOccurred())
+				Expect(run("pastiche auth logout")).To(MatchError("expected argument for service"))
+			})
+
+			It("displays help without requiring the service", func() {
+				Expect(run("pastiche auth logout --help")).To(Succeed())
+			})
+
+			It("removes only the expired logins with --expired", func() {
+				Expect(run("pastiche auth logout --expired")).To(Succeed())
+				Expect(loginExists("legacy")).To(BeFalse())
+				Expect(loginExists("production")).To(BeTrue())
+				Expect(loginExists("staging")).To(BeTrue())
 			})
 		})
 
