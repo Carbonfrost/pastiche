@@ -7,12 +7,18 @@ package workspace
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/Carbonfrost/joe-cli/extensions/bind"
 	"github.com/Carbonfrost/joe-cli/extensions/marshal"
 	"github.com/Carbonfrost/joe-cli/extensions/template"
 	"github.com/Carbonfrost/pastiche/pkg/config"
 )
+
+var gitIgnoreFile = []string{
+	"/logs",
+	"/logins",
+}
 
 func (p *InitParams) toService() *config.Service {
 	return &config.Service{
@@ -48,7 +54,7 @@ func (p *InitParams) newGenerator() template.Generator {
 			"ServiceName": p.Name,
 		},
 		template.File("{{ .ServiceName }}.yml", template.ContentsMarshal(p.toService(), yamlOutput)),
-		template.File(".gitignore", template.ContentsString("/logs")),
+		template.File(".gitignore", template.ContentsString(strings.Join(gitIgnoreFile, "\n"))),
 	)
 }
 
