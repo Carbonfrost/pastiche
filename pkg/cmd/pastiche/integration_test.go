@@ -312,6 +312,13 @@ var _ = Describe("Integration", Label("integration"), Ordered, func() {
 				Expect(run("pastiche auth logout")).To(MatchError("expected argument for service"))
 			})
 
+			It("removes all logins with --all", func() {
+				Expect(run("pastiche auth logout --all")).To(Succeed())
+				Expect(loginExists("production")).To(BeFalse())
+				Expect(loginExists("staging")).To(BeFalse())
+				Expect(loginExists("legacy")).To(BeFalse())
+			})
+
 			It("displays help without requiring the service", func() {
 				Expect(run("pastiche auth logout --help")).To(Succeed())
 			})
@@ -321,6 +328,13 @@ var _ = Describe("Integration", Label("integration"), Ordered, func() {
 				Expect(loginExists("legacy")).To(BeFalse())
 				Expect(loginExists("production")).To(BeTrue())
 				Expect(loginExists("staging")).To(BeTrue())
+			})
+
+			It("remove all when both flags are specified", func() {
+				Expect(run("pastiche auth logout --expired --all")).To(Succeed())
+				Expect(loginExists("legacy")).To(BeFalse())
+				Expect(loginExists("production")).To(BeFalse())
+				Expect(loginExists("staging")).To(BeFalse())
 			})
 		})
 
