@@ -244,9 +244,9 @@ func Auth() Action {
 			Name:     "auth",
 			HelpText: "Manage logins for services in the workspace",
 			Uses: cli.AddCommands([]*cli.Command{
-				{Name: "logout", Uses: loginDelegate1(Logout)},
-				{Name: "login", Uses: loginDelegate1(Login)},
-				{Name: "list", Uses: loginDelegate(ListLogins)},
+				{Uses: Logout()},
+				{Uses: Login()},
+				{Uses: loginDelegate(ListLogins)},
 			}...),
 			Options: cli.ExpandSubcommandSynopses,
 		},
@@ -346,7 +346,7 @@ func loginExpires(l *model.Login, now time.Time) string {
 }
 
 // Logout removes the login for a service and server
-func Logout(p model.LoginProvider, paramsopt ...*LogoutParams) Action {
+func Logout(paramsopt ...*LogoutParams) Action {
 	params := exactOrUse(useLogoutParams, paramsopt)
 	return cli.Pipeline(
 		cli.Prototype{
@@ -354,17 +354,23 @@ func Logout(p model.LoginProvider, paramsopt ...*LogoutParams) Action {
 			HelpText: "Remove the login for a service",
 			Uses: cli.Pipeline(
 				cli.AddFlags([]*cli.Flag{
-					{Uses: LogoutExpired(p)},
-					{Uses: LogoutAll(p), Options: cli.OrderFirst},
+					{Uses: LogoutExpired()},
+					{Uses: LogoutAll(), Options: cli.OrderFirst},
 				}...),
 			),
 		},
-		bind.Call2(clearLogin, bind.Exact(p), params),
+		bind.Call2(clearLogin, loginsBinder(), params),
 	)
 }
 
+func loginsBinder() bind.Binder[model.LoginProvider] {
+	return bind.Seq(bind.FromContext(FromContext), func(w *Workspace) (model.LoginProvider, error) {
+		return w.Logins(), nil
+	})
+}
+
 // LogoutExpired removes all expired logins
-func LogoutExpired(p model.LoginProvider) Action {
+func LogoutExpired() Action {
 	return cli.Pipeline(
 		&cli.Prototype{
 			Name:     "expired",
@@ -372,12 +378,12 @@ func LogoutExpired(p model.LoginProvider) Action {
 			Options:  cli.Exits,
 			Value:    new(bool),
 		},
-		bind.Call0(p.GC),
+		bind.Call((model.LoginProvider).GC, loginsBinder()),
 	)
 }
 
 // LogoutAll removes all logins
-func LogoutAll(p model.LoginProvider) Action {
+func LogoutAll() Action {
 	return cli.Pipeline(
 		&cli.Prototype{
 			Name:     "all",
@@ -385,7 +391,7 @@ func LogoutAll(p model.LoginProvider) Action {
 			Options:  cli.Exits,
 			Value:    new(bool),
 		},
-		bind.Call0(p.ClearAllLogins),
+		bind.Call((model.LoginProvider).ClearAllLogins, loginsBinder()),
 	)
 }
 
@@ -409,12 +415,6 @@ func loginServer(c *cli.Context, service string) string {
 }
 
 func loginDelegate(fn func(model.LoginProvider) Action) cli.ActionFunc {
-	return func(c *cli.Context) error {
-		return cli.Do(c, fn(FromContext(c).Logins()))
-	}
-}
-
-func loginDelegate1[T any](fn func(model.LoginProvider, ...T) Action) cli.ActionFunc {
 	return func(c *cli.Context) error {
 		return cli.Do(c, fn(FromContext(c).Logins()))
 	}
@@ -687,14 +687,14 @@ func useLoginParams() bind.ActionBinder[*LoginParams] {
 }
 
 // Login stores the login for a service and server
-func Login(p model.LoginProvider, paramsopt ...*LoginParams) Action {
+func Login(paramsopt ...*LoginParams) Action {
 	params := exactOrUse(useLoginParams, paramsopt)
 	return cli.Pipeline(
 		cli.Prototype{
 			Name:     "login",
 			HelpText: "Store the login for a service, reading the token from stdin",
 		},
-		bind.Call3(login, bind.Context(), bind.Exact(p), params),
+		bind.Call3(login, bind.Context(), loginsBinder(), params),
 	)
 }
 
