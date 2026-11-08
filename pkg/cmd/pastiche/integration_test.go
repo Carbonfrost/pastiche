@@ -407,7 +407,7 @@ var _ = Describe("Integration", Label("integration"), Ordered, func() {
 					Expect(run(arguments, stdin)).To(MatchError(expected))
 				},
 				Entry("missing --with-token", "pastiche auth login @example/customers", "t", "--with-token is required"),
-				Entry("missing spec", "pastiche auth login --with-token", "t", "expected argument for spec"),
+				Entry("missing spec", "pastiche auth login --with-token", "t", "expected argument for service"),
 				Entry("empty token", "pastiche auth login --with-token @example/customers", " \n", "no token was provided on stdin"),
 				Entry("unknown service", "pastiche auth login --with-token @example/nope", "t", `service not found: "@example/nope"`),
 				Entry("unknown server", "pastiche auth login --with-token @example/customers.nope", "t", `no server "nope" defined for service "@example/customers"`),

@@ -248,7 +248,7 @@ func Auth() Action {
 				{Name: "login", Uses: loginDelegate1(Login)},
 				{Name: "list", Uses: loginDelegate(ListLogins)},
 			}...),
-			Action: cli.DisplayHelpScreen(),
+			Options: cli.ExpandSubcommandSynopses,
 		},
 	)
 }
@@ -635,8 +635,8 @@ func useLoginParams() bind.ActionBinder[*LoginParams] {
 			Uses: cli.Pipeline(
 				cli.AddArgs([]*cli.Arg{
 					{
-						Name:       "spec",
-						UsageText:  "SERVICE_SPEC",
+						Name:       "service",
+						UsageText:  "SERVICE",
 						HelpText:   "Service to log in to, optionally followed by a dot and the server",
 						Value:      new(string),
 						Completion: completeServices(),
@@ -659,11 +659,11 @@ func useLoginParams() bind.ActionBinder[*LoginParams] {
 		},
 	),
 		func(c *cli.Context) (*LoginParams, error) {
-			text := c.String("spec")
+			text := c.String("service")
 			if text == "" {
 				return nil, &cli.ParseError{
 					Code: cli.ExpectedArgument,
-					Name: "spec",
+					Name: "service",
 					Err:  errors.New("expected argument"),
 				}
 			}
@@ -680,7 +680,7 @@ func useLoginParams() bind.ActionBinder[*LoginParams] {
 			return &LoginParams{
 				Expires: expires,
 				Server:  loginServer(c, service),
-				Spec:    c.String("spec"),
+				Spec:    c.String("service"),
 			}, nil
 		},
 	)

@@ -85,6 +85,9 @@
                 },
                 {
                     "name": "output-arg",
+                    "dependsOn": [
+                        "output"
+                    ],
                     "helpText": "Sets an argument for output",
                     "value": {
                         "type": "string"
@@ -218,6 +221,9 @@
                 },
                 {
                     "name": "output-arg",
+                    "dependsOn": [
+                        "output"
+                    ],
                     "helpText": "Sets an argument for output",
                     "value": {
                         "type": "string"
@@ -474,6 +480,112 @@
                 }
             ],
             "helpText": "Access request logs for the workspace"
+        },
+        {
+            "name": "auth",
+            "subcommands": [
+                {
+                    "name": "logout",
+                    "flags": [
+                        {
+                            "name": "expired",
+                            "helpText": "Remove all expired logins instead of the login for a service",
+                            "options": "EXITS",
+                            "value": {
+                                "type": "bool",
+                                "string": "false"
+                            }
+                        },
+                        {
+                            "name": "all",
+                            "helpText": "Remove all logins instead of the login for a service",
+                            "options": "EXITS, ORDER_FIRST",
+                            "value": {
+                                "type": "bool",
+                                "string": "false"
+                            }
+                        },
+                        {
+                            "name": "server",
+                            "aliases": [
+                                "S"
+                            ],
+                            "helpText": "Log out of the specified server rather than the default server of the service",
+                            "usageText": "NAME",
+                            "value": {
+                                "type": "string"
+                            }
+                        }
+                    ],
+                    "args": [
+                        {
+                            "name": "service",
+                            "helpText": "Name of the service to log out of",
+                            "usageText": "SERVICE",
+                            "value": {
+                                "type": "string"
+                            }
+                        }
+                    ],
+                    "helpText": "Remove the login for a service"
+                },
+                {
+                    "name": "login",
+                    "flags": [
+                        {
+                            "name": "with-token",
+                            "helpText": "Read the token from stdin",
+                            "value": {
+                                "type": "bool",
+                                "string": "false"
+                            }
+                        },
+                        {
+                            "name": "expires",
+                            "helpText": "Duration until the login expires, which defaults to 1 year",
+                            "usageText": "DURATION",
+                            "value": {
+                                "type": "duration",
+                                "string": "8760h0m0s"
+                            }
+                        }
+                    ],
+                    "args": [
+                        {
+                            "name": "service",
+                            "helpText": "Service to log in to, optionally followed by a dot and the server",
+                            "usageText": "SERVICE",
+                            "value": {
+                                "type": "string"
+                            }
+                        }
+                    ],
+                    "helpText": "Store the login for a service, reading the token from stdin"
+                },
+                {
+                    "name": "list",
+                    "aliases": [
+                        "ls"
+                    ],
+                    "helpText": "List the stored logins"
+                }
+            ],
+            "args": [
+                {
+                    "name": "command",
+                    "usageText": "\u003ccommand\u003e [\u003cargs\u003e]",
+                    "options": "DISABLE_SPLITTING",
+                    "data": {
+                        "Source": "github.com/Carbonfrost/joe-cli"
+                    },
+                    "value": {
+                        "type": "list",
+                        "string": "[]"
+                    }
+                }
+            ],
+            "helpText": "Manage logins for services in the workspace",
+            "options": "EXPAND_SUBCOMMAND_SYNOPSES"
         },
         {
             "name": "fetch",
@@ -877,6 +989,40 @@
                         "HTTP_CLIENT_TRACE_LEVEL"
                     ],
                     "helpText": "Set which client operations are traced",
+                    "valueHelpText": [
+                        {
+                            "value": "debug, verbose, on, off",
+                            "helpText": "Activate built-in trace level"
+                        },
+                        {
+                            "value": "connections",
+                            "helpText": "Trace network connections"
+                        },
+                        {
+                            "value": "requestHeaders, requestBody",
+                            "helpText": "Print request headers and body"
+                        },
+                        {
+                            "value": "responseHeaders",
+                            "helpText": "Print response headers"
+                        },
+                        {
+                            "value": "dns",
+                            "helpText": "Report name resolution activity"
+                        },
+                        {
+                            "value": "tls",
+                            "helpText": "Print information about certs and TLS"
+                        },
+                        {
+                            "value": "http1xx, responseStatus",
+                            "helpText": "Print HTTP status codes"
+                        },
+                        {
+                            "value": "redirects",
+                            "helpText": "Track each request redirect"
+                        }
+                    ],
                     "category": "Tracing and debugging options",
                     "usageText": "LEVEL",
                     "data": {
@@ -1000,6 +1146,20 @@
                 {
                     "name": "auth",
                     "helpText": "Sets the authorization provider for the endpoint",
+                    "valueHelpText": [
+                        {
+                            "value": "basic",
+                            "helpText": "Use basic auth"
+                        },
+                        {
+                            "value": "bearer",
+                            "helpText": "Use bearer token auth"
+                        },
+                        {
+                            "value": "none",
+                            "helpText": "Disable authentication"
+                        }
+                    ],
                     "category": "Request options",
                     "usageText": "\u003cprovider\u003e[,options...]",
                     "options": "IMPLIED_ACTION",
@@ -1430,6 +1590,9 @@
                 },
                 {
                     "name": "auth-arg",
+                    "dependsOn": [
+                        "auth"
+                    ],
                     "helpText": "Sets an argument for auth",
                     "category": "Request options",
                     "data": {
@@ -1442,6 +1605,9 @@
                 },
                 {
                     "name": "filter-arg",
+                    "dependsOn": [
+                        "filter"
+                    ],
                     "helpText": "Sets an argument for filter",
                     "category": "Output options",
                     "data": {
@@ -1758,7 +1924,7 @@
     ],
     "helpText": "Make requests to HTTP APIs using their OpenAPI schemas and definitions.",
     "version": "(devel)",
-    "buildDate": "2026-11-02T23:22:39.713411587-08:00",
+    "buildDate": "2026-11-07T22:54:34.495869414-08:00",
     "comment": "Smart OpenAPI client",
     "options": "SORTED_FLAGS, SORTED_COMMANDS, SORTED_EXPRS"
 }
