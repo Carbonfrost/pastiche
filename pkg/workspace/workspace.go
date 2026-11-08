@@ -96,7 +96,7 @@ func withDefaultAction() optionFunc {
 
 // FlagsAndArgs adds flags supporting the workspace. Despite its name, which is conventional,
 // this action adds to args.
-func FlagsAndArgs() cli.Action {
+func FlagsAndArgs() Action {
 	return cli.AddFlags([]*cli.Flag{
 		{Uses: SetDisableValidation()},
 	}...)
@@ -115,11 +115,11 @@ func TryFromContext(ctx context.Context) (*Workspace, bool) {
 
 // ContextValue provides an action that sets the given value into the context.
 // The only supported type is *Workspace.
-func ContextValue(v *Workspace) cli.Action {
+func ContextValue(v *Workspace) Action {
 	return cli.WithContextValue(contextkey.Workspace, v)
 }
 
-func (w *Workspace) Pipeline() cli.Action {
+func (w *Workspace) Pipeline() Action {
 	return w.Action
 }
 

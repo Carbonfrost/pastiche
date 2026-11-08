@@ -433,7 +433,7 @@ func SetDisableValidation() Action {
 }
 
 // Describe provides the action for describing a resource
-func Describe(paramsopt ...*DescribeParams) cli.Action {
+func Describe(paramsopt ...*DescribeParams) Action {
 	params := exactOrUse(useDescribeParams, paramsopt)
 	return cli.Pipeline(
 		cli.Prototype{
