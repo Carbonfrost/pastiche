@@ -135,14 +135,18 @@ func FlagsAndArgs() cli.Action {
 	return cli.Pipeline(
 		// Remove --header, --plaintext contributed by each client, which is replaced by
 		// SetHeader that binds to both
-		removeFlag(httpclient.LookupID, httpclient.IDHeader),
-		removeFlag(grpcclient.LookupID, grpcclient.IDHeader),
-		removeFlag(httpclient.LookupID, httpclient.IDPlaintext),
-		removeFlag(grpcclient.LookupID, grpcclient.IDPlaintext),
-		cli.ProvideValueInitializer(nil, "__finalize__", cli.Pipeline(
-			// TODO In joe-cli@futures,  this should be WithCommand and should remove flags on matching criteria not just name
-			cli.RemoveFlag("no-plaintext"),
-		)),
+		// TODO In joe-cli@futures, should be possible to use WithCommand here
+		cli.ProvideValueInitializer(nil, "__finalize__",
+			cli.Pipeline(
+				removeFlag(httpclient.LookupID, httpclient.IDHeader),
+				removeFlag(grpcclient.LookupID, grpcclient.IDHeader),
+				removeFlag(httpclient.LookupID, httpclient.IDPlaintext),
+				removeFlag(grpcclient.LookupID, grpcclient.IDPlaintext),
+
+				// TODO In joe-cli@futures,  this should be WithCommand and should remove flags on matching criteria not just name
+				cli.RemoveFlag("no-plaintext"),
+			),
+		),
 
 		cli.AddFlags([]*cli.Flag{
 			{Uses: ListFilters()},
@@ -287,14 +291,14 @@ func WithDefaultLocationResolver() Option {
 }
 
 func removeFlag[T comparable](filter func(target any) (T, bool), match T) cli.Action {
-	return cli.ProvideValueInitializer(nil, "__finalize__", cli.ActionFunc(func(c *cli.Context) error {
+	return cli.ActionFunc(func(c *cli.Context) error {
 		for _, f := range c.Command().Flags {
 			if id, ok := filter(f); ok && id == match {
 				return c.RemoveFlag(f)
 			}
 		}
 		return fmt.Errorf("did not find flag %v", match)
-	}))
+	})
 }
 
 func withBinding[V any](binder func(*Client, V) error, args []V) cli.Action {
